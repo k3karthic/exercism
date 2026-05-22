@@ -1,5 +1,20 @@
 # **The Architecture of Memory Management: A Language-by-Language Deep Dive**
 
+## **Summary Comparison**
+
+| Language | Primary Strategy | Compaction | Fragmentation Solution |
+| :---- | :---- | :---- | :---- |
+| **Python** | Ref Counting \+ Gen GC | No | Rely on OS allocator; pools for small ints. |
+| **Go** | Concurrent Mark-Sweep | No | TCMalloc size classes. |
+| **Java (JVM)** | Generational \+ Concurrent | Yes | Physical sliding / Relocation via Load Barriers. |
+| **.NET** | Gen Mark-and-Compact | Partial | Physical sliding (Small Object Heap only). |
+| **Haskell** | Copying / Bump-Pointer | Yes | Stop-and-copy generation evacuation. |
+| **Erlang** | Per-Process GC | No | Address Order Best Fit (AOBF). |
+| **Rust** | Compile-Time Ownership | No | jemalloc, Arenas (bumpalo), Object Pooling. |
+| **Zig** | Manual \+ Explicit | No | Explicit Arenas, built-in GPA, Fixed Buffers. |
+| **Node** | Gen Semi-Space \+ Mark-Sweep | Yes | Copying (Young), Page Compaction (Old), Off-heap Buffers. |
+
+
 ## **1\. Python: The Dual-System Manager**
 
 Python provides automatic memory management without exposing pointers to the developer. It achieves this by layering two distinct systems to balance speed with comprehensive cleanup.
@@ -22,21 +37,21 @@ Because simple types (integers, strings) cannot form circular loops, the GC **on
 3. **The Rescue Phase:** Any object with a temporary count \> 0 is being kept alive by something outside the cycle (like an active variable). The GC flags these as "safe" and traces their references, rescuing anything they touch.  
 4. **The Purge:** Any object left with a count of 0 is mathematically proven to be an isolated island. The GC forcefully breaks their internal links, allowing their real reference counts to hit zero, destroying them.
 
-### **Memory Fragmentation** {#memory-fragmentation}
+### **Memory Fragmentation**
 
 Python suffers from memory fragmentation because its Garbage Collector cannot physically move objects to compact memory.
 
-#### **The Root Cause: pymalloc Arenas** {#the-root-cause:-pymalloc-arenas}
+#### **The Root Cause: pymalloc Arenas**
 
 To speed up allocation for small objects (under 512 bytes), Python uses a system called pymalloc. It requests massive 256 KB blocks of memory from the OS, called **Arenas**.
 
 The trap: Python can only return an Arena to the OS if it is **100% empty**. If you create millions of objects during a traffic spike and then delete 99.9% of them, a single surviving 8-byte variable can hold an entire 256 KB Arena hostage.
 
-#### **The Symptom: "Phantom Leaks"** {#the-symptom:-"phantom-leaks"}
+#### **The Symptom: "Phantom Leaks"**
 
 After a large workload finishes, your OS-level memory usage (RSS) stays flat at its peak, making it look like a memory leak. In reality, Python's internal heap is mostly empty, but it is hoarding the fragmented Arenas for future use.
 
-#### **How to Mitigate It** {#how-to-mitigate-it}
+#### **How to Mitigate It**
 
 Because you cannot force Python to compact memory, developers rely on architectural workarounds:
 
@@ -170,25 +185,25 @@ Moving massive blocks of memory kills performance. Any object larger than 85,000
 * **Workstation GC:** Uses a single background thread. Prioritizes UI responsiveness and minimal user-facing pauses.  
 * **Server GC:** Creates a dedicated memory heap and a dedicated GC thread for *every logical CPU core*. Prioritizes raw throughput for massive web APIs.
 
-#### **1\. LOH Fragmentation** {#1.-loh-fragmentation}
+#### **1\. LOH Fragmentation**
 
 Any object larger than 85,000 bytes goes to the Large Object Heap (LOH). Moving massive blocks kills performance, so **the LOH is not compacted by default**, creating severe external fragmentation over time.
 
 * **The Solution:** Use System.Buffers.ArrayPool to rent and return large arrays. This reuses memory blocks so they never die, preventing fragmentation entirely.
 
-#### **2\. GC Pressure and Gen 2 Spikes** {#2.-gc-pressure-and-gen-2-spikes}
+#### **2\. GC Pressure and Gen 2 Spikes**
 
 Creating millions of temporary objects forces frequent Gen 0 collections, accidentally pushing short-lived data into Gen 2\. Sweeping Gen 2 requires heavy "Stop-The-World" (STW) pauses, spiking latency.
 
 * **The Solution:** Use stack-allocated **Value Types** (struct) instead of heap-allocated classes. Leverage **Span** to slice strings and arrays dynamically without creating new heap objects.
 
-#### **3\. Unmanaged Resource Leaks** {#3.-unmanaged-resource-leaks}
+#### **3\. Unmanaged Resource Leaks**
 
 The .NET GC is completely blind to OS-level resources like file handles, graphics contexts, or database sockets. If you lose the C\# reference, the underlying OS resource can remain locked open forever.
 
 * **The Solution:** Enforce the **IDisposable pattern** wrapped inside a **using block**. This guarantees that the resource is immediately returned to the OS the millisecond the block exits, entirely bypassing the GC timeline.
 
-#### **4\. Pinning Roadblocks** {#4.-pinning-roadblocks}
+#### **4\. Pinning Roadblocks**
 
 When passing memory pointers to native C/C++ code (P/Invoke), developers must "pin" the managed array using the fixed keyword so the GC doesn't move it. However, pinning creates unmovable roadblocks that destroy the GC’s ability to cleanly compact the surrounding heap.
 
@@ -213,19 +228,19 @@ To fix server latency, GHC introduced an opt-in hybrid collector (--nonmoving-gc
 
 By not moving objects in the Old Generation, GHC avoids massive "Stop-The-World" pauses but risks **external fragmentation** (scattered, unusable gaps). GHC solves this using a segregated memory architecture similar to modern C allocators.
 
-#### **1\. Segments and Size Classes** {#1.-segments-and-size-classes}
+#### **1\. Segments and Size Classes**
 
 Instead of an open heap, the Old Generation is divided into 32 KB **Segments**. Each Segment is rigidly carved into fixed-size slots (e.g., a Segment strictly for 32-byte objects, another for 64-byte objects).
 
 When objects survive the young generation (Nursery) and are promoted, they are routed directly into the Segment that matches their exact size.
 
-#### **2\. Eliminating External Fragmentation** {#2.-eliminating-external-fragmentation}
+#### **2\. Eliminating External Fragmentation**
 
 This structure mathematically prevents external fragmentation. If a long-lived 64-byte object dies, it leaves a perfect 64-byte hole. The very next 64-byte object promoted will slot in perfectly.
 
 **The Trade-off:** This introduces **internal fragmentation** (placing a 48-byte object into a 64-byte slot wastes 16 bytes), but GHC accepts this slight memory waste in exchange for guaranteed sub-millisecond latency.
 
-#### **3\. Bitmap Sweeping** {#3.-bitmap-sweeping}
+#### **3\. Bitmap Sweeping**
 
 Instead of using slow, sequential "free lists" to track empty holes, each Segment uses a **Bitmap** (a tiny array of 1s and 0s).
 
@@ -234,7 +249,7 @@ Instead of using slow, sequential "free lists" to track empty holes, each Segmen
 
 When the concurrent GC sweeps away dead objects, it simply flips the bits to 0\. Promoting new objects is as fast as using native CPU instructions to find the next 0 in the bitmap.
 
-#### **4\. Releasing Memory to the OS** {#4.-releasing-memory-to-the-os}
+#### **4\. Releasing Memory to the OS**
 
 Because Segments are isolated blocks, GHC can easily track their overall usage. If a 32 KB Segment becomes completely empty (its bitmap is entirely 0s), GHC unmaps it and returns the raw memory directly back to the operating system, preventing permanent memory bloat after traffic spikes.
 
@@ -349,20 +364,20 @@ Like Zig, Rust cannot physically move allocated objects. To combat fragmentation
 * **Arena Allocation (bumpalo):** Similar to Zig, crates like bumpalo allow developers to allocate massive blocks of memory for short-lived tasks, allocating sequentially and dropping the entire block at once.  
 * **Object Pooling:** Rust heavily encourages capacity reuse. Instead of dropping a Vec and returning its memory to the fragmented heap, developers call vec.clear(). This empties the vector but keeps the underlying memory block reserved for the next cycle.
 
-## **9\. Node.js (V8): Generational Compaction and Off-Heap Buffers** {#9.-node.js-(v8):-generational-compaction-and-off-heap-buffers}
+## **9\. Node.js (V8): Generational Compaction and Off-Heap Buffers**
 
 Node.js does not have its own native garbage collector; instead, it delegates memory management entirely to **Google's V8 JavaScript Engine** (the same engine that powers Chrome).
 
 V8 uses a highly optimized, multi-threaded **Generational Mark-Sweep-Compact** garbage collector. While originally designed for short-lived browser tabs, it has evolved significantly under the "Orinoco" project to handle massive, long-running Node.js server workloads.
 
-### **The Generational Heap Split** {#the-generational-heap-split}
+### **The Generational Heap Split**
 
 V8 strictly divides the JavaScript heap into two main segments:
 
 * **The Young Generation (New Space):** A small block of memory (usually between 16MB and 64MB) where all new objects are allocated.  
 * **The Old Generation (Old Space):** A much larger block of memory for objects that survive the Young Generation.
 
-### **The Scavenger (Young Generation GC)** {#the-scavenger-(young-generation-gc)}
+### **The Scavenger (Young Generation GC)**
 
 Because JavaScript creates and discards temporary objects rapidly, V8 cleans the Young Generation frequently using a blazing-fast, "Stop-The-World" (STW) algorithm called the Scavenger.
 
@@ -370,7 +385,7 @@ Because JavaScript creates and discards temporary objects rapidly, V8 cleans the
 * Objects are allocated in the From-Space. When it fills up, the app pauses. The Scavenger finds all live objects, physically copies them perfectly packed together into the To-Space, and then instantly wipes the entire From-Space clean.  
 * The two spaces then swap roles. If an object survives two Scavenger cycles, it is "tenured" and promoted to the Old Generation.
 
-### **Mark-Sweep-Compact (Old Generation)** {#mark-sweep-compact-(old-generation)}
+### **Mark-Sweep-Compact (Old Generation)**
 
 When the massive Old Generation fills up, a Scavenger approach (copying everything) would consume too much RAM and take too long. Instead, V8 uses a **Mark-Sweep-Compact** algorithm.
 
@@ -378,7 +393,7 @@ When the massive Old Generation fills up, a Scavenger approach (copying everythi
 2. **Sweeping:** It identifies dead objects and adds their memory addresses to a free-list for future allocations.  
 3. **Compaction (Solving Fragmentation):** Because the Old Generation acts like a Swiss-cheese parking lot over time, V8 physically slides surviving objects together to close the gaps. This step *does* require pausing the main Node.js thread to update all the pointers, but V8 limits this by only compacting highly fragmented memory pages rather than the entire heap at once.
 
-### **The Node.js Specific Feature: Off-Heap Buffer Objects** {#the-node.js-specific-feature:-off-heap-buffer-objects}
+### **The Node.js Specific Feature: Off-Heap Buffer Objects**
 
 JavaScript was originally designed for web pages, not file systems or TCP streams. If a Node.js server tried to load a 500MB video file into the V8 Garbage Collector, the STW pauses would completely crash the server.
 
@@ -389,18 +404,3 @@ To solve this, Node.js introduced the Buffer class.
 * **The Trap:** When the tiny JS object is eventually garbage collected by V8, it triggers a C++ callback to free the massive external memory block. However, if you accidentally keep that tiny JS reference alive (e.g., inside a closure), the V8 heap will look perfectly healthy, but your server will crash from an external Out-Of-Memory error because the massive off-heap payload cannot be released.
 
 *(Note: Node.js historically had strict memory limits of around 1.5GB on 64-bit systems. If your application needs a larger V8 heap, you must explicitly start Node with the flag \--max-old-space-size=X where X is the memory limit in megabytes).*
-
-## **Summary Comparison** {#summary-comparison}
-
-| Language | Primary Strategy | Compaction | Fragmentation Solution |
-| :---- | :---- | :---- | :---- |
-| **Python** | Ref Counting \+ Gen GC | No | Rely on OS allocator; pools for small ints. |
-| **Go** | Concurrent Mark-Sweep | No | TCMalloc size classes. |
-| **Java (JVM)** | Generational \+ Concurrent | Yes | Physical sliding / Relocation via Load Barriers. |
-| **.NET** | Gen Mark-and-Compact | Partial | Physical sliding (Small Object Heap only). |
-| **Haskell** | Copying / Bump-Pointer | Yes | Stop-and-copy generation evacuation. |
-| **Erlang** | Per-Process GC | No | Address Order Best Fit (AOBF). |
-| **Rust** | Compile-Time Ownership | No | jemalloc, Arenas (bumpalo), Object Pooling. |
-| **Zig** | Manual \+ Explicit | No | Explicit Arenas, built-in GPA, Fixed Buffers. |
-| **Node** | Gen Semi-Space \+ Mark-Sweep | Yes | Copying (Young), Page Compaction (Old), Off-heap Buffers. |
-
