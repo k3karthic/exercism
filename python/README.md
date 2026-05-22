@@ -9,3 +9,9 @@ uv init
 ```bash
 uv run python index.py
 ```
+
+## Format
+
+```bash
+make format
+```
