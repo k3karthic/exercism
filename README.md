@@ -8,6 +8,8 @@ Categories:
     * Debugger
     * Testing
     * [Testcontainers](https://testcontainers.com/)
+    * Concurrency
+    * Parallelism
 
 ## Code Mirrors
 
