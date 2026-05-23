@@ -12,6 +12,7 @@
     "test": "vitest run testing/tests"
   },
   "devDependencies": {
+    "@testcontainers/redis": "^12.0.0",
     "@types/node": "^25.9.1",
     "prettier": "^3.8.3",
     "tsx": "^4.22.3",
@@ -19,6 +20,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
-    "@platformatic/flame": "^1.6.0"
+    "@platformatic/flame": "^1.6.0",
+    "redis": "^5.12.1"
   }
 }
