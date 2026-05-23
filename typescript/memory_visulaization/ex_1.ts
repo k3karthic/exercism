@@ -37,15 +37,25 @@ function generateFibonacciHash(
   );
 }
 
-// DO NOT CHANGE
-const LENGTH_OF_SEQUENCE_1 = 33333;
-const LENGTH_OF_SEQUENCE_2 = 30000;
-const LENGTH_OF_SEQUENCE_3 = 34567;
-// DO NOT CHANGE
-console.log(
-  generateFibonacciHash(
+async function main() {
+  console.log("Execution will start. Holding process open for profiling...");
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+
+  // DO NOT CHANGE
+  const LENGTH_OF_SEQUENCE_1 = 33333;
+  const LENGTH_OF_SEQUENCE_2 = 30000;
+  const LENGTH_OF_SEQUENCE_3 = 34567;
+  // DO NOT CHANGE
+  const result = generateFibonacciHash(
     LENGTH_OF_SEQUENCE_1,
     LENGTH_OF_SEQUENCE_2,
     LENGTH_OF_SEQUENCE_3,
-  ),
-);
+  );
+
+  console.log("Execution ended. Holding process open for profiling...");
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+
+  console.log(result);
+}
+
+main().then(() => {});

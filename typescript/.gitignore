@@ -1,2 +1,4 @@
 node_modules
 dist
+heap-profile-*
+cpu-profile-*
