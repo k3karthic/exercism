@@ -8,13 +8,15 @@
   "main": "dist/index.js",
   "scripts": {
     "main": "tsx index.ts",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "test": "vitest run testing/tests"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
     "prettier": "^3.8.3",
     "tsx": "^4.22.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.7"
   },
   "dependencies": {
     "@platformatic/flame": "^1.6.0"
