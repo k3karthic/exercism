@@ -1,4 +1,4 @@
-# Generate Flamegraph
+## Generate Flamegraph
 
 ```bash
 uv run memray run <file>
