@@ -1,4 +1,4 @@
-## Experiments & Research on Programming Languages
+## Experiments on Programming Languages
 
 Categories:
 * Memory Management - memory_management_by_language.md
