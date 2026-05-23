@@ -2,8 +2,10 @@
 
 Categories:
 * Memory Management - memory_management_by_language.md
-* CPU / Memory Visualization
-* Debugger
+* CPU Topology - cpu_topology/
+* Per Language,
+    * CPU / Memory Visualization
+    * Debugger
 
 ## Code Mirrors
 
