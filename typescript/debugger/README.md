@@ -3,7 +3,7 @@ Documentation: [Node.js Inspector](https://nodejs.org/api/debugger.html)
 ## Run Program
 
 ```bash
-npx tsx --inspect debugger/debugger_test.ts
+npx node --import tsx inspect debugger/debugger_test.ts
 ```
 
 ## Quick Reference
@@ -24,7 +24,7 @@ repl - start interactive repl
 exec/p - execute the one-line statement in the context of the current stack frame
 
 restart
-kill - quit
+Ctrl+d - exit
 
 setBreakpoint(), sb(): Set breakpoint on current line
 setBreakpoint(line), sb(line): Set breakpoint on specific line
