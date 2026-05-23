@@ -398,5 +398,3 @@ To solve this, Node.js introduced the Buffer class.
 * When you allocate a Buffer to read a file or network stream, the massive payload of raw bytes is allocated **outside of the V8 Heap** using direct C++ memory (malloc).  
 * V8 only stores a tiny JavaScript reference object on its heap that points to that external C++ memory.  
 * **The Trap:** When the tiny JS object is eventually garbage collected by V8, it triggers a C++ callback to free the massive external memory block. However, if you accidentally keep that tiny JS reference alive (e.g., inside a closure), the V8 heap will look perfectly healthy, but your server will crash from an external Out-Of-Memory error because the massive off-heap payload cannot be released.
-
-*(Note: Node.js historically had strict memory limits of around 1.5GB on 64-bit systems. If your application needs a larger V8 heap, you must explicitly start Node with the flag \--max-old-space-size=X where X is the memory limit in megabytes).*
