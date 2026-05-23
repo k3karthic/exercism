@@ -6,6 +6,7 @@ Categories:
 * Per Language,
     * CPU / Memory Visualization
     * Debugger
+    * Testing
 
 ## Code Mirrors
 
