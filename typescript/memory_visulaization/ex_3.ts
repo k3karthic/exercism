@@ -14,7 +14,8 @@ export class Algorithms {
       return cached;
     }
 
-    const value = n > 1 ? BigInt(n) * this.factorialPlus(n - 1) + this.inc : 1n + this.inc;
+    const value =
+      n > 1 ? BigInt(n) * this.factorialPlus(n - 1) + this.inc : 1n + this.inc;
     this.cache.set(n, value);
     return value;
   }

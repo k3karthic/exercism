@@ -25,7 +25,7 @@ Open the generated html file in the browser
 
 Excessive memory consumption as the program stores all results in a local variable but only needs the result of the calculation.
 
-![ex1 flamegraph](media/memory_visualization/ex_1_flamegraph.png)
+![ex1 flamegraph](../media/memory_visualization/ex_1_flamegraph.png)
 ![ex1 table](media/memory_visualization/ex_1_table.png)
 
 ### ex_2.py

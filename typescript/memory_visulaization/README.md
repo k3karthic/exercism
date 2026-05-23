@@ -12,7 +12,6 @@ uv run memray run --native <file>
 
 ## Visualize Flamegraph
 
-
 ```bash
 uv run memray flamegraph <generated bin file>
 ```

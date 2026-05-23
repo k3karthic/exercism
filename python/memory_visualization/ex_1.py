@@ -41,6 +41,6 @@ if __name__ == "__main__":
     LENGTH_OF_SEQUENCE_2 = 30000
     LENGTH_OF_SEQUENCE_3 = 34567
     # DO NOT CHANGE
-    generate_fibonacci_hash(
+    print(generate_fibonacci_hash(
         LENGTH_OF_SEQUENCE_1, LENGTH_OF_SEQUENCE_2, LENGTH_OF_SEQUENCE_3
-    )
+    ))
