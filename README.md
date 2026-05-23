@@ -3,6 +3,7 @@
 Categories:
 * Memory Management - memory_management_by_language.md
 * CPU / Memory Visualization
+* Debugger
 
 ## Code Mirrors
 
