@@ -1,3 +1,6 @@
+The following modules are useful for IO bound tasks as all running code shares a common GIL.
+This means that at any given time, only one function is executing bytecode.
+
 ## Threads
 
 Use a ThreadPoolExecutor to execute multiple functions concurrently.
