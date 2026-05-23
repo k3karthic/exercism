@@ -2,7 +2,7 @@
 
 Categories:
 * Memory Management - memory_management_by_language.md
-* Memory Visualization
+* CPU / Memory Visualization
 
 ## Code Mirrors
 

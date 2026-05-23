@@ -4,13 +4,13 @@
 npx tsc
 ```
 
-## Generate Profile
+## Generate Profiles
 
 ```bash
-npx flame run --sourcemap-dirs=dist dist/memory_visulaization/<file>.js
+npx flame run --sourcemap-dirs=dist dist/cpu_memory_visualization/<file>.js
 ```
 
-Open the generated html file in the browser
+Open the generated html file in the browser. There will be two files for cpu and memory.
 
 ## Exercises
 
@@ -31,3 +31,4 @@ Although Node.js automatically collects unsued memory, in this case we have ling
 Unexpected memory consumption as the LRU cache object uses the object instance as part of the cache key.
 
 ![ex3 flamegraph](../media/memory_visualization/ex_3_flamegraph.png)
+![ex3 cpu profile](../media/memory_visualization/ex_3_cpu_profile.png)
