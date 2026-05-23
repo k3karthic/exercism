@@ -82,10 +82,6 @@ Go avoids "Stop-The-World" pauses by running the GC concurrently alongside your 
 
 **The Write Barrier:** To prevent the application from moving a White object behind a Black object while the GC is actively scanning (which would cause live data to be deleted), Go injects a tiny snippet of code called a Write Barrier. It intercepts pointer modifications during a GC cycle, keeping the memory graph safe without freezing the app.
 
-### **Escape Analysis Instead of Generations**
-
-Go does not use a generational heap. Instead, the Go compiler performs **Escape Analysis**. If a variable is only used inside the function that created it, the compiler places it on the **Stack**. The Stack cleans itself instantly when the function returns—zero GC overhead. Only variables that "escape" the function are allocated on the Heap. Because short-lived garbage rarely hits the Heap, Go doesn't need complex generational tracking.
-
 ### **TCMalloc-Style Allocation**
 
 Because Go doesn't physically move objects to compact memory, it prevents fragmentation by dividing the heap into strict size classes (e.g., a pool purely for 32-byte objects). When an object is freed, it leaves a perfect hole for the next object of that exact size.
