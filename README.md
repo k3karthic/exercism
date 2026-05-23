@@ -7,6 +7,7 @@ Categories:
     * CPU / Memory Visualization
     * Debugger
     * Testing
+    * [Testcontainers](https://testcontainers.com/)
 
 ## Code Mirrors
 
