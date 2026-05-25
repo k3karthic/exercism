@@ -13,15 +13,11 @@ class IdempotentServer:
         self.is_running = True
 
     def _secure_cleanup_existing(self):
-        """Safely removes an existing socket only if owned by the current user."""
         if os.path.exists(self.socket_path):
             file_stat = os.stat(self.socket_path)
-            current_uid = os.getuid()
-
-            if file_stat.st_uid != current_uid:
+            if file_stat.st_uid != os.getuid():
                 raise PermissionError(
-                    f"Security Alert: Socket path '{self.socket_path}' is owned by another user (UID: {file_stat.st_uid}). "
-                    "Aborting to prevent hijacking or unauthorized tampering."
+                    f"Security Alert: Socket path '{self.socket_path}' is owned by another user."
                 )
             os.remove(self.socket_path)
 
@@ -35,15 +31,13 @@ class IdempotentServer:
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             server.bind(self.socket_path)
-            # Restrict permissions: 0o600 means Owner: RW, Group: None, Others: None
             os.chmod(self.socket_path, 0o600)
-            print(f"[SECURITY] Set safe permissions (0600) on {self.socket_path}")
         except OSError as e:
             print(f"Failed to bind to socket path '{self.socket_path}': {e}")
             return
 
         server.listen(5)
-        print(f"Server listening on dynamic path: {self.socket_path}...")
+        print(f"Server listening on path: {self.socket_path}...")
 
         cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
         cleanup_thread.start()
@@ -77,13 +71,15 @@ class IdempotentServer:
             with self.lock:
                 if req_id in self.processed_requests:
                     print(f"[CACHE HIT] Returning cached result for Request {req_id}")
-                    response = self.processed_requests[req_id][0]
+                    result = self.processed_requests[req_id][0]
                 else:
                     print(f"[NEW REQ] Processing Request {req_id}: Double {number}")
-                    response = number * 2
-                    self.processed_requests[req_id] = (response, time.time())
+                    result = number * 2
+                    self.processed_requests[req_id] = (result, time.time())
 
-            conn.sendall(str(response).encode("utf-8"))
+            # Format response payload to echo back the req_id
+            response_payload = f"{req_id}:{result}"
+            conn.sendall(response_payload.encode("utf-8"))
         except Exception as e:
             print(f"Error handling request: {e}")
         finally:
@@ -101,10 +97,6 @@ class IdempotentServer:
                 ]
                 for req_id in expired:
                     del self.processed_requests[req_id]
-                if expired:
-                    print(
-                        f"[CLEANUP] Purged {len(expired)} expired requests from memory."
-                    )
 
 
 if __name__ == "__main__":
