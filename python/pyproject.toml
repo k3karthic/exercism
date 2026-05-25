@@ -5,6 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "grpcio>=1.80.0",
+    "grpcio-tools>=1.80.0",
     "memray>=1.19.3",
     "numpy>=2.4.6",
     "pytest>=9.0.3",
