@@ -1,18 +1,18 @@
-import socket
+import asyncio
 import os
 import time
-import threading
 import argparse
 
 
-class IdempotentServer:
+class AsyncIdempotentServer:
     def __init__(self, socket_path):
         self.socket_path = socket_path
+        # Schema: { req_id: (result_value, timestamp) }
         self.processed_requests = {}
-        self.lock = threading.Lock()
         self.is_running = True
 
     def _secure_cleanup_existing(self):
+        """Safely removes an existing socket only if owned by the current user."""
         if os.path.exists(self.socket_path):
             file_stat = os.stat(self.socket_path)
             if file_stat.st_uid != os.getuid():
@@ -21,75 +21,87 @@ class IdempotentServer:
                 )
             os.remove(self.socket_path)
 
-    def start(self):
+    async def start(self):
         try:
             self._secure_cleanup_existing()
         except PermissionError as e:
             print(e)
             return
 
-        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        # Start the UDS server using asyncio
         try:
-            server.bind(self.socket_path)
+            server = await asyncio.start_unix_server(
+                self._handle_client, path=self.socket_path
+            )
+            # Restrict permissions to the owner immediately after creation
             os.chmod(self.socket_path, 0o600)
+            print(f"[SECURITY] Set safe permissions (0600) on {self.socket_path}")
         except OSError as e:
             print(f"Failed to bind to socket path '{self.socket_path}': {e}")
             return
 
-        server.listen(5)
-        print(f"Server listening on path: {self.socket_path}...")
+        print(f"Async Server listening on path: {self.socket_path}...")
 
-        cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
-        cleanup_thread.start()
+        # Schedule the background cleanup loop task
+        cleanup_task = asyncio.create_task(self._cleanup_loop())
 
+        async with server:
+            try:
+                await server.serve_forever()
+            except asyncio.CancelledError:
+                print("\nServer task cancelled.")
+            finally:
+                self.is_running = False
+                cleanup_task.cancel()
+                if os.path.exists(self.socket_path):
+                    try:
+                        os.remove(self.socket_path)
+                    except PermissionError:
+                        pass
+                print("Server shut down cleanly.")
+
+    async def _handle_client(self, reader, writer):
+        """Callback executed automatically whenever a client connects."""
         try:
-            while self.is_running:
-                conn, _ = server.accept()
-                threading.Thread(
-                    target=self._handle_client, args=(conn,), daemon=True
-                ).start()
-        except KeyboardInterrupt:
-            print("\nShutting down server...")
-        finally:
-            self.is_running = False
-            server.close()
-            if os.path.exists(self.socket_path):
-                try:
-                    os.remove(self.socket_path)
-                except PermissionError:
-                    pass
-
-    def _handle_client(self, conn):
-        try:
-            data = conn.recv(1024).decode("utf-8")
+            # Read up to 1024 bytes from the stream
+            data = await reader.read(1024)
             if not data:
                 return
 
-            req_id, num_str = data.split(":", 1)
+            payload = data.decode("utf-8")
+            req_id, num_str = payload.split(":", 1)
             number = int(num_str)
 
-            with self.lock:
-                if req_id in self.processed_requests:
-                    print(f"[CACHE HIT] Returning cached result for Request {req_id}")
-                    result = self.processed_requests[req_id][0]
-                else:
-                    print(f"[NEW REQ] Processing Request {req_id}: Double {number}")
-                    result = number * 2
-                    self.processed_requests[req_id] = (result, time.time())
+            # NOTE: No threading locks are needed here!
+            # Asyncio runs on a single event loop thread, preventing race conditions.
+            if req_id in self.processed_requests:
+                print(f"[CACHE HIT] Returning cached result for Request {req_id}")
+                result = self.processed_requests[req_id][0]
+            else:
+                print(f"[NEW REQ] Processing Request {req_id}: Double {number}")
+                result = number * 2
+                self.processed_requests[req_id] = (result, time.time())
 
-            # Format response payload to echo back the req_id
+            # Format and send response payload
             response_payload = f"{req_id}:{result}"
-            conn.sendall(response_payload.encode("utf-8"))
+            writer.write(response_payload.encode("utf-8"))
+            await writer.drain()  # Ensure data is completely flushed through the socket
+
         except Exception as e:
             print(f"Error handling request: {e}")
         finally:
-            conn.close()
+            writer.close()
+            await writer.wait_closed()
 
-    def _cleanup_loop(self):
+    async def _cleanup_loop(self):
+        """Asynchronous background loop to purge expired cache tokens."""
         while self.is_running:
-            time.sleep(30)
-            now = time.time()
-            with self.lock:
+            try:
+                await asyncio.sleep(
+                    30
+                )  # Non-blocking sleep shifts control back to event loop
+                now = time.time()
+
                 expired = [
                     req_id
                     for req_id, (_, ts) in self.processed_requests.items()
@@ -97,10 +109,16 @@ class IdempotentServer:
                 ]
                 for req_id in expired:
                     del self.processed_requests[req_id]
+                if expired:
+                    print(
+                        f"[CLEANUP] Purged {len(expired)} expired requests from memory."
+                    )
+            except asyncio.CancelledError:
+                break
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Secure Idempotent UDS IPC Server")
+    parser = argparse.ArgumentParser(description="Secure Async Idempotent UDS Server")
     parser.add_argument(
         "-s",
         "--socket",
@@ -109,5 +127,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    server = IdempotentServer(args.socket)
-    server.start()
+    server_instance = AsyncIdempotentServer(args.socket)
+    try:
+        asyncio.run(server_instance.start())
+    except KeyboardInterrupt:
+        print("\nExiting via KeyboardInterrupt...")
