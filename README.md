@@ -1,5 +1,16 @@
 ## Experiments on Programming Languages
 
+Languages:
+* Python (LLM-assisted)
+* TypeScript (LLM-assisted)
+* Go
+* Kotlin
+* Rust
+* Elixir
+* Zig
+* F#
+* Haskell
+
 Categories:
 * Memory Management - memory_management_by_language.md
 * CPU Topology - cpu_topology/
