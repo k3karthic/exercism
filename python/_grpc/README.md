@@ -16,7 +16,7 @@ If Pyright flags the generated gRPC files, add this line at the very top of the 
 uv run python server.py
 ```
 
-![server screenshot][../media/grpc/server.png]
+![server screenshot](../media/grpc/server.png)
 
 ## Run Client
 
@@ -26,4 +26,4 @@ uv run python client.py
 
 The client talks to `localhost:50051` by default. Use `--address` on the server or `--target` on the client to change it.
 
-![client screenshot][../media/grpc/client.png]
+![client screenshot](../media/grpc/client.png)
