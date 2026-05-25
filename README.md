@@ -10,7 +10,8 @@ Categories:
     * [Testcontainers](https://testcontainers.com/)
     * Concurrency
     * Parallelism
-    * [ZeroMQ](https://zeromq.org/)
+    * UNIX Domain Sockets
+    * Named Pipes
     * [gRPC](https://grpc.io/)
     * [Elastic](https://www.elastic.co/)
     * [Kafka](https://kafka.apache.org/)
