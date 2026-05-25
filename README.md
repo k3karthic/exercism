@@ -18,6 +18,7 @@ Categories:
     * [Keycloak](https://www.keycloak.org/)
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Zig, Rust
+    * [OpenAPI](https://www.openapis.org)
 
 ## Code Mirrors
 
