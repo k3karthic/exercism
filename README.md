@@ -10,11 +10,11 @@ Categories:
     * [Testcontainers](https://testcontainers.com/)
     * Concurrency
     * Parallelism
-    * [ZeroMQ](https://zeromq.org/) - excluded: Haskell
+    * [ZeroMQ](https://zeromq.org/)
     * [gRPC](https://grpc.io/)
     * [Elastic](https://www.elastic.co/)
     * [Kafka](https://kafka.apache.org/)
-    * [RabbitMQ](https://www.rabbitmq.com/) - excluded: Haskell
+    * [RabbitMQ](https://www.rabbitmq.com/)
     * [Keycloak](https://www.keycloak.org/)
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Zig, Rust
