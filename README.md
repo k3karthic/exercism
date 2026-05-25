@@ -13,7 +13,6 @@ Categories:
     * UNIX Domain Sockets
     * Named Pipes
     * [gRPC](https://grpc.io/)
-    * [Elastic](https://www.elastic.co/)
     * [Kafka](https://kafka.apache.org/)
     * [RabbitMQ](https://www.rabbitmq.com/)
     * [Keycloak](https://www.keycloak.org/)
