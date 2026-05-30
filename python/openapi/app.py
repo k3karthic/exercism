@@ -107,6 +107,7 @@ class PetRow(Base):
     @classmethod
     async def create(cls, session: AsyncSession, pet: PetSchema) -> "PetRow":
         row = cls(
+            id=pet.id,
             name=pet.name,
             status=pet.status,
             photo_urls=pet.photoUrls,
@@ -188,6 +189,7 @@ class OrderRow(Base):
     @classmethod
     async def create(cls, session: AsyncSession, order: OrderSchema) -> "OrderRow":
         row = cls(
+            id=order.id,
             pet_id=order.petId,
             quantity=order.quantity,
             ship_date=order.shipDate,
@@ -574,4 +576,4 @@ async def delete_order(
 
 
 if __name__ == "__main__":
-    uvicorn.run("openapi.app:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)

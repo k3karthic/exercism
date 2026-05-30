@@ -52,15 +52,21 @@ async def client(pg_url: str):
 
 
 async def create_pet(
-    client: AsyncClient, name: str = "Rex", status: str = "available"
+    client: AsyncClient,
+    name: str = "Rex",
+    status: str = "available",
+    pet_id: int | None = None,
 ) -> dict:
+    payload: dict[str, object] = {
+        "name": name,
+        "photoUrls": ["https://example.com/photo.jpg"],
+        "status": status,
+    }
+    if pet_id is not None:
+        payload["id"] = pet_id
     resp = await client.post(
         "/pet",
-        json={
-            "name": name,
-            "photoUrls": ["https://example.com/photo.jpg"],
-            "status": status,
-        },
+        json=payload,
         headers=HEADERS,
     )
     assert resp.status_code == 200
@@ -78,6 +84,11 @@ async def test_add_and_get_pet(client: AsyncClient):
     resp = await client.get(f"/pet/{created['id']}", headers=HEADERS)
     assert resp.status_code == 200
     assert resp.json()["name"] == "Buddy"
+
+
+async def test_add_pet_keeps_supplied_id(client: AsyncClient):
+    created = await create_pet(client, "Spot", pet_id=1)
+    assert created["id"] == 1
 
 
 async def test_update_pet(client: AsyncClient):
@@ -191,6 +202,22 @@ async def test_place_and_get_order(client: AsyncClient):
     resp = await client.get(f"/store/order/{order['id']}", headers=HEADERS)
     assert resp.status_code == 200
     assert resp.json()["status"] == "placed"
+
+
+async def test_place_order_keeps_supplied_id(client: AsyncClient):
+    resp = await client.post(
+        "/store/order",
+        json={
+            "id": 7,
+            "petId": 1,
+            "quantity": 1,
+            "status": "placed",
+            "complete": False,
+        },
+        headers=HEADERS,
+    )
+    assert resp.status_code == 200
+    assert resp.json()["id"] == 7
 
 
 async def test_delete_order(client: AsyncClient):
