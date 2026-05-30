@@ -5,25 +5,25 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    Column,
     DateTime,
     Integer,
     JSON,
     String,
-    Text,
     func,
     select,
 )
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlmodel import Field, SQLModel
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -48,71 +48,46 @@ class OrderStatus(str, Enum):
     delivered = "delivered"
 
 
-class TagSchema(BaseModel):
+class Tag(SQLModel):
     id: Optional[int] = None
     name: Optional[str] = None
 
 
-class CategorySchema(BaseModel):
+class Category(SQLModel):
     id: Optional[int] = None
     name: Optional[str] = None
 
 
-class PetSchema(BaseModel):
-    id: Optional[int] = None
+class Pet(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     name: str
-    photoUrls: list[str]
-    category: Optional[CategorySchema] = None
-    tags: Optional[list[TagSchema]] = None
+    photo_urls: Any = Field(
+        default_factory=list,
+        alias="photoUrls",
+        sa_column=Column(JSON, nullable=False),
+    )
+    category: Any = Field(default=None, sa_column=Column(JSON, nullable=True))
+    tags: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(postgresql.ARRAY(String()), nullable=False),
+    )
     status: Optional[str] = None
-
-
-class OrderSchema(BaseModel):
-    id: Optional[int] = None
-    petId: Optional[int] = None
-    quantity: Optional[int] = None
-    shipDate: Optional[datetime] = None
-    status: Optional[str] = None
-    complete: Optional[bool] = None
-
-
-class ApiResponseSchema(BaseModel):
-    code: Optional[int] = None
-    type: Optional[str] = None
-    message: Optional[str] = None
-
-
-# ── Database models ───────────────────────────────────────────────────────────
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class PetRow(Base):
-    __tablename__ = "pets"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    photo_urls: Mapped[list] = mapped_column(JSON, default=list)
-    category: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    tags: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     @classmethod
-    async def get(cls, session: AsyncSession, pet_id: int) -> Optional["PetRow"]:
-        result = await session.execute(select(cls).where(cls.id == pet_id))
+    async def get(cls, session: AsyncSession, pet_id: int) -> Optional["Pet"]:
+        table = cast(Any, cls).__table__
+        result = await session.execute(select(cls).where(table.c.id == pet_id))
         return result.scalar_one_or_none()
 
     @classmethod
-    async def create(cls, session: AsyncSession, pet: PetSchema) -> "PetRow":
+    async def create(cls, session: AsyncSession, pet: "Pet") -> "Pet":
         row = cls(
             id=pet.id,
             name=pet.name,
             status=pet.status,
-            photo_urls=pet.photoUrls,
-            category=pet.category.model_dump() if pet.category else None,
-            tags=[t.model_dump() for t in pet.tags] if pet.tags else None,
+            photoUrls=pet.photo_urls,
+            category=pet.category,
+            tags=list(dict.fromkeys(pet.tags)),
         )
         session.add(row)
         await session.commit()
@@ -120,7 +95,7 @@ class PetRow(Base):
         return row
 
     @classmethod
-    async def update(cls, session: AsyncSession, pet: PetSchema) -> Optional["PetRow"]:
+    async def update(cls, session: AsyncSession, pet: "Pet") -> Optional["Pet"]:
         if pet.id is None:
             return None
         row = await cls.get(session, pet.id)
@@ -128,9 +103,9 @@ class PetRow(Base):
             return None
         row.name = pet.name
         row.status = pet.status
-        row.photo_urls = pet.photoUrls
-        row.category = pet.category.model_dump() if pet.category else None
-        row.tags = [t.model_dump() for t in pet.tags] if pet.tags else None
+        row.photo_urls = pet.photo_urls
+        row.category = pet.category
+        row.tags = list(dict.fromkeys(pet.tags))
         await session.commit()
         await session.refresh(row)
         return row
@@ -145,54 +120,60 @@ class PetRow(Base):
         return True
 
     @classmethod
-    async def find_by_status(cls, session: AsyncSession, status: str) -> list["PetRow"]:
-        result = await session.execute(select(cls).where(cls.status == status))
+    async def find_by_status(cls, session: AsyncSession, status: str) -> list["Pet"]:
+        table = cast(Any, cls).__table__
+        result = await session.execute(select(cls).where(table.c.status == status))
         return list(result.scalars().all())
 
     @classmethod
     async def find_by_tags(
         cls, session: AsyncSession, tag_names: list[str]
-    ) -> list["PetRow"]:
+    ) -> list["Pet"]:
         result = await session.execute(select(cls))
-        matched = []
+        matched: list[Pet] = []
         for pet in result.scalars().all():
-            names = {t.get("name") for t in (pet.tags or [])}
-            if set(tag_names).issubset(names):
+            if set(tag_names).issubset(set(pet.tags or [])):
                 matched.append(pet)
         return matched
 
     @classmethod
     async def inventory(cls, session: AsyncSession) -> dict[str, int]:
+        table = cast(Any, cls).__table__
         rows = await session.execute(
-            select(cls.status, func.count(cls.id)).group_by(cls.status)
+            select(table.c.status, func.count(table.c.id)).group_by(table.c.status)
         )
         return {row[0]: row[1] for row in rows.all() if row[0] is not None}
 
 
-class OrderRow(Base):
-    __tablename__ = "orders"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    pet_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    quantity: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    ship_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
+class Order(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    pet_id: Optional[int] = Field(
+        default=None, sa_column=Column(BigInteger, nullable=True)
     )
-    status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    complete: Mapped[bool] = mapped_column(Boolean, default=False)
+    quantity: Optional[int] = Field(
+        default=None, sa_column=Column(Integer, nullable=True)
+    )
+    ship_date: Optional[datetime] = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    status: Optional[str] = Field(
+        default=None, sa_column=Column(String(20), nullable=True)
+    )
+    complete: bool = Field(default=False, sa_column=Column(Boolean, default=False))
 
     @classmethod
-    async def get(cls, session: AsyncSession, order_id: int) -> Optional["OrderRow"]:
-        result = await session.execute(select(cls).where(cls.id == order_id))
+    async def get(cls, session: AsyncSession, order_id: int) -> Optional["Order"]:
+        table = cast(Any, cls).__table__
+        result = await session.execute(select(cls).where(table.c.id == order_id))
         return result.scalar_one_or_none()
 
     @classmethod
-    async def create(cls, session: AsyncSession, order: OrderSchema) -> "OrderRow":
+    async def create(cls, session: AsyncSession, order: "Order") -> "Order":
         row = cls(
             id=order.id,
-            pet_id=order.petId,
+            pet_id=order.pet_id,
             quantity=order.quantity,
-            ship_date=order.shipDate,
+            ship_date=order.ship_date,
             status=order.status,
             complete=order.complete or False,
         )
@@ -211,7 +192,15 @@ class OrderRow(Base):
         return True
 
 
+class ApiResponse(SQLModel):
+    code: Optional[int] = None
+    type: Optional[str] = None
+    message: Optional[str] = None
+
+
 # ── Database setup ────────────────────────────────────────────────────────────
+
+Base = SQLModel
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
@@ -230,28 +219,6 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 # ── CRUD helpers ──────────────────────────────────────────────────────────────
 
 
-def _pet_to_schema(row: PetRow) -> PetSchema:
-    return PetSchema(
-        id=row.id,
-        name=row.name,
-        photoUrls=row.photo_urls or [],
-        category=CategorySchema(**row.category) if row.category else None,
-        tags=[TagSchema(**t) for t in row.tags] if row.tags else None,
-        status=row.status,
-    )
-
-
-def _order_to_schema(row: OrderRow) -> OrderSchema:
-    return OrderSchema(
-        id=row.id,
-        petId=row.pet_id,
-        quantity=row.quantity,
-        shipDate=row.ship_date,
-        status=row.status,
-        complete=row.complete,
-    )
-
-
 def _sort_items(items: list[Any], sort_by: str, sort_order: str) -> list[Any]:
     reverse = sort_order == "desc"
     return sorted(
@@ -259,7 +226,7 @@ def _sort_items(items: list[Any], sort_by: str, sort_order: str) -> list[Any]:
     )
 
 
-def _pet_matches_search(row: PetRow, criteria: dict[str, Any]) -> bool:
+def _pet_matches_search(row: Pet, criteria: dict[str, Any]) -> bool:
     name = criteria.get("name")
     if name:
         needle = str(name).replace("*", "").lower()
@@ -272,14 +239,13 @@ def _pet_matches_search(row: PetRow, criteria: dict[str, Any]) -> bool:
 
     tags = criteria.get("tags") or []
     if tags:
-        names = {t.get("name") for t in (row.tags or [])}
-        if not set(tags).issubset(names):
+        if not set(tags).issubset(set(row.tags or [])):
             return False
 
     return True
 
 
-def _order_matches_search(row: OrderRow, criteria: dict[str, Any]) -> bool:
+def _order_matches_search(row: Order, criteria: dict[str, Any]) -> bool:
     order_id = criteria.get("orderId")
     if order_id is not None and row.id != order_id:
         return False
@@ -350,51 +316,51 @@ app = FastAPI(title="Petstore", version="1.0.13", lifespan=lifespan)
 # Specific paths are registered before parameterised ones to avoid shadowing.
 
 
-@app.post("/pet", response_model=PetSchema, dependencies=[Depends(require_api_key)])
+@app.post("/pet", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def add_pet(
-    pet: PetSchema,
+    pet: Pet,
     session: AsyncSession = Depends(get_session),
-) -> PetSchema:
-    return _pet_to_schema(await PetRow.create(session, pet))
+) -> Pet:
+    return await Pet.create(session, pet)
 
 
-@app.put("/pet", response_model=PetSchema, dependencies=[Depends(require_api_key)])
+@app.put("/pet", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def update_pet(
-    pet: PetSchema,
+    pet: Pet,
     session: AsyncSession = Depends(get_session),
-) -> PetSchema:
+) -> Pet:
     if pet.id is None:
         raise HTTPException(status_code=400, detail="Pet ID required for update")
-    row = await PetRow.update(session, pet)
+    row = await Pet.update(session, pet)
     if row is None:
         raise HTTPException(status_code=404, detail="Pet not found")
-    return _pet_to_schema(row)
+    return row
 
 
 @app.get(
     "/pet/findByStatus",
-    response_model=list[PetSchema],
+    response_model=list[Pet],
     dependencies=[Depends(require_api_key)],
 )
 async def find_pets_by_status(
     status: PetStatus = Query(PetStatus.available),
     session: AsyncSession = Depends(get_session),
-) -> list[PetSchema]:
-    rows = await PetRow.find_by_status(session, status.value)
-    return [_pet_to_schema(r) for r in rows]
+) -> list[Pet]:
+    rows = await Pet.find_by_status(session, status.value)
+    return rows
 
 
 @app.get(
     "/pet/findByTags",
-    response_model=list[PetSchema],
+    response_model=list[Pet],
     dependencies=[Depends(require_api_key)],
 )
 async def find_pets_by_tags(
     tags: list[str] = Query(default=[]),
     session: AsyncSession = Depends(get_session),
-) -> list[PetSchema]:
-    rows = await PetRow.find_by_tags(session, tags)
-    return [_pet_to_schema(r) for r in rows]
+) -> list[Pet]:
+    rows = await Pet.find_by_tags(session, tags)
+    return rows
 
 
 @app.api_route(
@@ -407,7 +373,7 @@ async def search_pets(
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
     criteria = await request.json()
-    result = await session.execute(select(PetRow))
+    result = await session.execute(select(Pet))
     rows = [row for row in result.scalars().all() if _pet_matches_search(row, criteria)]
     sort_field = str(criteria.get("sortBy") or "name")
     sort_field = {"name": "name", "status": "status"}.get(sort_field, "name")
@@ -415,7 +381,7 @@ async def search_pets(
     total = len(rows)
     page = rows[offset : offset + limit]
     return {
-        "results": [_pet_to_schema(row).model_dump(mode="json") for row in page],
+        "results": [row.model_dump(mode="json", by_alias=True) for row in page],
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -423,17 +389,15 @@ async def search_pets(
     }
 
 
-@app.get(
-    "/pet/{petId}", response_model=PetSchema, dependencies=[Depends(require_api_key)]
-)
+@app.get("/pet/{petId}", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def get_pet_by_id(
     petId: int,
     session: AsyncSession = Depends(get_session),
-) -> PetSchema:
-    row = await PetRow.get(session, petId)
+) -> Pet:
+    row = await Pet.get(session, petId)
     if row is None:
         raise HTTPException(status_code=404, detail="Pet not found")
-    return _pet_to_schema(row)
+    return row
 
 
 @app.post("/pet/{petId}", status_code=200, dependencies=[Depends(require_api_key)])
@@ -443,7 +407,7 @@ async def update_pet_with_form(
     status: Optional[str] = Query(None),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    row = await PetRow.get(session, petId)
+    row = await Pet.get(session, petId)
     if row is None:
         raise HTTPException(status_code=404, detail="Pet not found")
     if name is not None:
@@ -459,14 +423,14 @@ async def delete_pet(
     petId: int,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    if not await PetRow.delete(session, petId):
+    if not await Pet.delete(session, petId):
         raise HTTPException(status_code=404, detail="Pet not found")
     return {}
 
 
 @app.post(
     "/pet/{petId}/uploadImage",
-    response_model=ApiResponseSchema,
+    response_model=ApiResponse,
     dependencies=[Depends(require_api_key)],
 )
 async def upload_pet_image(
@@ -474,11 +438,11 @@ async def upload_pet_image(
     request: Request,
     additionalMetadata: Optional[str] = Query(None),
     session: AsyncSession = Depends(get_session),
-) -> ApiResponseSchema:
-    if await PetRow.get(session, petId) is None:
+) -> ApiResponse:
+    if await Pet.get(session, petId) is None:
         raise HTTPException(status_code=404, detail="Pet not found")
     data = await request.body()
-    return ApiResponseSchema(
+    return ApiResponse(
         code=200,
         type="unknown",
         message=f"Uploaded {len(data)} bytes for pet {petId}; metadata={additionalMetadata}",
@@ -494,17 +458,15 @@ async def upload_pet_image(
     dependencies=[Depends(require_api_key)],
 )
 async def get_inventory(session: AsyncSession = Depends(get_session)) -> dict[str, int]:
-    return await PetRow.inventory(session)
+    return await Pet.inventory(session)
 
 
-@app.post(
-    "/store/order", response_model=OrderSchema, dependencies=[Depends(require_api_key)]
-)
+@app.post("/store/order", response_model=Order, dependencies=[Depends(require_api_key)])
 async def place_order(
-    order: OrderSchema,
+    order: Order,
     session: AsyncSession = Depends(get_session),
-) -> OrderSchema:
-    return _order_to_schema(await OrderRow.create(session, order))
+) -> Order:
+    return await Order.create(session, order)
 
 
 @app.api_route(
@@ -517,7 +479,7 @@ async def search_orders(
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
     criteria = await request.json()
-    result = await session.execute(select(OrderRow))
+    result = await session.execute(select(Order))
     rows = [
         row for row in result.scalars().all() if _order_matches_search(row, criteria)
     ]
@@ -538,7 +500,7 @@ async def search_orders(
     page_rows = rows[start : start + pageSize]
     total_pages = (total + pageSize - 1) // pageSize if total else 0
     return {
-        "orders": [_order_to_schema(row).model_dump(mode="json") for row in page_rows],
+        "orders": [row.model_dump(mode="json", by_alias=True) for row in page_rows],
         "pagination": {
             "page": page,
             "pageSize": pageSize,
@@ -550,17 +512,17 @@ async def search_orders(
 
 @app.get(
     "/store/order/{orderId}",
-    response_model=OrderSchema,
+    response_model=Order,
     dependencies=[Depends(require_api_key)],
 )
 async def get_order_by_id(
     orderId: int,
     session: AsyncSession = Depends(get_session),
-) -> OrderSchema:
-    row = await OrderRow.get(session, orderId)
+) -> Order:
+    row = await Order.get(session, orderId)
     if row is None:
         raise HTTPException(status_code=404, detail="Order not found")
-    return _order_to_schema(row)
+    return row
 
 
 @app.delete(
@@ -570,7 +532,7 @@ async def delete_order(
     orderId: int,
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    if not await OrderRow.delete(session, orderId):
+    if not await Order.delete(session, orderId):
         raise HTTPException(status_code=404, detail="Order not found")
     return {}
 

@@ -149,7 +149,7 @@ async def test_find_by_tags(client: AsyncClient):
             "name": "TaggedPet",
             "photoUrls": [],
             "status": "available",
-            "tags": [{"id": 1, "name": "fluffy"}],
+            "tags": ["fluffy"],
         },
         headers=HEADERS,
     )

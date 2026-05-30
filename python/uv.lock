@@ -338,6 +338,15 @@ wheels = [
 ]
 
 [[package]]
+name = "kafka-python"
+version = "2.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/98/cbecbe20ec9e4e6f978c42229e7c777f498eec5061f986b4acfa34a7ec46/kafka_python-2.3.1.tar.gz", hash = "sha256:90f1caa12d8faa9fd059852b0c73adf169b979279aa2e3ff370f9fe615d654b6", size = 357302, upload-time = "2026-04-09T21:10:22.861Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/78/83/6f79b5e03f7d259cba60d3e48c97f7b76a86d20486a515e8ffadea97434e/kafka_python-2.3.1-py2.py3-none-any.whl", hash = "sha256:4908865da9e57f0f966a83788c71cb0ae91c33451a26ab6e6984a00b15c6ed71", size = 326065, upload-time = "2026-04-09T21:10:24.685Z" },
+]
+
+[[package]]
 name = "linkify-it-py"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -665,6 +674,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "grpcio" },
     { name = "grpcio-tools" },
+    { name = "kafka-python" },
     { name = "memray" },
     { name = "numpy" },
     { name = "pydantic" },
@@ -672,6 +682,7 @@ dependencies = [
     { name = "redis" },
     { name = "ruff" },
     { name = "sqlalchemy", extra = ["asyncio"] },
+    { name = "sqlmodel" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "viztracer" },
 ]
@@ -691,6 +702,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "grpcio", specifier = ">=1.80.0" },
     { name = "grpcio-tools", specifier = ">=1.80.0" },
+    { name = "kafka-python", specifier = ">=2.0.2" },
     { name = "memray", specifier = ">=1.19.3" },
     { name = "numpy", specifier = ">=2.4.6" },
     { name = "pydantic", specifier = ">=2.13.4" },
@@ -698,6 +710,7 @@ requires-dist = [
     { name = "redis", specifier = ">=7.4.0" },
     { name = "ruff", specifier = ">=0.15.14" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.0" },
+    { name = "sqlmodel", specifier = ">=0.0.21" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
     { name = "viztracer", specifier = ">=1.1.1" },
 ]
@@ -708,7 +721,7 @@ dev = [
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pyright", specifier = ">=1.1.409" },
     { name = "pytest-asyncio", specifier = ">=0.24.0" },
-    { name = "testcontainers", extras = ["postgres", "redis"], specifier = ">=4.14.2" },
+    { name = "testcontainers", extras = ["kafka", "postgres", "redis"], specifier = ">=4.14.2" },
 ]
 
 [[package]]
@@ -857,6 +870,20 @@ wheels = [
 [package.optional-dependencies]
 asyncio = [
     { name = "greenlet" },
+]
+
+[[package]]
+name = "sqlmodel"
+version = "0.0.38"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "sqlalchemy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/0d/26ec1329960ea9430131fe63f63a95ea4cb8971d49c891ff7e1f3255421c/sqlmodel-0.0.38.tar.gz", hash = "sha256:d583ec237b14103809f74e8630032bc40ab68cd6b754a610f0813c56911a547b", size = 86710, upload-time = "2026-04-02T21:03:55.571Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/c7/10c60af0607ab6fa136264f7f39d205932218516226d38585324ffda705d/sqlmodel-0.0.38-py3-none-any.whl", hash = "sha256:84e3fa990a77395461ded72a6c73173438ce8449d5c1c4d97fbff1b1df692649", size = 27294, upload-time = "2026-04-02T21:03:56.406Z" },
 ]
 
 [[package]]
