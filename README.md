@@ -31,7 +31,7 @@ Categories:
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Zig, Rust
     * [OpenAPI](https://www.openapis.org)
-* WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/))
+* WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
     * Multi Memory
     * Multiple Values
     * Tail Calls
