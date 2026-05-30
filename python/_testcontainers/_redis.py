@@ -6,7 +6,7 @@ import redis
 
 
 def main() -> None:
-    with RedisContainer("redis:5.0.3-alpine") as container:
+    with RedisContainer("redis:7-alpine") as container:
         client: redis.Redis = container.get_client(decode_responses=True)
 
         client.set("foo", "bar")

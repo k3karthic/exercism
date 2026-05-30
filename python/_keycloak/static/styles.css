@@ -1,0 +1,52 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #f4f6fb;
+  color: #1d2433;
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  background: white;
+  width: min(720px, calc(100vw - 2rem));
+  border-radius: 16px;
+  box-shadow: 0 16px 32px rgba(29, 36, 51, 0.12);
+  padding: 2rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a6b8a;
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem;
+}
+
+.subtitle {
+  color: #5a6b8a;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  background: #2f6fed;
+  color: white;
+  font-size: 1rem;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+}
+
+.sessions ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sessions li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid #e5e9f2;
+}
+
