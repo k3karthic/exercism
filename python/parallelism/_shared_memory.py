@@ -8,6 +8,7 @@ def worker(start_idx, end_idx, shm_name):
     # Attach to existing shared memory
     shm = shared_memory.SharedMemory(name=shm_name)
     buf = shm.buf
+    assert buf is not None
 
     for i in range(start_idx, end_idx):
         num = buf[i]
@@ -25,10 +26,12 @@ def main():
 
     # Create shared memory block of size n bytes
     shm = shared_memory.SharedMemory(create=True, size=n)
+    buf = shm.buf
+    assert buf is not None
 
     # Initialize shared memory with values 0..9
     for i in range(n):
-        shm.buf[i] = i
+        buf[i] = i
 
     # Partition work for 3 workers
     partitions = [(0, 4), (4, 7), (7, 10)]
@@ -38,7 +41,7 @@ def main():
             executor.submit(worker, start, end, shm.name)
 
     # Read results
-    results = [shm.buf[i] for i in range(n)]
+    results = [buf[i] for i in range(n)]
     print("Results:", results)
 
     shm.close()
