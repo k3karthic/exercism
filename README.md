@@ -14,6 +14,7 @@ Languages:
 Categories:
 * Memory Management - memory_management_by_language.md
 * CPU Topology - cpu_topology/
+* [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - keycloak_overview.md
 * Per Language,
     * CPU / Memory Visualization
     * Debugger
@@ -26,7 +27,7 @@ Categories:
     * [gRPC](https://grpc.io/)
     * [Kafka](https://kafka.apache.org/)
     * [RabbitMQ](https://www.rabbitmq.com/)
-    * [Keycloak](https://www.keycloak.org/)
+    * Keycloak
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Zig, Rust
     * [OpenAPI](https://www.openapis.org)
