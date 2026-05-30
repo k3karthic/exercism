@@ -5,7 +5,11 @@
 From this directory:
 
 ```bash
-podman run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres:16-alpine
+podman run --rm --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 postgres:16-alpine
+```
+
+In another terminal run:
+```bash
 DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres uv run uvicorn app:app --reload
 ```
 
