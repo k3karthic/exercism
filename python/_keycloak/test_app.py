@@ -6,6 +6,7 @@ from html.parser import HTMLParser
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
+import jwt
 import pytest
 from fastapi import FastAPI
 from testcontainers.keycloak import KeycloakContainer
@@ -15,6 +16,8 @@ from _keycloak.app import Settings, create_app
 
 REALM = "my-app-realm"
 CLIENT_ID = "my-app-client"
+AUDIENCE_SCOPE = "my-app-audience-scope"
+API_AUDIENCE = "my-app-api"
 USERNAME = "testuser"
 PASSWORD = "Password123!"
 EMAIL = "testuser@example.com"
@@ -84,6 +87,35 @@ def keycloak_runtime() -> Generator[KeycloakRuntime, None, None]:
         client_uuid = admin.get_client_id(CLIENT_ID)
         assert client_uuid is not None
         client_secret = admin.get_client_secrets(client_uuid)["value"]
+        scope_id = admin.create_client_scope(
+            payload={
+                "name": AUDIENCE_SCOPE,
+                "protocol": "openid-connect",
+                "description": "Adds the API audience to tokens only when requested.",
+            }
+        )
+        admin.add_mapper_to_client_scope(
+            scope_id,
+            payload={
+                "name": "my-app-audience-mapper",
+                "protocol": "openid-connect",
+                "protocolMapper": "oidc-audience-mapper",
+                "config": {
+                    "included.client.audience": API_AUDIENCE,
+                    "id.token.claim": "false",
+                    "access.token.claim": "true",
+                },
+            },
+        )
+        admin.add_client_optional_client_scope(
+            client_uuid,
+            scope_id,
+            payload={
+                "realm": REALM,
+                "client": client_uuid,
+                "clientScopeId": scope_id,
+            },
+        )
         admin.create_user(
             payload={
                 "username": USERNAME,
@@ -163,6 +195,7 @@ async def _authenticate_with_next(
     assert login_redirect.status_code == 303
 
     auth_url = login_redirect.headers["location"]
+    assert parse_qs(urlparse(auth_url).query)["scope"] == [f"openid {AUDIENCE_SCOPE}"]
     async with httpx.AsyncClient(base_url=keycloak_url, follow_redirects=False) as kc:
         login_page = await kc.get(auth_url)
         assert login_page.status_code == 200
@@ -243,6 +276,64 @@ async def test_login_shows_welcome_and_active_sessions(
         other_response = await other_client.get("/", follow_redirects=False)
         assert other_response.status_code == 200
         assert other_response.text.count("data-session-id=") == 2
+
+
+async def test_access_token_includes_optional_audience(
+    client: httpx.AsyncClient,
+    keycloak_runtime: KeycloakRuntime,
+) -> None:
+    login_redirect = await client.get("/api/auth/login?next=/", follow_redirects=False)
+    assert login_redirect.status_code == 303
+    auth_url = login_redirect.headers["location"]
+    assert parse_qs(urlparse(auth_url).query)["scope"] == [f"openid {AUDIENCE_SCOPE}"]
+
+    async with httpx.AsyncClient(
+        base_url=keycloak_runtime.container.get_url(),
+        follow_redirects=False,
+    ) as kc:
+        login_page = await kc.get(auth_url)
+        assert login_page.status_code == 200
+
+        parser = _FormParser()
+        parser.feed(login_page.text)
+        assert parser.action
+        post_url = urljoin(auth_url, parser.action)
+        payload = {
+            **parser.fields,
+            "username": USERNAME,
+            "password": PASSWORD,
+        }
+        cookie_header = "; ".join(
+            f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar
+        )
+        response = await kc.post(
+            post_url,
+            data=payload,
+            headers={"Cookie": cookie_header},
+            follow_redirects=False,
+        )
+        assert response.status_code in {302, 303}
+        callback_url = response.headers["location"]
+
+        token_response = await kc.post(
+            f"{keycloak_runtime.container.get_url()}/realms/{REALM}/protocol/openid-connect/token",
+            data={
+                "grant_type": "authorization_code",
+                "client_id": CLIENT_ID,
+                "client_secret": keycloak_runtime.client_secret,
+                "code": parse_qs(urlparse(callback_url).query)["code"][0],
+                "redirect_uri": CALLBACK_URI,
+            },
+            follow_redirects=False,
+        )
+        assert token_response.status_code == 200
+        access_token = token_response.json()["access_token"]
+
+    claims = jwt.decode(access_token, options={"verify_signature": False})
+    audience = claims["aud"]
+    if isinstance(audience, str):
+        audience = [audience]
+    assert API_AUDIENCE in audience
 
 
 async def test_logout_clears_session(

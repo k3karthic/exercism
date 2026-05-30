@@ -24,6 +24,8 @@ DEFAULT_POST_LOGOUT_REDIRECT_URI = "http://localhost:3000/"
 DEFAULT_KEYCLOAK_BASE_URL = "http://127.0.0.1:8080"
 DEFAULT_KEYCLOAK_REALM = "my-app-realm"
 DEFAULT_KEYCLOAK_CLIENT_ID = "my-app-client"
+DEFAULT_KEYCLOAK_AUDIENCE_SCOPE = "my-app-audience-scope"
+DEFAULT_KEYCLOAK_API_AUDIENCE = "my-app-api"
 DEFAULT_SESSION_COOKIE_NAME = "keycloak_session_id"
 DEFAULT_SESSION_PREFIX = "keycloak-exercise"
 DEFAULT_SESSION_TTL_SECONDS = 60 * 60 * 10
@@ -36,6 +38,8 @@ class Settings:
     keycloak_realm: str = DEFAULT_KEYCLOAK_REALM
     keycloak_client_id: str = DEFAULT_KEYCLOAK_CLIENT_ID
     keycloak_client_secret: str = ""
+    keycloak_audience_scope: str = DEFAULT_KEYCLOAK_AUDIENCE_SCOPE
+    keycloak_api_audience: str = DEFAULT_KEYCLOAK_API_AUDIENCE
     redirect_uri: str = DEFAULT_REDIRECT_URI
     post_logout_redirect_uri: str = DEFAULT_POST_LOGOUT_REDIRECT_URI
     redis_url: str = "redis://localhost:6379/0"
@@ -52,6 +56,12 @@ class Settings:
             keycloak_realm=_env("KEYCLOAK_REALM", DEFAULT_KEYCLOAK_REALM),
             keycloak_client_id=_env("KEYCLOAK_CLIENT_ID", DEFAULT_KEYCLOAK_CLIENT_ID),
             keycloak_client_secret=_env("KEYCLOAK_CLIENT_SECRET", ""),
+            keycloak_audience_scope=_env(
+                "KEYCLOAK_AUDIENCE_SCOPE", DEFAULT_KEYCLOAK_AUDIENCE_SCOPE
+            ),
+            keycloak_api_audience=_env(
+                "KEYCLOAK_API_AUDIENCE", DEFAULT_KEYCLOAK_API_AUDIENCE
+            ),
             redirect_uri=_env("KEYCLOAK_REDIRECT_URI", DEFAULT_REDIRECT_URI),
             post_logout_redirect_uri=_env(
                 "POST_LOGOUT_REDIRECT_URI", DEFAULT_POST_LOGOUT_REDIRECT_URI
@@ -319,7 +329,7 @@ class KeycloakService:
                 "client_id": self.settings.keycloak_client_id,
                 "redirect_uri": self.settings.redirect_uri,
                 "response_type": "code",
-                "scope": "openid",
+                "scope": f"openid {self.settings.keycloak_audience_scope}",
                 "state": state,
                 "nonce": nonce,
             }
@@ -360,6 +370,20 @@ class KeycloakService:
         if claims.get("nonce") != nonce:
             raise HTTPException(status_code=400, detail="invalid login nonce")
         return claims
+
+    async def validate_access_token(self, access_token: str) -> dict[str, Any]:
+        configuration = await self.configuration()
+        jwk_client = jwt.PyJWKClient(configuration.jwks_uri)
+        signing_key = await asyncio.to_thread(
+            jwk_client.get_signing_key_from_jwt, access_token
+        )
+        return jwt.decode(
+            access_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=self.settings.keycloak_api_audience,
+            issuer=configuration.issuer,
+        )
 
     async def logout_url(self, id_token: str) -> str:
         configuration = await self.configuration()
@@ -439,7 +463,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         token_payload = await keycloak.exchange_code(code)
         id_token = str(token_payload["id_token"])
+        access_token = token_payload.get("access_token")
+        if access_token is None:
+            raise HTTPException(status_code=502, detail="missing access token")
         claims = await keycloak.validate_id_token(id_token, pending.nonce)
+        await keycloak.validate_access_token(str(access_token))
         session = await session_store.create_session(id_token=id_token, claims=claims)
 
         response = RedirectResponse(

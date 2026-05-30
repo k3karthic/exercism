@@ -99,6 +99,12 @@ Securing Keycloak is only half the battle. The APIs receiving the JWTs **must** 
 4. **Validate `iss` (Issuer):** Ensure the token was issued by your specific Keycloak realm URL.
 5. **Validate `aud` (Audience):** Ensure your API's identifier is in the `aud` claim.
 
+## 6. Application-Side Recommendation
+
+For the application itself, prefer **server-side sessions** and keep only a **session cookie** in the browser. This avoids exposing JWTs to the user agent, which reduces the impact of XSS, token leakage in client-side storage, and accidental token disclosure through logs or browser tooling.
+
+This approach also improves revocation and session control, because the server can invalidate sessions centrally without waiting for JWT expiry. It keeps token handling out of the frontend, making the application simpler to secure and easier to reason about.
+
 ## Summary
 
-JWTs are powerful but require strict governance. By combining **short lifespans, strict audience mapping, and continuous key rotation** within Keycloak, you can mitigate the vast majority of JWT-related attack vectors. Coupling this robust backend security with modern, cleanly developed frontend interfaces via **Keycloakify** ensures an application ecosystem that is both highly secure and user-friendly.
+JWTs are powerful but require strict governance. By combining **short lifespans, strict audience mapping, continuous key rotation**, and **server-side application sessions** with session cookies, you can mitigate the vast majority of JWT-related attack vectors while reducing token exposure in the browser. Coupling this robust backend security with modern, cleanly developed frontend interfaces via **Keycloakify** ensures an application ecosystem that is both highly secure and user-friendly.

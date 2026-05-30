@@ -18,7 +18,7 @@ In another terminal:
 KEYCLOAK_BASE_URL=http://127.0.0.1:8080 \
 KEYCLOAK_CLIENT_SECRET=... \
 REDIS_URL=redis://localhost:6379/0 \
-uv run uvicorn _keycloak.app:app --reload --host 127.0.0.1 --port 3000
+uv run uvicorn app:app --reload --host 127.0.0.1 --port 3000
 ```
 
 ## Test
