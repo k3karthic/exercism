@@ -22,6 +22,23 @@ resource "keycloak_realm" "app_realm" {
 
   # Match the Keycloakify theme name generated from keycloakify-starter/
   login_theme = "keycloakify-starter"
+
+  # Short-lived tokens and sessions reduce the impact of a stolen token.
+  default_signature_algorithm = "RS256"
+  access_token_lifespan       = "10m"
+  sso_session_idle_timeout    = "30m"
+  sso_session_max_lifespan    = "10h"
+}
+
+# Explicit signing key provider so the realm does not rely only on defaults.
+resource "keycloak_realm_keystore_rsa_generated" "app_signing_key" {
+  realm_id  = keycloak_realm.app_realm.id
+  name      = "my-app-signing-key"
+  enabled   = true
+  active    = true
+  priority  = 100
+  algorithm = "RS256"
+  key_size  = 2048
 }
 
 # Create an OIDC Client configured for Authorization Code Flow
@@ -41,6 +58,7 @@ resource "keycloak_openid_client" "app_client" {
   implicit_flow_enabled        = false
   direct_access_grants_enabled = false
   service_accounts_enabled     = false
+  full_scope_allowed           = false
 
   # Update these URIs to match your application's actual URLs
   valid_redirect_uris = [
@@ -49,6 +67,37 @@ resource "keycloak_openid_client" "app_client" {
   ]
 
   web_origins = ["+"] # "+" allows CORS from valid_redirect_uris
+}
+
+# Optional scope used to add an aud claim for the API without bloating every token.
+resource "keycloak_openid_client_scope" "app_audience_scope" {
+  realm_id    = keycloak_realm.app_realm.id
+  name        = "my-app-audience-scope"
+  description = "Adds the API audience to tokens only when requested."
+}
+
+# Attach the audience mapper to the scope so only scoped tokens include the audience.
+resource "keycloak_openid_audience_protocol_mapper" "app_audience_mapper" {
+  realm_id                 = keycloak_realm.app_realm.id
+  client_scope_id          = keycloak_openid_client_scope.app_audience_scope.id
+  name                     = "my-app-audience-mapper"
+  included_custom_audience = "my-app-api"
+  add_to_id_token          = false
+  add_to_access_token      = true
+}
+
+# Keep the scope optional so the client can request it explicitly.
+resource "keycloak_openid_client_optional_scopes" "app_optional_scopes" {
+  realm_id  = keycloak_realm.app_realm.id
+  client_id = keycloak_openid_client.app_client.id
+
+  optional_scopes = [
+    "address",
+    "phone",
+    "offline_access",
+    "microprofile-jwt",
+    keycloak_openid_client_scope.app_audience_scope.name,
+  ]
 }
 
 # Create a sample user
