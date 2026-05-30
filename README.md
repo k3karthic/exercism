@@ -3,13 +3,13 @@
 Languages:
 * Python (LLM-assisted)
 * TypeScript (LLM-assisted)
-* Go
-* Kotlin
-* Rust
-* Elixir
-* Zig
-* F#
-* Haskell
+* Go - TODO
+* Kotlin - TODO
+* Rust - TODO
+* Elixir - TODO
+* Zig - TODO
+* F# - TODO
+* Haskell - TODO
 
 Categories:
 * Memory Management - memory_management_by_language.md
