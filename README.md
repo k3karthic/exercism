@@ -23,7 +23,6 @@ Categories:
     * Concurrency
     * Parallelism
     * UNIX Domain Sockets
-    * Named Pipes
     * [gRPC](https://grpc.io/)
     * [Kafka](https://kafka.apache.org/)
     * [RabbitMQ](https://www.rabbitmq.com/)
