@@ -20,6 +20,8 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/proto-loader": "^0.8.1",
     "@platformatic/flame": "^1.6.0",
     "redis": "^5.12.1"
   }

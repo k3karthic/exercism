@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package doubler_service;
+
+service Doubler {
+  rpc Double(DoubleRequest) returns (DoubleResponse);
+}
+
+message DoubleRequest {
+  string request_id = 1;
+  int32 number = 2;
+}
+
+message DoubleResponse {
+  string request_id = 1;
+  int32 result = 2;
+}
