@@ -19,6 +19,8 @@
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,

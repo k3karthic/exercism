@@ -9,12 +9,19 @@
   "scripts": {
     "main": "tsx index.ts",
     "format": "prettier . --write",
-    "test": "vitest run testing/tests"
+    "test": "vitest run testing/tests",
+    "test:openapi": "vitest run openapi/openapi.test.ts",
+    "tsoa:routes": "tsoa routes -c openapi/tsoa.json",
+    "tsoa:spec": "tsoa spec -c openapi/tsoa.json"
   },
   "devDependencies": {
     "@testcontainers/redis": "^12.0.0",
+    "@types/express": "^5.0.3",
     "@types/node": "^25.9.1",
+    "@types/supertest": "^6.0.3",
     "prettier": "^3.8.3",
+    "tsoa": "^6.6.0",
+    "supertest": "^7.1.4",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
     "vitest": "^4.1.7"
@@ -23,6 +30,7 @@
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@platformatic/flame": "^1.6.0",
+    "express": "^4.21.2",
     "redis": "^5.12.1"
   }
 }

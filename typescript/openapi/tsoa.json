@@ -1,0 +1,34 @@
+{
+  "entryFile": "./openapi/app.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["./openapi/controllers/*Controller.ts"],
+  "spec": {
+    "outputDirectory": "./openapi/build",
+    "specFileBaseName": "swagger",
+    "specVersion": 3,
+    "securityDefinitions": {
+      "api_key": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "header"
+      }
+    },
+    "tags": [
+      {
+        "name": "Pet",
+        "description": "Operations about pets"
+      },
+      {
+        "name": "Store",
+        "description": "Operations about store orders"
+      }
+    ]
+  },
+  "routes": {
+    "routesDir": "./openapi/build",
+    "routesFileName": "routes.ts",
+    "esm": true,
+    "middleware": "express",
+    "authenticationModule": "./openapi/auth.ts"
+  }
+}

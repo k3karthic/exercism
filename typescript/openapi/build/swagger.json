@@ -1,0 +1,978 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "examples": {},
+    "headers": {},
+    "parameters": {},
+    "requestBodies": {},
+    "responses": {},
+    "schemas": {
+      "Record_string.number_": {
+        "properties": {},
+        "additionalProperties": {
+          "type": "number",
+          "format": "double"
+        },
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "OrderStatus": {
+        "enum": ["placed", "approved", "delivered"],
+        "type": "string"
+      },
+      "Order": {
+        "properties": {
+          "id": {
+            "type": "number",
+            "format": "double"
+          },
+          "petId": {
+            "type": "number",
+            "format": "double"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "shipDate": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "complete": {
+            "type": "boolean"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "OrderSearchResults": {
+        "properties": {
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/Order"
+            },
+            "type": "array"
+          },
+          "pagination": {
+            "properties": {
+              "totalResults": {
+                "type": "number",
+                "format": "double"
+              },
+              "totalPages": {
+                "type": "number",
+                "format": "double"
+              },
+              "pageSize": {
+                "type": "number",
+                "format": "double"
+              },
+              "page": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "required": ["totalResults", "totalPages", "pageSize", "page"],
+            "type": "object"
+          }
+        },
+        "required": ["orders", "pagination"],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "DateRange": {
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "QuantityRange": {
+        "properties": {
+          "min": {
+            "type": "number",
+            "format": "double"
+          },
+          "max": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "OrderSearchCriteria": {
+        "properties": {
+          "orderId": {
+            "type": "number",
+            "format": "double"
+          },
+          "petId": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "items": {
+              "$ref": "#/components/schemas/OrderStatus"
+            },
+            "type": "array"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "dateRange": {
+            "$ref": "#/components/schemas/DateRange"
+          },
+          "quantityRange": {
+            "$ref": "#/components/schemas/QuantityRange"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": ["shipDate", "petId", "quantity", "status", "id"]
+          },
+          "sortOrder": {
+            "type": "string",
+            "enum": ["asc", "desc"]
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Record_string.unknown_": {
+        "properties": {},
+        "additionalProperties": {},
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "$ref": "#/components/schemas/Record_string.unknown_"
+          }
+        },
+        "required": ["message"],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Record_string.never_": {
+        "properties": {},
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "Category": {
+        "properties": {
+          "id": {
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Tag": {
+        "properties": {
+          "id": {
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PetStatus": {
+        "enum": ["available", "pending", "sold"],
+        "type": "string"
+      },
+      "Pet": {
+        "properties": {
+          "id": {
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "type": "string"
+          },
+          "photoUrls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PetStatus"
+          }
+        },
+        "required": ["name", "photoUrls"],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PetSearchResults": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Pet"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number",
+            "format": "double"
+          },
+          "limit": {
+            "type": "number",
+            "format": "double"
+          },
+          "offset": {
+            "type": "number",
+            "format": "double"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        },
+        "required": ["results", "total", "limit", "offset", "hasMore"],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PetSearchCriteria": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "items": {
+              "$ref": "#/components/schemas/PetStatus"
+            },
+            "type": "array"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sortBy": {
+            "type": "string",
+            "enum": ["name", "status"]
+          },
+          "sortOrder": {
+            "type": "string",
+            "enum": ["asc", "desc"]
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ApiResponse": {
+        "properties": {
+          "code": {
+            "type": "number",
+            "format": "double"
+          },
+          "type": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "api_key": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "header"
+      }
+    }
+  },
+  "info": {
+    "title": "typescript",
+    "version": "1.0.0",
+    "license": {
+      "name": "ISC"
+    },
+    "contact": {}
+  },
+  "paths": {
+    "/store/inventory": {
+      "get": {
+        "operationId": "GetInventory",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record_string.number_"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Store"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": []
+      }
+    },
+    "/store/order": {
+      "post": {
+        "operationId": "PlaceOrder",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Order"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Store"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Order"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/order/search": {
+      "post": {
+        "operationId": "SearchOrders",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderSearchResults"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Store"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderSearchCriteria"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/store/order/{orderId}": {
+      "get": {
+        "operationId": "GetOrderById",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Order"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Store"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DeleteOrder",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Record_string.never_"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Store"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/pet": {
+      "post": {
+        "operationId": "AddPet",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "UpdatePet",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Pet"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pet"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pet/findByStatus": {
+      "get": {
+        "operationId": "FindPetsByStatus",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Pet"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PetStatus"
+            }
+          }
+        ]
+      }
+    },
+    "/pet/findByTags": {
+      "get": {
+        "operationId": "FindPetsByTags",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Pet"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tags",
+            "required": false,
+            "schema": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "/pet/search": {
+      "post": {
+        "operationId": "SearchPets",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PetSearchResults"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PetSearchCriteria"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pet/{petId}": {
+      "get": {
+        "operationId": "GetPetById",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Pet"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "UpdatePetWithForm",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Record_string.never_"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PetStatus"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "DeletePet",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Record_string.never_"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/pet/{petId}/uploadImage": {
+      "post": {
+        "operationId": "UploadPetImage",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {}
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["Pet"],
+        "security": [
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "petId",
+            "required": true,
+            "schema": {
+              "format": "double",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "additionalMetadata",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Pet",
+      "description": "Operations about pets"
+    },
+    {
+      "name": "Store",
+      "description": "Operations about store orders"
+    }
+  ]
+}
