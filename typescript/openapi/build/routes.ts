@@ -1,5 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
+// @ts-nocheck
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from "@tsoa/runtime";
 import { fetchMiddlewares, ExpressTemplateService } from "@tsoa/runtime";
@@ -784,9 +785,9 @@ export function RegisterRoutes(app: Router) {
     TsoaRoute.ParameterSchema
   > = {
     petId: { in: "path", name: "petId", required: true, dataType: "double" },
+    notFound: { in: "res", name: "404", required: true, ref: "ErrorResponse" },
     name: { in: "query", name: "name", dataType: "string" },
     status: { in: "query", name: "status", ref: "PetStatus" },
-    notFound: { in: "res", name: "404", required: true, ref: "ErrorResponse" },
   };
   app.post(
     "/pet/:petId",
@@ -885,12 +886,12 @@ export function RegisterRoutes(app: Router) {
       required: true,
       dataType: "object",
     },
+    notFound: { in: "res", name: "404", required: true, ref: "ErrorResponse" },
     additionalMetadata: {
       in: "query",
       name: "additionalMetadata",
       dataType: "string",
     },
-    notFound: { in: "res", name: "404", required: true, ref: "ErrorResponse" },
   };
   app.post(
     "/pet/:petId/uploadImage",

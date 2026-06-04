@@ -15,6 +15,7 @@
     "tsoa:spec": "tsoa spec -c openapi/tsoa.json"
   },
   "devDependencies": {
+    "@testcontainers/kafka": "^12.0.1",
     "@testcontainers/redis": "^12.0.0",
     "@types/express": "^5.0.3",
     "@types/node": "^25.9.1",
@@ -28,6 +29,7 @@
     "vitest": "^4.1.7"
   },
   "dependencies": {
+    "@confluentinc/kafka-javascript": "^1.9.1",
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.8.1",
     "@platformatic/flame": "^1.6.0",

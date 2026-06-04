@@ -11,12 +11,20 @@ import {
 } from "./models.js";
 
 function clonePet(pet: Pet): Pet {
-  return {
+  const cloned: Pet = {
     ...pet,
     photoUrls: [...pet.photoUrls],
-    tags: pet.tags?.map((tag) => ({ ...tag })),
-    category: pet.category === undefined ? undefined : { ...pet.category },
   };
+
+  if (pet.tags !== undefined) {
+    cloned.tags = pet.tags.map((tag) => ({ ...tag }));
+  }
+
+  if (pet.category !== undefined) {
+    cloned.category = { ...pet.category };
+  }
+
+  return cloned;
 }
 
 function cloneOrder(order: Order): Order {

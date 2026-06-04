@@ -93,9 +93,9 @@ export class PetController extends Controller {
   @Post("{petId}")
   public async updatePetWithForm(
     @Path() petId: number,
+    @Res() notFound: TsoaResponse<404, ErrorResponse>,
     @Query() name?: string,
     @Query() status?: PetStatus,
-    @Res() notFound: TsoaResponse<404, ErrorResponse>,
   ): Promise<Record<string, never> | void> {
     const updated = petStore.updatePetFromForm(petId, name, status);
     if (!updated) {
@@ -125,8 +125,8 @@ export class PetController extends Controller {
   public async uploadPetImage(
     @Path() petId: number,
     @Request() request: any,
-    @Query() additionalMetadata?: string,
     @Res() notFound: TsoaResponse<404, ErrorResponse>,
+    @Query() additionalMetadata?: string,
   ): Promise<ApiResponse | void> {
     const pet = petStore.getPet(petId);
     if (pet === undefined) {
