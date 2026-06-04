@@ -13,8 +13,8 @@ CONCURRENCY_DIR = Path(__file__).resolve().parent
 if str(CONCURRENCY_DIR) not in sys.path:
     sys.path.insert(0, str(CONCURRENCY_DIR))
 
-import _async as async_module  # noqa: E402
-import _threads as threads_module  # noqa: E402
+import async_worker as async_module  # noqa: E402
+import thread_worker as threads_module  # noqa: E402
 
 
 class FakeQueue:

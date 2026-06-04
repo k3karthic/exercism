@@ -7,7 +7,7 @@ import pytest
 from httpx import ASGITransport
 from fastapi import FastAPI
 
-from _otel.app import (
+from opentelemetry_exercise.app import (
     DEFAULT_MESSAGES,
     WorkflowResult,
     Service1,

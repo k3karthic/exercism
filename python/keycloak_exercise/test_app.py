@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from testcontainers.keycloak import KeycloakContainer
 from testcontainers.redis import RedisContainer
 
-from _keycloak.app import Settings, create_app
+from keycloak_exercise.app import Settings, create_app
 
 REALM = "my-app-realm"
 CLIENT_ID = "my-app-client"

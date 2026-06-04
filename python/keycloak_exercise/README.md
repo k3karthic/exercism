@@ -24,7 +24,7 @@ uv run uvicorn app:app --reload --host 127.0.0.1 --port 3000
 ## Test
 
 ```bash
-uv run pytest -q _keycloak/test_app.py
+uv run pytest -q keycloak_exercise/test_app.py
 ```
 
 ![app screenshot](../media/keycloak/app.png)

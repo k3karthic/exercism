@@ -36,7 +36,7 @@ numeric ones, and writes malformed records to `failed_messages.txt`.
 ## Run the tests
 
 ```bash
-uv run pytest -q test_app.py
+uv run pytest -q kafka_exercise/test_app.py
 ```
 
 ## Run Kafbat UI

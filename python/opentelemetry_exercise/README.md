@@ -116,7 +116,7 @@ uv run opentelemetry-instrument python app.py --service service_1 --service-2-ur
 ## Run the tests
 
 ```bash
-uv run pytest -q _otel/test_app.py
+uv run pytest -q opentelemetry_exercise/test_app.py
 ```
 
 ![logs](../media/opentelemetry/logs.png)

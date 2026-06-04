@@ -6,7 +6,7 @@ from collections.abc import Generator
 import pytest
 from testcontainers.kafka import KafkaContainer
 
-from _kafka.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
+from kafka_exercise.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
 
 
 @pytest.fixture(scope="session")

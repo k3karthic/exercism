@@ -8,7 +8,7 @@ This works well for synchronous calls that will block the calling thread.
 
 Run program,
 ```bash
-uv run concurrency/_threads.py
+uv run concurrency/thread_worker.py
 ```
 
 ## Async
@@ -19,5 +19,5 @@ Calling a synchronous function from the event loop can lead to the call hogging 
 
 Run program,
 ```bash
-uv run concurrency/_async.py
+uv run concurrency/async_worker.py
 ```

@@ -7,7 +7,7 @@ import pika
 import pytest
 from testcontainers.rabbitmq import RabbitMqContainer
 
-from _rabbitmq.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
+from rabbitmq_exercise.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
 
 
 @pytest.fixture(scope="session")
