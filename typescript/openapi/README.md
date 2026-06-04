@@ -23,3 +23,7 @@ npm run test:openapi
 
 The generated specification is written to `openapi/build/swagger.json`.
 Requests use the `api_key` header with the value `some-api-key`.
+Swagger UI is available at `/swagger` (also `/docs` and `/openapi`).
+
+![authorization](../media/openapi/authorization.png)
+![sample](../media/openapi/sample.png)

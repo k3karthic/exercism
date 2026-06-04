@@ -3,9 +3,15 @@ import express, {
   type Request as ExRequest,
   type Response as ExResponse,
 } from "express";
+import { readFileSync } from "node:fs";
+import swaggerUi from "swagger-ui-express";
 import { ValidateError } from "tsoa";
 
 import { RegisterRoutes } from "./build/routes.js";
+
+const swaggerDocument = JSON.parse(
+  readFileSync(new URL("./build/swagger.json", import.meta.url), "utf8"),
+);
 
 function hasHttpStatus(
   error: unknown,
@@ -23,6 +29,8 @@ export const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.raw({ type: "application/octet-stream" }));
+
+app.use(["/openapi", "/docs", "/swagger"], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 RegisterRoutes(app);
 
