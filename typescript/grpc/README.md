@@ -11,3 +11,6 @@ npx tsx typescript/_grpc/client.ts
 The server listens on `[::]:50051` by default. The client connects to
 `localhost:50051` by default. Use `--address` on the server or `--target` on
 the client to change it.
+
+![server](../media/grpc/server.png)
+![client](../media/grpc/client.png)
