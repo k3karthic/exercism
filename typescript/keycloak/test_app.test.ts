@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 
 import { GenericContainer, Wait } from "testcontainers";
-import { RedisContainer } from "@testcontainers/redis";
+import {
+  RedisContainer,
+  type StartedRedisContainer,
+} from "@testcontainers/redis";
 import request from "supertest";
 import { createClient as createRedisClient } from "redis";
 import { afterAll, beforeAll, beforeEach, test } from "vitest";
@@ -32,7 +35,7 @@ interface KeycloakRuntime {
   baseUrl: string;
 }
 
-let redisContainer: RedisContainer;
+let redisContainer: StartedRedisContainer;
 let keycloakRuntime: KeycloakRuntime;
 let appSettings: Settings;
 let app = createApp();
@@ -280,7 +283,13 @@ function parseLoginForm(html: string): {
   for (const match of html.matchAll(
     /<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/gi,
   )) {
-    fields[match[1]] = match[2];
+    const name = match[1];
+    const value = match[2];
+    if (name === undefined || value === undefined) {
+      continue;
+    }
+
+    fields[name] = value;
   }
 
   return { action, fields };
@@ -293,7 +302,10 @@ function cookieHeaderFromSetCookie(setCookie: string | null): string {
 
   return setCookie
     .split(/,(?=[^;,]+=)/)
-    .map((cookie) => cookie.split(";", 1)[0].trim())
+    .map((cookie) => {
+      const header = cookie.split(";", 1)[0];
+      return header === undefined ? "" : header.trim();
+    })
     .join("; ");
 }
 
@@ -461,10 +473,13 @@ test("access token includes optional audience", async () => {
     },
   );
 
+  const accessToken = tokenResponse.access_token;
+  assert.ok(accessToken);
+  const payloadPart = accessToken.split(".")[1];
+  assert.ok(payloadPart);
+
   const claims = JSON.parse(
-    Buffer.from(tokenResponse.access_token.split(".")[1], "base64url").toString(
-      "utf8",
-    ),
+    Buffer.from(payloadPart, "base64url").toString("utf8"),
   ) as { aud: string | string[] };
   const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   assert.ok(audience.includes(DEFAULT_KEYCLOAK_API_AUDIENCE));
@@ -512,7 +527,10 @@ test("login rejects open redirect", async () => {
   assert.equal(callback.headers.location, "/");
 });
 
-async function authenticate(agent: request.SuperAgentTest): Promise<void> {
+async function authenticate(
+  agent: ReturnType<typeof request.agent>,
+  _baseUrl: string,
+): Promise<void> {
   const rootResponse = await agent.get("/").redirects(0);
   assert.equal(rootResponse.status, 303);
   assert.equal(rootResponse.headers.location, "/api/auth/login?next=/");

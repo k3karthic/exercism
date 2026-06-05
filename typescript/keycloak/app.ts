@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import express, {
   type NextFunction,
   type Request,
-  type Response,
+  type Response as ExpressResponse,
 } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { createClient } from "redis";
@@ -46,7 +46,7 @@ export interface OidcConfiguration {
   authorizationEndpoint: string;
   tokenEndpoint: string;
   jwksUri: string;
-  endSessionEndpoint?: string;
+  endSessionEndpoint: string | undefined;
 }
 
 export interface PendingLogin {
@@ -66,6 +66,10 @@ export interface SessionRecord {
   updatedAt: string;
   expiresAt: string;
 }
+
+type JsonWebKeyWithKid = JsonWebKey & {
+  kid?: string;
+};
 
 export function createSettingsFromEnv(): Settings {
   return {
@@ -158,7 +162,9 @@ function formHeaders(): Record<string, string> {
   return { "content-type": "application/x-www-form-urlencoded" };
 }
 
-async function readResponseText(response: Response): Promise<string> {
+async function readResponseText(
+  response: globalThis.Response,
+): Promise<string> {
   try {
     return await response.text();
   } catch {
@@ -392,7 +398,7 @@ class RedisSessionStore {
 
 class KeycloakService {
   private configurationCache: OidcConfiguration | null = null;
-  private jwksCache: JsonWebKey[] | null = null;
+  private jwksCache: JsonWebKeyWithKid[] | null = null;
 
   constructor(private readonly settings: Settings) {}
 
@@ -412,7 +418,7 @@ class KeycloakService {
       },
     );
 
-    this.configurationCache = {
+    const configuration: OidcConfiguration = {
       issuer: String(payload.issuer),
       authorizationEndpoint: String(payload.authorization_endpoint),
       tokenEndpoint: String(payload.token_endpoint),
@@ -423,10 +429,11 @@ class KeycloakService {
           : undefined,
     };
 
-    return this.configurationCache;
+    this.configurationCache = configuration;
+    return configuration;
   }
 
-  private async jwks(): Promise<JsonWebKey[]> {
+  private async jwks(): Promise<JsonWebKeyWithKid[]> {
     if (this.jwksCache !== null) {
       return this.jwksCache;
     }
@@ -570,11 +577,11 @@ function getNextPath(value: unknown): string {
 function asyncHandler(
   handler: (
     request: Request,
-    response: Response,
+    response: ExpressResponse,
     next: NextFunction,
   ) => Promise<void>,
 ) {
-  return (request: Request, response: Response, next: NextFunction) => {
+  return (request: Request, response: ExpressResponse, next: NextFunction) => {
     void handler(request, response, next).catch(next);
   };
 }
@@ -687,7 +694,7 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
     (
       error: unknown,
       _request: Request,
-      response: Response,
+      response: ExpressResponse,
       _next: NextFunction,
     ) => {
       const message =

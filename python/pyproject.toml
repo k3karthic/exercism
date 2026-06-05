@@ -36,6 +36,10 @@ dependencies = [
 pythonpath = ["."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:The @wait_container_is_ready decorator is deprecated.*:DeprecationWarning:testcontainers\\.(keycloak|rabbitmq|redis)(\\..*)?",
+    "ignore:The wait_for_logs function with string or callable predicates is deprecated.*:DeprecationWarning:testcontainers\\.keycloak(\\..*)?",
+]
 
 [dependency-groups]
 dev = [

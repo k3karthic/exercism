@@ -2,7 +2,7 @@
 
 Languages:
 * Python (LLM-assisted)
-* TypeScript (LLM-assisted) - WIP
+* TypeScript (LLM-assisted)
 * Go - TODO
 * Kotlin - TODO
 * Rust - TODO

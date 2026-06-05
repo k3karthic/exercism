@@ -1,5 +1,6 @@
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,7 +28,17 @@ export type DoublerServiceImplementation = grpc.UntypedServiceImplementation & {
 };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const protoPath = join(__dirname, "doubler_service.proto");
+
+function resolveProtoPath(): string {
+  const localProtoPath = join(__dirname, "doubler_service.proto");
+  if (existsSync(localProtoPath)) {
+    return localProtoPath;
+  }
+
+  return join(process.cwd(), "grpc", "doubler_service.proto");
+}
+
+const protoPath = resolveProtoPath();
 
 const packageDefinition = protoLoader.loadSync(protoPath, {
   keepCase: true,
