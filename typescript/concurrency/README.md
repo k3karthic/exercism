@@ -5,5 +5,5 @@ Calling a synchronous function from the event loop can hog the CPU and block oth
 ## Run Program
 
 ```bash
-npx tsx concurrency/_async.ts
+npx tsx concurrency/async.ts
 ```

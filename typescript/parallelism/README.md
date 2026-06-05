@@ -6,5 +6,5 @@ The cluster module spawns a new node.js process to better utilize multiple cores
 ## Run Program
 
 ```bash
-npx tsx parallelism/_cluster.ts
+npx tsx parallelism/cluster.ts
 ```
