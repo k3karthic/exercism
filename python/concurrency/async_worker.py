@@ -3,8 +3,13 @@ import time
 from asyncio import Queue
 
 
+# Input and output queues
+input_queue = Queue()
+output_queue = Queue()
+
+
 # Worker coroutine
-async def worker(input_queue: Queue, output_queue: Queue, worker_id: int):
+async def worker(worker_id: int):
     while True:
         try:
             num = await asyncio.wait_for(input_queue.get(), timeout=1)
@@ -18,18 +23,12 @@ async def worker(input_queue: Queue, output_queue: Queue, worker_id: int):
 
 
 async def main():
-    input_queue = Queue()
-    output_queue = Queue()
-
     # Fill input queue
     for i in range(10):
         await input_queue.put(i)
 
     # Create 3 async workers
-    workers = [
-        asyncio.create_task(worker(input_queue, output_queue, worker_id=i))
-        for i in range(3)
-    ]
+    workers = [asyncio.create_task(worker(worker_id=i)) for i in range(3)]
 
     # Wait for all tasks to finish
     await input_queue.join()

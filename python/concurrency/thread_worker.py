@@ -8,13 +8,13 @@ output_queue = queue.Queue()
 
 
 # Worker function
-def worker():
+def worker(worker_id: int):
     while True:
         try:
             num = input_queue.get(timeout=1)  # wait for item
         except queue.Empty:
             break  # no more items, exit loop
-        print(f"Worker {time.time()} processing {num}")
+        print(f"Worker {worker_id} {time.time()} processing {num}")
         time.sleep(1)  # simulate work
         result = num * 2
         output_queue.put(result)
@@ -28,8 +28,8 @@ def main():
 
     # Use ThreadPoolExecutor with 3 worker threads
     with ThreadPoolExecutor(max_workers=3) as executor:
-        for _ in range(3):
-            executor.submit(worker)
+        for i in range(3):
+            executor.submit(worker, i)
 
     # Wait until all tasks are processed
     input_queue.join()

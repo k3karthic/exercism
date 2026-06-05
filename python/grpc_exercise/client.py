@@ -46,6 +46,8 @@ def send_request_with_retry(
                 time.sleep(backoff)
                 backoff *= 2
 
+        return None
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="gRPC Doubler Client")
