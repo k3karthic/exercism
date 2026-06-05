@@ -44,7 +44,7 @@ Excessive memory consumption as the program stores all results in a local variab
 
 ### ex_2.py
 
-Although Python automatically collects unsued memory, in this case we have lingering references to data and data_pow that cause the program to hold onto memory for longer than needed. Unlike other GC languages, CPython will immediately remove unused memory once it is eligible for collection.
+Although Python automatically collects unused memory, in this case we have lingering references to data and data_pow that cause the program to hold onto memory for longer than needed. CPython may free objects promptly when their reference count drops to zero, but the process can keep memory for reuse instead of returning it immediately to the OS.
 
 ![ex2 flamegraph](../media/cpu_memory_visualization/ex_2_flamegraph.png)
 

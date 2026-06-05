@@ -1,6 +1,6 @@
 # Keycloak FastAPI exercise
 
-This exercise builds a small server-side rendered FastAPI app that authenticates against the local Keycloak realm defined in `../keycloak/main.tf`.
+This exercise builds a small server-side rendered FastAPI app that authenticates against the local Keycloak realm defined in `../../keycloak/main.tf`.
 
 Make sure that the Keycloak server is running as per instructions in `../../keycloak/README.md`
 

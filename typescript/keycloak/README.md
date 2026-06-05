@@ -18,13 +18,13 @@ Then run the app:
 KEYCLOAK_BASE_URL=http://127.0.0.1:8080 \
 KEYCLOAK_CLIENT_SECRET=... \
 REDIS_URL=redis://localhost:6379/0 \
-npx tsx _keycloak/app.ts
+npx tsx keycloak/app.ts
 ```
 
 ## Test
 
 ```bash
-npx vitest run _keycloak/test_app.test.ts
+npx vitest run keycloak/test_app.test.ts
 ```
 
 ![app screenshot](../media/keycloak/app.png)

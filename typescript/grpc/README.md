@@ -4,8 +4,8 @@ This exercise uses `@grpc/grpc-js` and `@grpc/proto-loader`, so no generated
 stub files are checked in.
 
 ```bash
-npx tsx typescript/_grpc/server.ts
-npx tsx typescript/_grpc/client.ts
+npx tsx grpc/server.ts
+npx tsx grpc/client.ts
 ```
 
 The server listens on `[::]:50051` by default. The client connects to
