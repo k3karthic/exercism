@@ -94,8 +94,10 @@ The driver sends `1`, `2`, `oops`, `3`, and `4`, then exits.
 
 ## Auto instrumentation
 
-Install the OpenTelemetry distro plus the FastAPI, HTTPX, and logging
+Install the `opentelemetry-distro` package plus the FastAPI, HTTPX, and logging
 instrumentations, then run the same commands through `opentelemetry-instrument`:
+
+See the official guide: https://opentelemetry.io/docs/zero-code/python/
 
 ```bash
 OTEL_SERVICE_NAME=service_2 \

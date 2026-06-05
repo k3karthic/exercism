@@ -92,6 +92,36 @@ OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 npx tsx opentelemetry/app.ts
 
 The driver sends `1`, `2`, `oops`, `3`, and `4`, then exits.
 
+## Auto instrumentation
+
+Install the OpenTelemetry packages used for auto instrumentation:
+
+```bash
+npm install --save @opentelemetry/api @opentelemetry/auto-instrumentations-node
+```
+
+See the official guide: https://opentelemetry.io/docs/zero-code/js/
+
+Then run the same commands with the Node preload hook:
+
+```bash
+OTEL_SERVICE_NAME=service_2 \
+OTEL_RESOURCE_ATTRIBUTES=service.name=service_2 \
+OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+OTEL_EXPORTER_OTLP_INSECURE=true \
+NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register \
+npx tsx opentelemetry/app.ts --service service_2 --port 8002
+
+OTEL_SERVICE_NAME=service_1 \
+OTEL_RESOURCE_ATTRIBUTES=service.name=service_1 \
+OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+OTEL_EXPORTER_OTLP_INSECURE=true \
+NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register \
+npx tsx opentelemetry/app.ts
+```
+
 ## Run the tests
 
 ```bash
