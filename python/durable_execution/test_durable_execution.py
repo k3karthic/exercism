@@ -24,13 +24,12 @@ async def test_doubler_workflow_runs_real_activities(
 
     original_get_random_number_activity = durable_execution.get_random_number_activity
     original_double_number_activity = durable_execution.double_number_activity
-    get_random_number_activity_name = (
-        cast(Any, original_get_random_number_activity)
-        .__temporal_activity_definition.name
-    )
-    double_number_activity_name = (
-        cast(Any, original_double_number_activity).__temporal_activity_definition.name
-    )
+    get_random_number_activity_name = cast(
+        Any, original_get_random_number_activity
+    ).__temporal_activity_definition.name
+    double_number_activity_name = cast(
+        Any, original_double_number_activity
+    ).__temporal_activity_definition.name
 
     @activity.defn(name=get_random_number_activity_name)
     async def tracking_get_random_number_activity() -> int:

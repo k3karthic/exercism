@@ -11,12 +11,12 @@ import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.security import APIKeyHeader
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     Column,
     DateTime,
     Integer,
-    JSON,
     String,
     func,
     select,
@@ -538,4 +538,4 @@ async def delete_order(
 
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("openapi.server:app", host="0.0.0.0", port=8000, reload=False)

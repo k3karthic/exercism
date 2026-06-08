@@ -10,7 +10,7 @@ podman run --rm --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -p 54
 
 In another terminal run:
 ```bash
-DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres uv run uvicorn app:app --reload
+DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres uv run uvicorn openapi.server:app --reload
 ```
 
 To connect with `psql`:
@@ -23,6 +23,18 @@ psql -h localhost -U postgres -d postgres
 
 ```bash
 uv run pytest -q test_app.py
+```
+
+## Generate the OpenAPI client
+
+```bash
+uv run python -m openapi.generate_client --output-path openapi --overwrite
+```
+
+## Call the server with the generated client
+
+```bash
+uv run python -m openapi.client_driver --base-url http://127.0.0.1:8000 --api-key some-api-key
 ```
 
 ## OpenAPI docs

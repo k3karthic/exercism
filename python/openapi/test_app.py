@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from openapi.app import Base, get_session, app
+from openapi.server import Base, app, get_session
 
 API_KEY = "some-api-key"
 HEADERS = {"api_key": API_KEY}
