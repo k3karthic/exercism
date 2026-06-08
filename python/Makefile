@@ -5,4 +5,4 @@ format:
 	uv run ruff check --fix .
 
 test:
-	uv run pytest testing/tests
+	uv run pytest
