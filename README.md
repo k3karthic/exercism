@@ -4,7 +4,7 @@ Languages:
 * Python (LLM-assisted)
 * TypeScript (LLM-assisted)
 * Go - TODO
-* Kotlin - TODO
+* Kotlin - WIP
 * Rust - TODO
 * Elixir - TODO
 * Zig - TODO
