@@ -25,3 +25,4 @@ include(":utils")
 rootProject.name = "kotlin"
 include("concurrency")
 include("parallelism")
+include("testcontainers")

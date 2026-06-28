@@ -5,5 +5,5 @@ Calling a synchronous function from the event loop can hog the CPU and block oth
 ## Run Program
 
 ```bash
-./gradlew concurrency:run
+./gradlew :concurrency:run
 ```
