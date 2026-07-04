@@ -26,3 +26,4 @@ rootProject.name = "kotlin"
 include("concurrency")
 include("parallelism")
 include("testcontainers")
+include("kafka")
