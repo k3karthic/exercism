@@ -58,7 +58,7 @@ class Consumer(
         failedMessagesPath: String,
         expectedMessages: Int,
     ): MutableList<Int> {
-        val doubledNumbers = mutableListOf(1)
+        val doubledNumbers = mutableListOf<Int>()
         var seenMessages = 0
 
         consumer.use { consumer ->

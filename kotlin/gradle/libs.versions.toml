@@ -12,6 +12,7 @@ testcontainers = "1.21.4"
 testcontainersRedis = "2.2.4"
 lettuce = "7.0.0.RELEASE"
 kafka = "4.3.1"
+rabbitmq = "1.2.0"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -22,6 +23,7 @@ kotlinxCoroutinesReactive = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 kotlinxCoroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 lettuce = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+rabbitmq = { module = "com.rabbitmq.client:amqp-client", version.ref = "rabbitmq" }
 testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainersJunitJupiter = { module = "org.testcontainers:junit-jupiter" }
