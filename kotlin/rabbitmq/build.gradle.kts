@@ -10,6 +10,12 @@ plugins {
 
 dependencies {
     implementation(libs.rabbitmq)
+
+    testImplementation(platform(libs.testcontainersBom))
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.testcontainersJunitJupiter)
+    testImplementation(libs.testcontainersRabbitmq)
+    testImplementation(kotlin("test"))
 }
 
 application {

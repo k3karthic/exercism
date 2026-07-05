@@ -15,6 +15,9 @@ import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
 
+const val TOPIC = "sample-numbers"
+const val FAILED_MESSAGES_PATH = "./failed_messages.txt"
+
 fun getProps(bootstrapServers: String): Properties {
     val props = Properties()
     props[CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG] = bootstrapServers
@@ -66,7 +69,6 @@ class Consumer(
             while (true) {
                 val records = consumer.poll(java.time.Duration.ofSeconds(1))
                 for (record in records) {
-                    seenMessages += 1
                     val numStr = record.value()
 
                     try {
@@ -77,6 +79,7 @@ class Consumer(
                     }
 
                     consumer.commitSync()
+                    seenMessages += 1
                 }
 
                 if (seenMessages >= expectedMessages) {
@@ -103,18 +106,20 @@ class Consumer(
     }
 }
 
-fun main() {
-    val bootstrapServers = "localhost:9092"
-    val topic = "sample-numbers"
-    val failedMessagesPath = "./failed_messages.txt"
-
+fun runDemo(bootstrapServers: String): MutableList<Int> {
     val producer = Producer(bootstrapServers)
     val consumer = Consumer(bootstrapServers)
 
     println("Producing messages")
-    producer.sendMessages(topic, listOf("1", "2a", "3"))
+    producer.sendMessages(TOPIC, listOf("1", "2a", "3"))
 
     println("Consuming messages")
-    val result = consumer.consumeAndDoubleMessages(topic, failedMessagesPath, 3)
+    return consumer.consumeAndDoubleMessages(TOPIC, FAILED_MESSAGES_PATH, 3)
+}
+
+fun main() {
+    val bootstrapServers = "localhost:9092"
+
+    val result = runDemo(bootstrapServers)
     println(result)
 }

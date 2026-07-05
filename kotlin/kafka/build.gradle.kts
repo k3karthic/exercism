@@ -10,6 +10,12 @@ plugins {
 
 dependencies {
     implementation(libs.kafka)
+
+    testImplementation(platform(libs.testcontainersBom))
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.testcontainersJunitJupiter)
+    testImplementation(libs.testcontainersKafka)
+    testImplementation(kotlin("test"))
 }
 
 application {
