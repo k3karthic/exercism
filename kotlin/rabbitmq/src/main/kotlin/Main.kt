@@ -12,11 +12,14 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
 import kotlin.system.exitProcess
 
-fun getAmqpEnvironment(bootstrapServers: String): Environment {
+const val QUEUE = "sample-numbers"
+const val FAILED_MESSAGES_PATH = "./failed_messages.txt"
+
+fun getAmqpEnvironment(amqpUrl: String): Environment {
     val environment =
         AmqpEnvironmentBuilder()
             .connectionSettings()
-            .uri(bootstrapServers)
+            .uri(amqpUrl)
             .environmentBuilder()
             .build()
 
@@ -26,11 +29,11 @@ fun getAmqpEnvironment(bootstrapServers: String): Environment {
 fun getConnection(environment: Environment): Connection = environment.connectionBuilder().build()
 
 class Producer(
-    bootstrapServers: String,
-    topic: String,
+    amqpUrl: String,
+    queue: String,
 ) {
-    val connection = getConnection(getAmqpEnvironment(bootstrapServers))
-    val publisher = connection.publisherBuilder().queue(topic).build()!!
+    val connection = getConnection(getAmqpEnvironment(amqpUrl))
+    val publisher = connection.publisherBuilder().queue(queue).build()!!
 
     fun sendMessages(messages: List<String>) {
         publisher.use {
@@ -45,12 +48,12 @@ class Producer(
 }
 
 class Consumer(
-    bootstrapServers: String,
+    amqpUrl: String,
 ) {
-    val connection = getConnection(getAmqpEnvironment(bootstrapServers))
+    val connection = getConnection(getAmqpEnvironment(amqpUrl))
 
     fun consumeAndDoubleMessages(
-        topic: String,
+        queue: String,
         failedMessagesPath: String,
         expectedMessages: Int,
     ): MutableList<Int> {
@@ -61,7 +64,7 @@ class Consumer(
         val consumer =
             connection
                 .consumerBuilder()
-                .queue(topic)
+                .queue(queue)
                 .messageHandler { context, message ->
                     val numStr = message.body().toString(Charsets.UTF_8)
 
@@ -98,28 +101,32 @@ class Consumer(
     }
 }
 
-fun main() {
-    val bootstrapServers = "amqp://guest:guest@localhost:5672/%2f"
-    val topic = "sample-numbers"
-    val failedMessagesPath = "./failed_messages.txt"
-
-    val connection = getConnection(getAmqpEnvironment(bootstrapServers))
+fun runDemo(amqpUrl: String): MutableList<Int> {
+    val connection = getConnection(getAmqpEnvironment(amqpUrl))
     val management = connection.management()
-    val queue = management.queue(topic)
+    val queue = management.queue(QUEUE)
     queue.declare()
 
-    val producer = Producer(bootstrapServers, topic)
-    val consumer = Consumer(bootstrapServers)
+    val producer = Producer(amqpUrl, QUEUE)
+    val consumer = Consumer(amqpUrl)
 
     println("Producing messages")
     producer.sendMessages(listOf("1", "2a", "3"))
 
     println("Consuming messages")
-    val result = consumer.consumeAndDoubleMessages(topic, failedMessagesPath, 3)
-    println(result)
+    val result = consumer.consumeAndDoubleMessages(QUEUE, FAILED_MESSAGES_PATH, 3)
 
     management.close()
     connection.close()
+
+    return result
+}
+
+fun main() {
+    val amqpUrl = "amqp://guest:guest@localhost:5672/%2f"
+
+    val result = runDemo(amqpUrl)
+    println(result)
 
     exitProcess(0)
 }

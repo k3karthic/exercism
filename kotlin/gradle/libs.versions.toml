@@ -11,6 +11,7 @@ ktlint = "14.2.0"
 testcontainers = "1.21.4"
 testcontainersRedis = "2.2.4"
 testcontainersKafka = "2.0.1"
+testcontainersRabbitmq = "2.0.1"
 lettuce = "7.0.0.RELEASE"
 kafka = "4.3.1"
 rabbitmq = "1.2.0"
@@ -29,7 +30,7 @@ testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.
 testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainersJunitJupiter = { module = "org.testcontainers:junit-jupiter" }
 testcontainersKafka = { module = "org.testcontainers:testcontainers-kafka", version.ref = "testcontainersKafka" }
-testcontainersRabbitmq = { module = "org.testcontainers:testcontainers-rabbitmq" }
+testcontainersRabbitmq = { module = "org.testcontainers:testcontainers-rabbitmq", version.ref = "testcontainersRabbitmq" }
 testcontainersRedis = { module = "com.redis:testcontainers-redis", version.ref = "testcontainersRedis" }
 
 # Libraries can be bundled together for easier import
