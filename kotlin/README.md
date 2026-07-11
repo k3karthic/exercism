@@ -1,4 +1,8 @@
-# kotlin
+## Notes
+
+Testing is part of the standard Gradle subproject structure and does not have a dedicated module.
+
+## Build & Run
 
 This project uses [Gradle](https://gradle.org/).
 To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,

@@ -14,7 +14,7 @@ fun worker(
     }
 }
 
-fun main() {
+fun runDemo(): Array<Int> {
     val inputQueue: ConcurrentLinkedQueue<Int> = ConcurrentLinkedQueue()
     val outputQueue: ConcurrentLinkedQueue<Int> = ConcurrentLinkedQueue()
 
@@ -39,7 +39,12 @@ fun main() {
         }
     }
 
-    println("results: ${results.contentToString()}")
-
     executor.shutdown()
+
+    return results
+}
+
+fun main() {
+    val results = runDemo()
+    println("results: ${results.contentToString()}")
 }

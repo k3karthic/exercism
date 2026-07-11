@@ -9,6 +9,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
 }
 
 application {

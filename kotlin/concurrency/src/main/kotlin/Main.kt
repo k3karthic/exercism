@@ -22,7 +22,7 @@ suspend fun worker(
     }
 }
 
-fun main() {
+fun runDemo(): Array<Int> {
     val dispatcher = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
     val scope = CoroutineScope(dispatcher)
 
@@ -39,15 +39,20 @@ fun main() {
         scope.launch { worker(inputChannel, outputChannel) }
     }
 
+    val results: Array<Int> = Array(3) { 0 }
     runBlocking {
-        val results: Array<Int> = Array(3) { 0 }
         for (i in 0..2) {
             results[i] = outputChannel.receive()
         }
-
-        println("results: ${results.contentToString()}")
     }
 
     scope.cancel()
     dispatcher.close()
+
+    return results
+}
+
+fun main() {
+    val results = runDemo()
+    println("results: ${results.contentToString()}")
 }
