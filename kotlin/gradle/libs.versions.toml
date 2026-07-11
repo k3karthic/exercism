@@ -15,6 +15,7 @@ testcontainersRabbitmq = "2.0.1"
 lettuce = "7.0.0.RELEASE"
 kafka = "4.3.1"
 rabbitmq = "1.2.0"
+temporal = "1.31.0"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -26,6 +27,8 @@ kotlinxCoroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-tes
 lettuce = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 rabbitmq = { module = "com.rabbitmq.client:amqp-client", version.ref = "rabbitmq" }
+temporalCore = { module = "io.temporal:temporal-sdk", version.ref = "temporal" }
+temporalTesting = { module = "io.temporal:temporal-testing", version.ref = "temporal" }
 testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainersJunitJupiter = { module = "org.testcontainers:junit-jupiter" }
@@ -36,6 +39,7 @@ testcontainersRedis = { module = "com.redis:testcontainers-redis", version.ref =
 # Libraries can be bundled together for easier import
 [bundles]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
+temporal = ["temporalCore", "temporalTesting"]
 
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
