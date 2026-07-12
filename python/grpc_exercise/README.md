@@ -25,5 +25,6 @@ uv run python client.py
 ```
 
 The client talks to `localhost:50051` by default. Use `--address` on the server or `--target` on the client to change it.
+Client retries are configured through the gRPC channel service config.
 
 ![client screenshot](../media/grpc/client.png)

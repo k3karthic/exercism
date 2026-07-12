@@ -10,7 +10,6 @@ from pathlib import Path
 from collections.abc import Coroutine
 from typing import Any
 
-import grpc
 import pytest
 
 GRPC_DIR = Path(__file__).resolve().parent
@@ -28,10 +27,6 @@ class DummyChannel:
 
     def __exit__(self, exc_type, exc, tb) -> bool:
         return False
-
-
-class TransientRpcError(grpc.RpcError):
-    pass
 
 
 @pytest.mark.asyncio
@@ -86,40 +81,6 @@ async def test_cleanup_expired_requests_removes_old_entries(
     assert "fresh" in service._processed_requests
 
 
-def test_send_request_with_retry_retries_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[float] = []
-
-    class Stub:
-        def __init__(self) -> None:
-            self.calls = 0
-
-        def Double(self, request: pb2.DoubleRequest) -> pb2.DoubleResponse:
-            self.calls += 1
-            if self.calls == 1:
-                raise TransientRpcError("temporary failure")
-            return pb2.DoubleResponse(
-                request_id=request.request_id,
-                result=request.number * 2,
-            )
-
-    stub = Stub()
-    monkeypatch.setattr(client.grpc, "insecure_channel", lambda target: DummyChannel())
-    monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda channel: stub)
-    monkeypatch.setattr(client.time, "sleep", lambda seconds: calls.append(seconds))
-
-    result = client.send_request_with_retry(
-        target="localhost:50051",
-        number=7,
-        req_id="req-1",
-        max_retries=3,
-        initial_backoff=0.25,
-    )
-
-    assert result == 14
-    assert stub.calls == 2
-    assert calls == [0.25]
-
-
 def test_send_request_with_retry_rejects_mismatched_request_id(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -132,16 +93,16 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
             return pb2.DoubleResponse(request_id="wrong-id", result=request.number * 2)
 
     stub = Stub()
-    monkeypatch.setattr(client.grpc, "insecure_channel", lambda target: DummyChannel())
+    monkeypatch.setattr(
+        client.grpc, "insecure_channel", lambda target, options=(): DummyChannel()
+    )
     monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda channel: stub)
-    monkeypatch.setattr(client.time, "sleep", lambda seconds: None)
 
     with pytest.raises(ValueError, match="Request ID mismatch"):
         client.send_request_with_retry(
             target="localhost:50051",
             number=7,
             req_id="req-2",
-            max_retries=1,
         )
 
     assert stub.calls == 1
