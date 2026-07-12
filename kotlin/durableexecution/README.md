@@ -7,13 +7,13 @@ temporal server start-dev
 In another terminal:
 
 ```bash
-./gradlew :durable_execution:run
+./gradlew :durableexecution:run
 ```
 
 ## Test
 
 ```bash
-./gradlew :durable_execution:test
+./gradlew :durableexecution:test
 ```
 
 The tests use Temporal's local testing environment so the workflow runs with real activities.
