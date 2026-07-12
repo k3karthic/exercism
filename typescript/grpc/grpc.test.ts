@@ -58,9 +58,7 @@ test("purgeExpiredRequests removes old entries", () => {
   expect(service.processedRequests.has("fresh")).toBe(true);
 });
 
-test("sendRequestWithRetry retries once", async () => {
-  const sleepCalls: number[] = [];
-
+test("sendRequestWithRetry returns the doubled result", async () => {
   class StubClient {
     public calls = 0;
 
@@ -69,11 +67,6 @@ test("sendRequestWithRetry retries once", async () => {
       callback: (error: Error | null, response?: DoubleResponse) => void,
     ): void {
       this.calls += 1;
-      if (this.calls === 1) {
-        callback(new Error("temporary failure"));
-        return;
-      }
-
       callback(null, {
         request_id: request.request_id,
         result: request.number * 2,
@@ -89,17 +82,11 @@ test("sendRequestWithRetry retries once", async () => {
     "localhost:50051",
     7,
     "req-1",
-    3,
-    0.25,
     () => stub as never,
-    async (milliseconds) => {
-      sleepCalls.push(milliseconds);
-    },
   );
 
   expect(result).toBe(14);
-  expect(stub.calls).toBe(2);
-  expect(sleepCalls).toEqual([250]);
+  expect(stub.calls).toBe(1);
 });
 
 test("sendRequestWithRetry rejects mismatched request ids", async () => {
@@ -127,10 +114,7 @@ test("sendRequestWithRetry rejects mismatched request ids", async () => {
       "localhost:50051",
       7,
       "req-2",
-      1,
-      0.5,
       () => stub as never,
-      async () => undefined,
     ),
   ).rejects.toThrow("Request ID mismatch");
 

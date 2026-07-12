@@ -14,8 +14,6 @@ export interface DoubleResponse {
   result: number;
 }
 
-export type SleepFn = (milliseconds: number) => Promise<void>;
-
 export interface DoublerClient extends grpc.Client {
   Double(
     request: DoubleRequest,
@@ -28,6 +26,25 @@ export type DoublerServiceImplementation = grpc.UntypedServiceImplementation & {
 };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const retryServiceConfig = {
+  methodConfig: [
+    {
+      name: [{ service: "doubler_service.Doubler", method: "Double" }],
+      retryPolicy: {
+        maxAttempts: 5,
+        initialBackoff: "0.5s",
+        maxBackoff: "4s",
+        backoffMultiplier: 2,
+        retryableStatusCodes: ["UNAVAILABLE"],
+      },
+    },
+  ],
+} as const;
+
+const channelOptions = {
+  "grpc.enable_retries": 1,
+  "grpc.service_config": JSON.stringify(retryServiceConfig),
+} satisfies grpc.ChannelOptions;
 
 function resolveProtoPath(): string {
   const localProtoPath = join(__dirname, "doubler_service.proto");
@@ -62,6 +79,7 @@ export function createDoublerClient(target: string): DoublerClient {
   return new (getDoublerServiceConstructor())(
     target,
     grpc.credentials.createInsecure(),
+    channelOptions,
   ) as unknown as DoublerClient;
 }
 

@@ -1,6 +1,4 @@
-import * as grpc from "@grpc/grpc-js";
 import { randomUUID } from "node:crypto";
-import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -8,7 +6,6 @@ import {
   type DoubleRequest,
   type DoubleResponse,
   type DoublerClient,
-  type SleepFn,
   invokeDouble,
 } from "./grpc_support.js";
 
@@ -33,10 +30,7 @@ export async function sendRequestWithRetry(
   target: string,
   number: number,
   reqId: string | undefined = undefined,
-  maxRetries = 5,
-  initialBackoff = 0.5,
   createClient: (value: string) => DoublerClient = createDoublerClient,
-  sleepFn: SleepFn = sleep,
 ): Promise<number> {
   const requestId = reqId ?? randomUUID().slice(0, 8);
   const request = {
@@ -44,41 +38,18 @@ export async function sendRequestWithRetry(
     number,
   } satisfies DoubleRequest;
 
-  let backoff = initialBackoff;
-  let client: DoublerClient | undefined;
-
+  const client = createClient(target);
   try {
-    client = createClient(target);
-    for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
-      try {
-        console.log(`Attempt ${attempt}: Connecting to server...`);
-        const response = await requestDouble(client, request);
+    console.log("Connecting to server...");
+    const response = await requestDouble(client, request);
 
-        console.log(
-          `Success! [Validated ID: ${response.request_id}] Result: ${response.result}`,
-        );
-        return response.result;
-      } catch (error) {
-        if (error instanceof IntegrityError) {
-          throw error;
-        }
-
-        console.log(`  Attempt ${attempt} failed: ${error}`);
-        if (attempt === maxRetries) {
-          console.log("Max retries reached. Failing.");
-          throw error;
-        }
-
-        console.log(`  Retrying in ${backoff} seconds...`);
-        await sleepFn(backoff * 1000);
-        backoff *= 2;
-      }
-    }
+    console.log(
+      `Success! [Validated ID: ${response.request_id}] Result: ${response.result}`,
+    );
+    return response.result;
   } finally {
-    client?.close();
+    client.close();
   }
-
-  throw new Error("Unreachable retry loop exit.");
 }
 
 function parseNumber(value: string | undefined): number {
