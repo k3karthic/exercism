@@ -16,6 +16,7 @@ lettuce = "7.0.0.RELEASE"
 kafka = "4.3.1"
 rabbitmq = "1.2.0"
 temporal = "1.31.0"
+clikt = "5.0.1"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -29,6 +30,7 @@ kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 rabbitmq = { module = "com.rabbitmq.client:amqp-client", version.ref = "rabbitmq" }
 temporalCore = { module = "io.temporal:temporal-sdk", version.ref = "temporal" }
 temporalTesting = { module = "io.temporal:temporal-testing", version.ref = "temporal" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 testcontainersBom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainersJunitJupiter = { module = "org.testcontainers:junit-jupiter" }
