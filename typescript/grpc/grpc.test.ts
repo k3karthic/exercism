@@ -58,7 +58,7 @@ test("purgeExpiredRequests removes old entries", () => {
   expect(service.processedRequests.has("fresh")).toBe(true);
 });
 
-test("sendRequestWithRetry returns the doubled result", async () => {
+test("requestDouble returns the doubled result", async () => {
   class StubClient {
     public calls = 0;
 
@@ -78,7 +78,7 @@ test("sendRequestWithRetry returns the doubled result", async () => {
 
   const stub = new StubClient();
 
-  const result = await client.sendRequestWithRetry(
+  const result = await client.requestDouble(
     "localhost:50051",
     7,
     "req-1",
@@ -89,7 +89,7 @@ test("sendRequestWithRetry returns the doubled result", async () => {
   expect(stub.calls).toBe(1);
 });
 
-test("sendRequestWithRetry rejects mismatched request ids", async () => {
+test("requestDouble rejects mismatched request ids", async () => {
   class StubClient {
     public calls = 0;
 
@@ -110,12 +110,7 @@ test("sendRequestWithRetry rejects mismatched request ids", async () => {
   const stub = new StubClient();
 
   await expect(
-    client.sendRequestWithRetry(
-      "localhost:50051",
-      7,
-      "req-2",
-      () => stub as never,
-    ),
+    client.requestDouble("localhost:50051", 7, "req-2", () => stub as never),
   ).rejects.toThrow("Request ID mismatch");
 
   expect(stub.calls).toBe(1);

@@ -4,29 +4,13 @@ import { fileURLToPath } from "node:url";
 import {
   createDoublerClient,
   type DoubleRequest,
-  type DoubleResponse,
   type DoublerClient,
   invokeDouble,
 } from "./grpc_support.js";
 
 export class IntegrityError extends Error {}
 
-async function requestDouble(
-  client: DoublerClient,
-  request: DoubleRequest,
-): Promise<DoubleResponse> {
-  const response = await invokeDouble(client, request);
-
-  if (response.request_id !== request.request_id) {
-    throw new IntegrityError(
-      `Security/Integrity Fault! Request ID mismatch. Expected '${request.request_id}', received '${response.request_id}'`,
-    );
-  }
-
-  return response;
-}
-
-export async function sendRequestWithRetry(
+export async function requestDouble(
   target: string,
   number: number,
   reqId: string | undefined = undefined,
@@ -41,7 +25,13 @@ export async function sendRequestWithRetry(
   const client = createClient(target);
   try {
     console.log("Connecting to server...");
-    const response = await requestDouble(client, request);
+    const response = await invokeDouble(client, request);
+
+    if (response.request_id !== request.request_id) {
+      throw new IntegrityError(
+        `Security/Integrity Fault! Request ID mismatch. Expected '${request.request_id}', received '${response.request_id}'`,
+      );
+    }
 
     console.log(
       `Success! [Validated ID: ${response.request_id}] Result: ${response.result}`,
@@ -99,7 +89,7 @@ async function main(): Promise<void> {
 
   console.log("--- Running gRPC Doubler Client ---");
   try {
-    await sendRequestWithRetry(target, number);
+    await requestDouble(target, number);
   } catch (error) {
     if (error instanceof Error) {
       console.log(`Execution terminated: ${error.message}`);
