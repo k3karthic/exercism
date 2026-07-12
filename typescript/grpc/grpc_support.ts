@@ -3,6 +3,7 @@ import * as protoLoader from "@grpc/proto-loader";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { setTimeout as sleep } from "node:timers/promises";
 
 export interface DoubleRequest {
   request_id: string;
@@ -24,6 +25,8 @@ export interface DoublerClient extends grpc.Client {
 export type DoublerServiceImplementation = grpc.UntypedServiceImplementation & {
   Double: grpc.handleUnaryCall<DoubleRequest, DoubleResponse>;
 };
+
+export type SleepFn = typeof sleep;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const retryServiceConfig = {
