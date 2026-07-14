@@ -26,11 +26,13 @@ client: Any = load_module("uds_client_test", UDS_DIR / "client.py")
 
 
 class FakeReader:
-    def __init__(self, payload: bytes) -> None:
-        self.payload = payload
+    def __init__(self, *chunks: bytes) -> None:
+        self.chunks = list(chunks)
 
     async def read(self, n: int) -> bytes:
-        return self.payload
+        if self.chunks:
+            return self.chunks.pop(0)
+        return b""
 
 
 class FakeWriter:
@@ -76,6 +78,16 @@ async def test_handle_client_caches_results() -> None:
     assert len(service.processed_requests) == 1
 
 
+@pytest.mark.asyncio
+async def test_handle_client_reads_all_chunks() -> None:
+    service = server.AsyncIdempotentServer("/tmp/unused.sock")
+
+    writer = FakeWriter()
+    await service._handle_client(FakeReader(b"req-2:", b"5"), writer)
+
+    assert writer.buffer.decode("utf-8") == "req-2:10"
+
+
 def test_verify_socket_permissions_rejects_loose_permissions(tmp_path: Path) -> None:
     socket_path = tmp_path / "service.sock"
     socket_path.write_text("placeholder")
@@ -94,6 +106,7 @@ def test_send_request_with_retry_returns_int_result(
             self.connected_to: str | None = None
             self.sent: bytes | None = None
             self.closed = False
+            self._recv_calls = 0
 
         def connect(self, socket_path: str) -> None:
             self.connected_to = socket_path
@@ -101,8 +114,14 @@ def test_send_request_with_retry_returns_int_result(
         def sendall(self, payload: bytes) -> None:
             self.sent = payload
 
+        def shutdown(self, how: int) -> None:
+            return None
+
         def recv(self, size: int) -> bytes:
-            return self.response
+            self._recv_calls += 1
+            if self._recv_calls == 1:
+                return self.response
+            return b""
 
         def close(self) -> None:
             self.closed = True
@@ -128,3 +147,50 @@ def test_send_request_with_retry_returns_int_result(
     assert fake_socket.connected_to == str(socket_path)
     assert fake_socket.sent == b"req-7:7"
     assert fake_socket.closed
+
+
+def test_send_request_with_retry_reads_all_chunks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeSocket:
+        def __init__(self, *chunks: bytes) -> None:
+            self.chunks = list(chunks)
+            self.connected_to: str | None = None
+            self.sent: bytes | None = None
+            self.closed = False
+
+        def connect(self, socket_path: str) -> None:
+            self.connected_to = socket_path
+
+        def sendall(self, payload: bytes) -> None:
+            self.sent = payload
+
+        def shutdown(self, how: int) -> None:
+            return None
+
+        def recv(self, size: int) -> bytes:
+            if self.chunks:
+                return self.chunks.pop(0)
+            return b""
+
+        def close(self) -> None:
+            self.closed = True
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        socket_path = Path(temp_dir) / "service.sock"
+        socket_path.write_text("placeholder")
+        socket_path.chmod(0o600)
+
+        fake_socket = FakeSocket(b"req-7:", b"14")
+        monkeypatch.setattr(
+            client.socket,
+            "socket",
+            lambda family, kind: fake_socket,
+        )
+        monkeypatch.setattr(client.time, "sleep", lambda seconds: None)
+
+        result = client.send_request_with_retry(
+            str(socket_path), 7, req_id="req-7", max_retries=1
+        )
+
+    assert result == 14

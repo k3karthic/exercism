@@ -45,6 +45,7 @@ export function verifySocketPermissions(socketPath: string): void {
 
 async function readResponse(socket: net.Socket): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
+    const chunks: Buffer[] = [];
     const cleanup = (): void => {
       socket.off("data", onData);
       socket.off("end", onEnd);
@@ -52,13 +53,17 @@ async function readResponse(socket: net.Socket): Promise<string> {
     };
 
     const onData = (chunk: Buffer | string): void => {
-      cleanup();
-      resolve(Buffer.isBuffer(chunk) ? chunk.toString("utf8") : chunk);
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     };
 
     const onEnd = (): void => {
       cleanup();
-      reject(new Error("Empty response received from server"));
+      if (chunks.length === 0) {
+        reject(new Error("Empty response received from server"));
+        return;
+      }
+
+      resolve(Buffer.concat(chunks).toString("utf8"));
     };
 
     const onError = (error: Error): void => {
@@ -66,7 +71,7 @@ async function readResponse(socket: net.Socket): Promise<string> {
       reject(error);
     };
 
-    socket.once("data", onData);
+    socket.on("data", onData);
     socket.once("end", onEnd);
     socket.once("error", onError);
   });
@@ -81,8 +86,9 @@ async function requestOnce(
 
   try {
     await once(socket, "connect");
+    const responsePromise = readResponse(socket);
     socket.end(payload);
-    return await readResponse(socket);
+    return await responsePromise;
   } finally {
     socket.destroy();
   }

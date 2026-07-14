@@ -63,8 +63,12 @@ class AsyncIdempotentServer:
     async def _handle_client(self, reader, writer):
         """Callback executed automatically whenever a client connects."""
         try:
-            # Read up to 1024 bytes from the stream
-            data = await reader.read(1024)
+            data = b""
+            while True:
+                chunk = await reader.read(1024)
+                if not chunk:
+                    break
+                data += chunk
             if not data:
                 return
 

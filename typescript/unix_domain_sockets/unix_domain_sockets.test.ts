@@ -20,7 +20,10 @@ class FakeWriter extends EventEmitter {
     return true;
   }
 
-  public end(): this {
+  public end(data?: string | Buffer): this {
+    if (data !== undefined) {
+      this.buffer.push(Buffer.isBuffer(data) ? data : Buffer.from(data));
+    }
     this.ended = true;
     return this;
   }
@@ -48,7 +51,9 @@ class FakeClientSocket extends EventEmitter {
     }
 
     queueMicrotask(() => {
-      this.emit("data", Buffer.from("req-7:14"));
+      this.emit("data", Buffer.from("req-7:"));
+      this.emit("data", Buffer.from("14"));
+      this.emit("end");
     });
 
     return this;
@@ -83,6 +88,8 @@ test("handle client caches the computed result", async () => {
     firstSocket as unknown as net.Socket,
   );
   firstSocket.emit("data", Buffer.from("req-1:5"));
+  firstSocket.emit("data", Buffer.from(""));
+  firstSocket.emit("end");
   await firstPromise;
 
   const secondSocket = new FakeWriter();
@@ -90,6 +97,7 @@ test("handle client caches the computed result", async () => {
     secondSocket as unknown as net.Socket,
   );
   secondSocket.emit("data", Buffer.from("req-1:99"));
+  secondSocket.emit("end");
   await secondPromise;
 
   expect(
@@ -129,4 +137,19 @@ test("send request with retry returns the numeric result", async () => {
   expect(result).toBe(14);
   expect(fakeSocket.sent).toBe("req-7:7");
   expect(fakeSocket.destroyed).toBe(true);
+});
+
+test("handle client reads the full request across multiple chunks", async () => {
+  const service = new server.AsyncIdempotentServer("/tmp/unused.sock");
+
+  const socket = new FakeWriter();
+  const promise = service._handleClient(socket as unknown as net.Socket);
+  socket.emit("data", Buffer.from("req-2:"));
+  socket.emit("data", Buffer.from("6"));
+  socket.emit("end");
+  await promise;
+
+  expect(socket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe(
+    "req-2:12",
+  );
 });

@@ -44,9 +44,18 @@ def send_request_with_retry(
             print(f"Attempt {attempt}: Connecting to server...")
             client.connect(socket_path)
             client.sendall(payload)
+            if hasattr(client, "shutdown"):
+                client.shutdown(socket.SHUT_WR)
 
             # Receive response formatted as "req_id:result"
-            response_data = client.recv(1024).decode("utf-8")
+            response_chunks = []
+            while True:
+                chunk = client.recv(1024)
+                if not chunk:
+                    break
+                response_chunks.append(chunk)
+
+            response_data = b"".join(response_chunks).decode("utf-8")
             if not response_data:
                 raise socket.error("Empty response received from server")
 

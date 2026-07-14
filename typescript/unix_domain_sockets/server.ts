@@ -47,7 +47,7 @@ export class AsyncIdempotentServer {
   public async start(): Promise<void> {
     this._secureCleanupExisting();
 
-    this.server = net.createServer((socket) => {
+    this.server = net.createServer({ allowHalfOpen: true }, (socket) => {
       void this._handleClient(socket);
     });
 
@@ -98,16 +98,26 @@ export class AsyncIdempotentServer {
   public async _handleClient(socket: net.Socket): Promise<void> {
     try {
       const data = await new Promise<Buffer>((resolve, reject) => {
+        const chunks: Buffer[] = [];
         const onData = (chunk: Buffer): void => {
-          socket.off("error", onError);
-          resolve(chunk);
+          chunks.push(chunk);
+        };
+        const onEnd = (): void => {
+          cleanup();
+          resolve(Buffer.concat(chunks));
         };
         const onError = (error: Error): void => {
-          socket.off("data", onData);
+          cleanup();
           reject(error);
         };
+        const cleanup = (): void => {
+          socket.off("data", onData);
+          socket.off("end", onEnd);
+          socket.off("error", onError);
+        };
 
-        socket.once("data", onData);
+        socket.on("data", onData);
+        socket.once("end", onEnd);
         socket.once("error", onError);
       });
 
@@ -139,10 +149,18 @@ export class AsyncIdempotentServer {
           timestamp: Date.now(),
         });
       }
-
       const responsePayload = `${reqId}:${result}`;
-      socket.write(responsePayload);
-      socket.end();
+      const onResponseError = (error: Error): void => {
+        console.log(`Error sending response: ${error}`);
+        socket.destroy();
+      };
+
+      socket.once("error", onResponseError);
+      socket.write(responsePayload, () => {
+        socket.end(() => {
+          socket.off("error", onResponseError);
+        });
+      });
     } catch (error) {
       console.log(`Error handling request: ${error}`);
       socket.destroy();
