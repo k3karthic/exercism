@@ -14,6 +14,9 @@
         "storybook": "storybook dev -p 6006",
         "format": "prettier . --write"
     },
+    "overrides": {
+        "esbuild": "0.28.1"
+    },
     "license": "MIT",
     "keywords": [],
     "dependencies": {
