@@ -4,27 +4,22 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { setTimeout as sleep } from "node:timers/promises";
+import type { ProtoGrpcType } from "./generated/doubler_service.js";
+import type { DoubleRequest__Output as GeneratedDoubleRequestOutput } from "./generated/doubler_service/DoubleRequest.js";
+import type {
+  DoubleResponse as GeneratedDoubleResponse,
+  DoubleResponse__Output as GeneratedDoubleResponseOutput,
+} from "./generated/doubler_service/DoubleResponse.js";
+import type {
+  DoublerClient as GeneratedDoublerClient,
+  DoublerHandlers as GeneratedDoublerHandlers,
+} from "./generated/doubler_service/Doubler.js";
 
-export interface DoubleRequest {
-  request_id: string;
-  number: number;
-}
-
-export interface DoubleResponse {
-  request_id: string;
-  result: number;
-}
-
-export interface DoublerClient extends grpc.Client {
-  Double(
-    request: DoubleRequest,
-    callback: grpc.requestCallback<DoubleResponse>,
-  ): grpc.ClientUnaryCall;
-}
-
-export type DoublerServiceImplementation = grpc.UntypedServiceImplementation & {
-  Double: grpc.handleUnaryCall<DoubleRequest, DoubleResponse>;
-};
+export type DoubleRequest = GeneratedDoubleRequestOutput;
+export type DoubleResponse = GeneratedDoubleResponse;
+export type DoubleResponseOutput = GeneratedDoubleResponseOutput;
+export type DoublerClient = GeneratedDoublerClient;
+export type DoublerServiceImplementation = GeneratedDoublerHandlers;
 
 export type SleepFn = typeof sleep;
 
@@ -68,13 +63,11 @@ const packageDefinition = protoLoader.loadSync(protoPath, {
   oneofs: true,
 });
 
-const grpcObject = grpc.loadPackageDefinition(packageDefinition) as unknown as {
-  doubler_service: {
-    Doubler: grpc.ServiceClientConstructor;
-  };
-};
+const grpcObject = grpc.loadPackageDefinition(
+  packageDefinition,
+) as unknown as ProtoGrpcType;
 
-export function getDoublerServiceConstructor(): grpc.ServiceClientConstructor {
+export function getDoublerServiceConstructor(): ProtoGrpcType["doubler_service"]["Doubler"] {
   return grpcObject.doubler_service.Doubler;
 }
 
@@ -83,14 +76,14 @@ export function createDoublerClient(target: string): DoublerClient {
     target,
     grpc.credentials.createInsecure(),
     channelOptions,
-  ) as unknown as DoublerClient;
+  );
 }
 
 export function invokeDouble(
   client: DoublerClient,
   request: DoubleRequest,
-): Promise<DoubleResponse> {
-  return new Promise<DoubleResponse>((resolve, reject) => {
+): Promise<DoubleResponseOutput> {
+  return new Promise<DoubleResponseOutput>((resolve, reject) => {
     client.Double(request, (error, response) => {
       if (error !== null) {
         reject(error);

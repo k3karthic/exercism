@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import {
   getDoublerServiceConstructor,
   type DoubleRequest,
-  type DoubleResponse,
   type DoublerServiceImplementation,
   type SleepFn,
 } from "./grpc_support.js";
@@ -91,7 +90,7 @@ export class DoublerService {
 export async function serve(address: string): Promise<void> {
   const server = new grpc.Server();
   const service = new DoublerService();
-  const implementation: grpc.UntypedServiceImplementation = {
+  const implementation: DoublerServiceImplementation = {
     Double: service.Double,
   };
 

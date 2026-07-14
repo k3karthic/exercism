@@ -1,7 +1,14 @@
 ## Run Client and Server
 
 This exercise uses `@grpc/grpc-js` and `@grpc/proto-loader`, so no generated
-stub files are checked in.
+stub files are checked in. Generated TypeScript types live in `grpc/generated/`
+locally and are ignored by git.
+
+To regenerate them:
+
+```bash
+npx proto-loader-gen-types --keepCase --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --importFileExtension=.js --outDir grpc/generated grpc/doubler_service.proto
+```
 
 ```bash
 npx tsx grpc/server.ts
