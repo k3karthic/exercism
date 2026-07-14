@@ -12,8 +12,8 @@ class Client(
 ) {
     private val clientChannel: SocketChannel
 
-    val p = Path.of(socketPath)
-    val address = UnixDomainSocketAddress.of(p)
+    val p: Path = Path.of(socketPath)
+    val address: UnixDomainSocketAddress? = UnixDomainSocketAddress.of(p)
 
     init {
         clientChannel =
@@ -30,17 +30,10 @@ class Client(
             val reqId = defaultReqId ?: Random.nextInt(0, Int.MAX_VALUE).toString()
 
             val message = "$reqId:$num"
-            val buffer = ByteBuffer.wrap(message.toByteArray(Charsets.UTF_8))
-            clientChannel.write(buffer)
+            clientChannel.write(ByteBuffer.wrap(message.toByteArray(Charsets.UTF_8)))
+            clientChannel.shutdownOutput()
 
-            val responseBuffer = ByteBuffer.allocate(1024)
-            clientChannel.read(responseBuffer)
-            responseBuffer.flip()
-
-            val response = Charsets.UTF_8.decode(responseBuffer).toString()
-            val parts = response.split(":")
-            val resId = parts[0]
-            val resNum = parts[1].toInt()
+            val (resId, resNum) = Utils.readData(clientChannel)
 
             if (resId != reqId) {
                 throw Exception("resID doesn't match reqId: $resId")

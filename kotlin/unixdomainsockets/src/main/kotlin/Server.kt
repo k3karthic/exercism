@@ -3,6 +3,7 @@ package com.github.k3karthic.unixdomainsockets
 import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.AsynchronousCloseException
 import java.nio.channels.ServerSocketChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,8 +21,8 @@ class Server(
 ) {
     private var serverChannel: ServerSocketChannel
 
-    val p = Path.of(socketPath)
-    val address = UnixDomainSocketAddress.of(p)
+    val p: Path = Path.of(socketPath)
+    val address: UnixDomainSocketAddress? = UnixDomainSocketAddress.of(p)
 
     val m = mutableMapOf<String, Response>()
 
@@ -62,15 +63,7 @@ class Server(
                 println("Server listening on $this.socketPath")
 
                 val clientChannel = this.serverChannel.accept()
-                val buffer = ByteBuffer.allocate(1024)
-
-                clientChannel.read(buffer)
-                buffer.flip()
-
-                val input = Charsets.UTF_8.decode(buffer).toString()
-                val parts = input.split(":")
-                val requestId = parts[0]
-                val number = parts[1].toInt()
+                val (requestId, number) = Utils.readData(clientChannel)
 
                 var result: Response?
                 if (m.containsKey(requestId)) {
@@ -80,14 +73,16 @@ class Server(
                     m[requestId] = result
                 }
 
-                assert(result != null, { "Could not process request" })
+                assert(result != null) { "Could not process request" }
                 val response = "${result?.requestId}:${result?.result}"
                 clientChannel.write(ByteBuffer.wrap(response.toByteArray(Charsets.UTF_8)))
+                clientChannel.shutdownOutput()
 
                 clientChannel.close()
             }
-        } catch (e: java.nio.channels.AsynchronousCloseException) {
+        } catch (e: AsynchronousCloseException) {
             println("Server socket closed, shutting down server loop.")
+            e.printStackTrace()
         } catch (e: Exception) {
             e.printStackTrace()
         } finally {
