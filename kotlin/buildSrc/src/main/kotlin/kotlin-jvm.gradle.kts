@@ -14,6 +14,11 @@ kotlin {
     jvmToolchain(25)
 }
 
+dependencyLocking {
+    // Lock all resolvable configurations so dependency versions are reproducible across builds.
+    lockAllConfigurations()
+}
+
 tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()
