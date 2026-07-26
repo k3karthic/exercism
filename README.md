@@ -28,7 +28,7 @@ Categories:
     * [RabbitMQ](https://www.rabbitmq.com/)
     * Keycloak
     * [OpenTelemetry](https://opentelemetry.io/)
-    * NUMA Aware (hwloc) - Zig, Rust
+    * NUMA Aware (hwloc) - Zig, Rust, C++
     * [OpenAPI](https://www.openapis.org)
     * Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
