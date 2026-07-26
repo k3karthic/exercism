@@ -15,3 +15,9 @@ npx tsx index.ts
 ```bash
 npm run format
 ```
+
+## Scan CVEs
+
+```bash
+npm run scan
+```
