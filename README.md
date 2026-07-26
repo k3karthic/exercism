@@ -8,7 +8,7 @@ Languages:
 * Rust - TODO
 * Elixir - TODO
 * Zig - TODO
-* F# - TODO
+* C++ - TODO
 * Haskell - TODO
 
 Categories:
