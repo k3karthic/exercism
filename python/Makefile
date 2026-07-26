@@ -6,3 +6,6 @@ format:
 
 test:
 	uv run pytest
+
+scan:
+	trivy fs --scanners vuln,secret,misconfig --skip-files "**/*.json" .

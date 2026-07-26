@@ -15,3 +15,9 @@ uv run python index.py
 ```bash
 make format
 ```
+
+## Check CVEs
+
+```bash
+make scan
+```
