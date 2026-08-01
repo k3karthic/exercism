@@ -1,18 +1,8 @@
-val lockTasks = subprojects.map { subproject ->
-	tasks.register<Exec>("lockDependencies_${subproject.name}") {
-		commandLine(
-			"./gradlew", "${subproject.name}:dependencies",
-			"--write-locks", "-q"
-		)
-	}
-}
-
-val lockDependencies = tasks.register("lockDependencies") {
-	dependsOn(lockTasks)
+plugins {
+    id("com.github.k3karthic.lockall")
 }
 
 tasks.register<Exec>("scan") {
-	dependsOn(lockDependencies)
 	commandLine(
         "trivy", "fs",
         "--scanners", "vuln,secret,misconfig",

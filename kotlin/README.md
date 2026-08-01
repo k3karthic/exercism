@@ -9,6 +9,7 @@ To build and run the application, use the *Gradle* tool window by clicking the G
 or run it directly from the terminal:
 
 * Run `./gradlew run` to build and run the application.
+* Run `./gradlew writeDependencyLocks --write-locks` to lock dependencies.
 * Run `./gradlew build` to only build the application.
 * Run `./gradlew check` to run all checks, including tests.
 * Run `./gradlew clean` to clean all build outputs.

@@ -17,6 +17,7 @@ kotlin {
 dependencyLocking {
     // Lock all resolvable configurations so dependency versions are reproducible across builds.
     lockAllConfigurations()
+	lockMode = LockMode.STRICT
 }
 
 tasks.withType<Test>().configureEach {
