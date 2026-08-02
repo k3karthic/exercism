@@ -1,15 +1,15 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-ch.qos.logback:logback-classic:1.3.14=ktlint
-ch.qos.logback:logback-core:1.3.14=ktlint
+ch.qos.logback:logback-classic:1.5.34=ktlint
+ch.qos.logback:logback-core:1.5.34=ktlint
 com.cronutils:cron-utils:9.2.1=runtimeClasspath,testRuntimeClasspath
-com.fasterxml.jackson.core:jackson-annotations:2.15.4=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.fasterxml.jackson.core:jackson-core:2.15.4=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.fasterxml.jackson.core:jackson-databind:2.15.4=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.15.4=runtimeClasspath,testRuntimeClasspath
-com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.4=runtimeClasspath,testRuntimeClasspath
-com.fasterxml.jackson:jackson-bom:2.15.4=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-annotations:2.18.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-core:2.18.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-databind:2.18.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.18.9=runtimeClasspath,testRuntimeClasspath
+com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.9=runtimeClasspath,testRuntimeClasspath
+com.fasterxml.jackson:jackson-bom:2.18.9=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
 com.github.ajalt.clikt:clikt:5.0.2=ktlint
 com.google.android:annotations:4.1.1.4=runtimeClasspath,testRuntimeClasspath
@@ -67,8 +67,8 @@ io.temporal:temporal-sdk:1.37.0=compileClasspath,runtimeClasspath,testCompileCla
 io.temporal:temporal-serviceclient:1.37.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.temporal:temporal-test-server:1.37.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 io.temporal:temporal-testing:1.37.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-net.minidev:accessors-smart:2.5.0=runtimeClasspath,testRuntimeClasspath
-net.minidev:json-smart:2.5.0=runtimeClasspath,testRuntimeClasspath
+net.minidev:accessors-smart:2.5.2=runtimeClasspath,testRuntimeClasspath
+net.minidev:json-smart:2.5.2=runtimeClasspath,testRuntimeClasspath
 org.apiguardian:apiguardian-api:1.1.2=testCompileClasspath
 org.codehaus.mojo:animal-sniffer-annotations:1.24=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.ec4j.core:ec4j-core:1.1.0=ktlint,ktlintBaselineReporter,ktlintRuleset
@@ -126,7 +126,7 @@ org.junit.platform:junit-platform-launcher:1.10.1=testRuntimeClasspath
 org.junit:junit-bom:5.10.1=testCompileClasspath,testRuntimeClasspath
 org.latencyutils:LatencyUtils:2.0.3=runtimeClasspath,testRuntimeClasspath
 org.opentest4j:opentest4j:1.3.0=testCompileClasspath,testRuntimeClasspath
-org.ow2.asm:asm:9.3=runtimeClasspath,testRuntimeClasspath
+org.ow2.asm:asm:9.7.1=runtimeClasspath,testRuntimeClasspath
 org.slf4j:slf4j-api:1.7.36=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-org.slf4j:slf4j-api:2.0.7=ktlint
+org.slf4j:slf4j-api:2.0.17=ktlint
 empty=annotationProcessor,implementationDependenciesMetadata,kotlinCompilerPluginClasspath,kotlinNativeCompilerPluginClasspath,kotlinScriptDefExtensions,testAnnotationProcessor,testImplementationDependenciesMetadata,testKotlinScriptDefExtensions

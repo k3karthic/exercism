@@ -8,6 +8,17 @@ plugins {
     application
 }
 
+// Force lz4-java to 1.11.1 to fix CVE-2026-59949 (JVM crash via invalid input to native XXHash).
+// lz4-java 1.10.2 is pulled in transitively by kafka-clients.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "at.yawk.lz4" && requested.name == "lz4-java") {
+            useVersion("1.11.1")
+            because("CVE-2026-59949: Native XXHash implementations can crash the JVM when passed invalid input")
+        }
+    }
+}
+
 dependencies {
     implementation(libs.kafka)
 
