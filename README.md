@@ -8,7 +8,6 @@ Languages:
 * Rust - TODO
 * Elixir - TODO
 * Zig - TODO
-* Haskell - TODO
 
 Categories:
 * Memory Management - memory_management_by_language.md
