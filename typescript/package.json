@@ -13,7 +13,7 @@
     "test:openapi": "vitest run openapi/openapi.test.ts",
     "tsoa:routes": "tsoa routes -c openapi/tsoa.json",
     "tsoa:spec": "tsoa spec -c openapi/tsoa.json",
-    "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"**/*.json\" ."
+    "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"node_modules/**/*.json,node_modules/**/Dockerfile\" ."
   },
   "devDependencies": {
     "@testcontainers/kafka": "^12.0.1",
