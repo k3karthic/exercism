@@ -7,8 +7,6 @@
 | **Python** | Ref Counting \+ Gen GC | No | Rely on OS allocator; pools for small ints. |
 | **Go** | Concurrent Mark-Sweep | No | TCMalloc size classes. |
 | **Java (JVM)** | Generational \+ Concurrent | Yes | Physical sliding / Relocation via Load Barriers. |
-| **.NET** | Gen Mark-and-Compact | Partial | Physical sliding (Small Object Heap only). |
-| **Haskell** | Copying / Bump-Pointer | Yes | Stop-and-copy generation evacuation. |
 | **Erlang** | Per-Process GC | No | Address Order Best Fit (AOBF). |
 | **Rust** | Compile-Time Ownership | No | jemalloc, Arenas (bumpalo), Object Pooling. |
 | **Zig** | Manual \+ Explicit | No | Explicit Arenas, built-in GPA, Fixed Buffers. |
@@ -158,142 +156,7 @@ If your application allocates a massive number of large objects (like giant byte
 1. **G1GC** will struggle. It won't compact them normally, leading to heap fragmentation and eventual brutal Full GC pauses. You will likely need to tune the XX:G1HeapRegionSize to prevent your objects from being classified as "humongous" in the first place.  
 2. **ZGC** will handle them effortlessly. It isolates them in single-object pages and drops them cleanly when they die, completely avoiding both fragmentation and pause-time penalties.
 
-## **4\. .NET (C\#): Self-Tuning Generational Compaction**
-
-The .NET Common Language Runtime (CLR) uses a Generational Mark-and-Compact GC designed to self-tune based on application workloads.
-
-### **The Generational Hypothesis in Action**
-
-.NET divides the Small Object Heap into three buckets:
-
-* **Generation 0:** All new objects start here. It fills fast and is very cheap to clean.  
-* **Generation 1:** The buffer. Objects surviving Gen 0 are promoted here.  
-* **Generation 2:** Long-lived fixtures (static configs, database pools). A full GC here is expensive, so .NET uses **Background GC** to perform the heavy marking phase concurrently without stopping the app.
-
-### **The Large Object Heap (LOH)**
-
-Moving massive blocks of memory kills performance. Any object larger than 85,000 bytes bypasses the generational system and goes straight to the LOH. The LOH is only collected during a heavy Gen 2 sweep, and to save CPU cycles, the GC **does not compact** the LOH by default.
-
-### **Workstation vs. Server Modes**
-
-.NET scales from mobile apps to enterprise servers by offering two GC modes:
-
-* **Workstation GC:** Uses a single background thread. Prioritizes UI responsiveness and minimal user-facing pauses.  
-* **Server GC:** Creates a dedicated memory heap and a dedicated GC thread for *every logical CPU core*. Prioritizes raw throughput for massive web APIs.
-
-#### **1\. LOH Fragmentation**
-
-Any object larger than 85,000 bytes goes to the Large Object Heap (LOH). Moving massive blocks kills performance, so **the LOH is not compacted by default**, creating severe external fragmentation over time.
-
-* **The Solution:** Use System.Buffers.ArrayPool to rent and return large arrays. This reuses memory blocks so they never die, preventing fragmentation entirely.
-
-#### **2\. GC Pressure and Gen 2 Spikes**
-
-Creating millions of temporary objects forces frequent Gen 0 collections, accidentally pushing short-lived data into Gen 2\. Sweeping Gen 2 requires heavy "Stop-The-World" (STW) pauses, spiking latency.
-
-* **The Solution:** Use stack-allocated **Value Types** (struct) instead of heap-allocated classes. Leverage **Span** to slice strings and arrays dynamically without creating new heap objects.
-
-#### **3\. Unmanaged Resource Leaks**
-
-The .NET GC is completely blind to OS-level resources like file handles, graphics contexts, or database sockets. If you lose the C\# reference, the underlying OS resource can remain locked open forever.
-
-* **The Solution:** Enforce the **IDisposable pattern** wrapped inside a **using block**. This guarantees that the resource is immediately returned to the OS the millisecond the block exits, entirely bypassing the GC timeline.
-
-#### **4\. Pinning Roadblocks**
-
-When passing memory pointers to native C/C++ code (P/Invoke), developers must "pin" the managed array using the fixed keyword so the GC doesn't move it. However, pinning creates unmovable roadblocks that destroy the GC’s ability to cleanly compact the surrounding heap.
-
-* **The Solution:** Use the **PinnedObjectHeap (POH)** (introduced in .NET 5\) to allocate objects that must be pinned. This quarantines them away from the standard generational heaps, allowing Gen 0/1/2 to compact at maximum efficiency.
-
-## **5\. Haskell (GHC): Optimized for Immutability**
-
-Because Haskell programs are purely functional and do not mutate data in place, they allocate temporary memory (like intermediate lists and unevaluated "thunks") at an astonishing rate.
-
-### **Generational Copying Collector (The Default)**
-
-Optimized for raw throughput, the default GC treats allocation almost like stack memory.
-
-* **The Nursery & Bump-Pointer:** All new objects go into a CPU-cache-sized Nursery. Allocation is a single CPU instruction (incrementing a pointer).  
-* **Stop-and-Copy:** When the Nursery fills, the program pauses. Surviving objects are physically copied to an older generation. The GC then simply resets the bump-pointer to zero, instantly wiping the Nursery clean.  
-* **Immutability Advantage:** Because old objects are immutable, they almost never point to young objects. The GC can clean the Nursery without ever scanning the massive old generations.  
-* *The Flaw:* When the old generation fills up, the GC must pause the entire application to copy and compact those long-lived objects, causing severe latency spikes for servers.
-
-### **Concurrent Non-Moving GC (GHC 8.10+)**
-
-To fix server latency, GHC introduced an opt-in hybrid collector (--nonmoving-gc). It keeps the blazing-fast Nursery for short-lived thunks, but handles old objects with a concurrent mark-and-sweep algorithm. By not moving old objects, it avoids STW pauses and keeps latency in the sub-millisecond range.
-
-By not moving objects in the Old Generation, GHC avoids massive "Stop-The-World" pauses but risks **external fragmentation** (scattered, unusable gaps). GHC solves this using a segregated memory architecture similar to modern C allocators.
-
-#### **1\. Segments and Size Classes**
-
-Instead of an open heap, the Old Generation is divided into 32 KB **Segments**. Each Segment is rigidly carved into fixed-size slots (e.g., a Segment strictly for 32-byte objects, another for 64-byte objects).
-
-When objects survive the young generation (Nursery) and are promoted, they are routed directly into the Segment that matches their exact size.
-
-#### **2\. Eliminating External Fragmentation**
-
-This structure mathematically prevents external fragmentation. If a long-lived 64-byte object dies, it leaves a perfect 64-byte hole. The very next 64-byte object promoted will slot in perfectly.
-
-**The Trade-off:** This introduces **internal fragmentation** (placing a 48-byte object into a 64-byte slot wastes 16 bytes), but GHC accepts this slight memory waste in exchange for guaranteed sub-millisecond latency.
-
-#### **3\. Bitmap Sweeping**
-
-Instead of using slow, sequential "free lists" to track empty holes, each Segment uses a **Bitmap** (a tiny array of 1s and 0s).
-
-* 1 \= active object.  
-* 0 \= empty slot.
-
-When the concurrent GC sweeps away dead objects, it simply flips the bits to 0\. Promoting new objects is as fast as using native CPU instructions to find the next 0 in the bitmap.
-
-#### **4\. Releasing Memory to the OS**
-
-Because Segments are isolated blocks, GHC can easily track their overall usage. If a 32 KB Segment becomes completely empty (its bitmap is entirely 0s), GHC unmaps it and returns the raw memory directly back to the operating system, preventing permanent memory bloat after traffic spikes.
-
-### **Large Objects**
-
-#### **1\. The "Large Object" Threshold**
-
-In GHC, memory is fundamentally requested from the OS in 1 MB **Megablocks**, which are subdivided into 4 KB **Blocks**.
-
-GHC defines a "Large Object" as anything that takes up more than 80% of a 4 KB block (approximately **3.2 KB** or larger). When your program allocates a ByteString, a large array, or a massive record that exceeds this threshold, GHC's allocator entirely bypasses the Nursery, the 32 KB Segments, and the Bitmap system.
-
-#### **2\. Bypassing the Nursery (Direct Allocation)**
-
-Because copying large chunks of memory is devastating to CPU caches and throughput, **large objects are never allocated in the Nursery**.
-
-Instead, GHC allocates them directly through the Block Allocator. The allocator grants the object its own dedicated 4 KB blocks (or entire 1 MB Megablocks if the object is huge). The object is flagged with a special BF\_LARGE tag.
-
-#### **3\. Inherently Non-Moving**
-
-Large objects are strictly non-moving, **even if you are using the default Generational Copying GC.**
-
-Copying a 10 MB array during a garbage collection pause would cause unacceptable latency. Instead of physically copying surviving large objects between generations, GHC manages them using a doubly-linked list.
-
-* When a large object is allocated, it is added to the "Generation 0 Large Object List".  
-* During a GC pause, if the collector traces the large object and finds it is still alive, it simply unlinks the pointer from the Generation 0 list and appends it to the Generation 1 list.  
-* The physical data never moves; only the pointers linking the lists change.
-
-#### **4\. How GHC Handles Large Object Fragmentation**
-
-Because large objects are allocated in custom-sized contiguous blocks rather than rigid size-class slots, they face different fragmentation challenges. GHC resolves this using a classic memory management technique: **Coalescing**.
-
-##### **Internal Fragmentation (The Trade-off)**
-
-GHC allocates large objects in whole 4 KB block increments. If your program creates a 5 KB object, GHC must allocate two 4 KB blocks (8 KB total). The remaining 3 KB cannot be used by other objects and is wasted. Just like the segment architecture for small objects, GHC accepts this internal fragmentation to keep allocation logic fast and simple.
-
-##### **External Fragmentation (Address-Sorted Coalescing)**
-
-If your program allocates and frees many large objects of varying sizes, the heap could become riddled with holes of varying sizes (external fragmentation), preventing GHC from finding a contiguous space for a new massive object.
-
-GHC prevents this at the Block Allocator level:
-
-* **The Free List:** When large objects die, their underlying blocks are stripped of their BF\_LARGE flag and returned to a "free list."  
-* **Address Sorting:** GHC strictly maintains this free list sorted by the actual physical memory addresses of the blocks.  
-* **Instant Coalescing:** When a block is freed, GHC checks its immediate physical neighbors in memory. If the block to its left or right is also free, GHC instantly merges (coalesces) them back into a single, larger contiguous block.
-
-By aggressively merging adjacent dead blocks, GHC stitches the memory space back together, ensuring that external fragmentation is kept in check and contiguous memory is available for the next massive allocation.
-
-## **6\. Erlang (BEAM): The Telecom Concurrency Model**
+## **4\. Erlang (BEAM): The Telecom Concurrency Model**
 
 Erlang (and Elixir) was built for massive concurrency and fault tolerance. It rejects the concept of a shared global memory heap for active processing.
 
@@ -325,7 +188,7 @@ To avoid performance-killing OS memory requests (`malloc`/`mmap`) for every tiny
 * **mmap Floods:** If an application generates thousands of 600KB payloads just above the 512KB default threshold, the VM bypasses its internal MBC pools. It triggers direct OS system calls (`mmap` and `munmap`) for every single object, flooding the OS kernel and spiking CPU. The fix is increasing `+MBsbct` so these payloads are routed into the efficient, pre-allocated MBCs.  
 * **Address Order Best Fit (AOBF):** To combat the "Swiss-cheese" fragmentation inside the global binary pool and MBCs, Erlang’s allocator uses AOBF. When placing a new binary, it tightly packs data into the lowest available physical memory address. This leaves the top of memory carriers completely empty, allowing the VM to safely slice off unused blocks and return them to the OS.
 
-## **7\. Zig: Explicit Control & Transparent Allocation**
+## **5\. Zig: Explicit Control & Transparent Allocation**
 
 Zig abandons the runtime garbage collector entirely, returning to manual memory management like C, but makes it transparent and highly controllable.
 
@@ -343,7 +206,7 @@ Because Zig compiles to bare metal, it cannot move memory to compact gaps. It av
 * **Arena Allocators (std.heap.ArenaAllocator):** A core language feature. Developers wrap a GPA in an Arena and pass it to a worker task (like parsing a file). All memory is allocated sequentially, and the entire Arena is dropped instantly when the task finishes, leaving zero fragmented holes.  
 * **Fixed Buffer Allocators:** For embedded systems, developers can wrap a fixed array directly on the Stack. The functions *think* they are allocating dynamically, but are merely slicing up stack memory, resulting in completely deterministic failures if memory limits are breached.
 
-## **8\. Rust: Compile-Time Memory Safety**
+## **5\. Rust: Compile-Time Memory Safety**
 
 Rust guarantees memory safety without a GC, and without forcing the developer to write manual free() statements, via strict compiler rules.
 
@@ -360,7 +223,7 @@ Like Zig, Rust cannot physically move allocated objects. To combat fragmentation
 * **Arena Allocation (bumpalo):** Similar to Zig, crates like bumpalo allow developers to allocate massive blocks of memory for short-lived tasks, allocating sequentially and dropping the entire block at once.  
 * **Object Pooling:** Rust heavily encourages capacity reuse. Instead of dropping a Vec and returning its memory to the fragmented heap, developers call vec.clear(). This empties the vector but keeps the underlying memory block reserved for the next cycle.
 
-## **9\. Node.js (V8): Generational Compaction and Off-Heap Buffers**
+## **7\. Node.js (V8): Generational Compaction and Off-Heap Buffers**
 
 Node.js does not have its own native garbage collector; instead, it delegates memory management entirely to **Google's V8 JavaScript Engine** (the same engine that powers Chrome).
 
