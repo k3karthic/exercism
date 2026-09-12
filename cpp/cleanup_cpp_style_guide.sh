@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Generated with GPT 5.4 Mini.
 
 set -euo pipefail
 
@@ -25,7 +26,17 @@ function strip_wrapping_code(line,  text) {
 function normalize_heading(line,  m, hashes, title) {
   if (line ~ /^(#{1,6})[[:space:]]+\*\*.*\*\*([[:space:]]+\{#.*\})?[[:space:]]*$/) {
     match(line, /^(#{1,6})[[:space:]]+\*\*(.*)\*\*([[:space:]]+\{#.*\})?[[:space:]]*$/, m)
-    return m[1] " " m[2] m[3]
+    return m[1] " " m[2]
+  }
+
+  if (line ~ /^(#{1,6})[[:space:]]+.*[[:space:]]+\[[^]]+\]\(#([^)]*)\)([[:space:]]+\{#.*\})?[[:space:]]*$/) {
+    match(line, /^(#{1,6})[[:space:]]+(.*)[[:space:]]+\[[^]]+\]\(#([^)]*)\)([[:space:]]+\{#.*\})?[[:space:]]*$/, m)
+    return m[1] " " m[2]
+  }
+
+  if (line ~ /^(#{1,6})[[:space:]]+.*[[:space:]]+\{#.*\}[[:space:]]*$/) {
+    match(line, /^(#{1,6})[[:space:]]+(.*)[[:space:]]+\{#.*\}[[:space:]]*$/, m)
+    return m[1] " " m[2]
   }
 
   if (line ~ /^#{1,6}[[:space:]]*$/) {

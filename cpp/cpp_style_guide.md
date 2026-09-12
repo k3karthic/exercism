@@ -1,7 +1,7 @@
 
 # Engineering Guide: Bridging Modern C++ Toward Rust-Level Safety
 
-## Summary {#summary}
+## Summary
 
 While C++ does not enforce memory safety by default through an integrated borrow checker, modern language standards (C++11 through C++23) paired with strict standard library hardening, AST-based policy enforcement, static analysis, sanitizers, and hermetic toolchains like Zig (\`zig c++\` / \`zig cc\`) can significantly close the gap. This document details the architectural guidelines, tooling configurations, automated enforcement policies, cross-compilation workflows, and language mappings required to emulate Rust’s safety guarantees within C++ codebases.
 
@@ -20,15 +20,15 @@ Use modern C++ vocabulary types to eliminate undefined behavior, null pointer ex
 | Arc\<T\> | std::shared\_ptr\<const T\> | C++11 | Thread-safe reference counting. Keep pointees const to prevent multithreaded mutation races. |
 | NonNull\<T\> | not\_null\<T\*\> | Custom | Enforces at the type system level that a pointer or smart pointer cannot be nullptr. |
 
-## 2\. Dependency Management & Tooling Supply Chain with Conan {#2.-dependency-management-&-tooling-supply-chain-with-conan}
+## 2\. Dependency Management & Tooling Supply Chain with Conan
 
 To guarantee consistent enforcement of memory-safety standards across diverse developer workstations and CI runners, dependency management and compiler toolchains must be strictly hermetic. Conan 2.x serves as the primary package and environment orchestrator for acquiring safety-critical dependencies, standard library abstractions (e.g., GSL), static analysis tools, and managing build profiles.
 
-### Hermetic Compilation via Zig Toolchain (\`zig c++\` / \`zig cc\`) {#hermetic-compilation-via-zig-toolchain-(`zig-c++`-/-`zig-cc`)}
+### Hermetic Compilation via Zig Toolchain (\`zig c++\` / \`zig cc\`)
 
 Integrating \`zig c++\` as the underlying driver provides a zero-dependency, hermetic C/C++ compiler toolchain powered by Clang/LLVM. This enables reproducible builds, seamless out-of-the-box cross-compilation target triplets (e.g., \`-target x86\_64-linux-gnu\`, \`-target aarch64-macos\`), and unified glibc/musl ABI targeting without installing cross-toolchains.
 
-### Hermetic Tooling & Build Requirements (conanfile.py) {#hermetic-tooling-&-build-requirements-(conanfile.py)}
+### Hermetic Tooling & Build Requirements (conanfile.py)
 
 Static analysis tools such as `clang-tidy`, `ast-grep`, and `cppcheck` are provisioned directly via Conan build requirements. This prevents version drift between local developer machines and CI gates.
 
@@ -53,7 +53,7 @@ class SafetyEngineeredProject(ConanFile):
         cmake_layout(self)
 ```
 
-### Conan Profiles for Sanitizers and Hardening {#conan-profiles-for-sanitizers-and-hardening}
+### Conan Profiles for Sanitizers and Hardening
 
 Sanitizer configurations and standard library hardening modes are declared cleanly via Conan profile injection rather than manual flag management in build scripts:
 
@@ -74,7 +74,7 @@ tools.build:sharedlinkflags=["-fsanitize=address,undefined"]
 tools.build:exelinkflags=["-fsanitize=address,undefined"]
 ```
 
-### Cross-Compilation Matrix with Zig Profiles {#cross-compilation-matrix-with-zig-profiles}
+### Cross-Compilation Matrix with Zig Profiles
 
 Cross-compiling to alternative architectures or C standard libraries is achieved by passing Zig target flags directly through Conan build configuration profiles:
 
@@ -93,7 +93,7 @@ tools.build:compiler_executables={"c": "zig cc -target aarch64-linux-gnu", "cpp"
 tools.build:cxxflags=["-std=c++23"]
 ```
 
-## 3\. CMake Build System & Compiler Configuration {#3.-cmake-build-system-&-compiler-configuration}
+## 3\. CMake Build System & Compiler Configuration
 
 CMake integrates seamlessly with Conan 2.x using the automatically generated \`CMakeToolchain\` context. When using \`zig c++\` / \`zig cc\` as the compiler driver, CMake automatically recognizes the underlying Clang frontend. Flags passed from Conan profiles drive cross-compilation targets, compiler warnings, standard library hardening macros, and target property configurations.
 
@@ -132,7 +132,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 ```
 
-## 4\. Concurrency Safety: Thread Safety Analysis {#4.-concurrency-safety:-thread-safety-analysis}
+## 4\. Concurrency Safety: Thread Safety Analysis
 
 Emulate Rust's Mutex\<T\> (where data cannot be accessed without holding the lock) using Clang's Thread Safety Analysis annotations:
 
@@ -153,7 +153,7 @@ public:
 };
 ```
 
-## 5\. Development Policies & Automated Enforcement {#5.-development-policies-&-automated-enforcement}
+## 5\. Development Policies & Automated Enforcement
 
 To ensure safety without relying on code review vigilance, each core development policy is bound directly to automated verification tools distributed via Conan build requirements and hooked into CMake target analysis properties.
 
@@ -233,7 +233,7 @@ rules:
       - pattern: $RET $FUNC(..., $TYPE* $PTR, size_t $LEN, ...)
 ```
 
-## 6\. Dynamic Verification (Conan & CMake CI/CD Strategy) {#6.-dynamic-verification-(conan-&-cmake-ci/cd-strategy)}
+## 6\. Dynamic Verification (Conan & CMake CI/CD Strategy)
 
 Because static analysis cannot guarantee 100% sound lifetime validation for arbitrary pointer graphs, all continuous integration pipelines must execute CMake test suites built with Conan sanitizer profiles.
 
@@ -245,7 +245,7 @@ Because static analysis cannot guarantee 100% sound lifetime validation for arbi
 
 *Note: ASan and TSan are mutually exclusive and must run in parallel, distinct CI pipeline jobs.*
 
-## 7\. CI/CD Pipeline Orchestration Flow {#7.-ci/cd-pipeline-orchestration-flow}
+## 7\. CI/CD Pipeline Orchestration Flow
 
 Embed verification gates directly into the Conan-CMake development lifecycle:
 > 1. **Pre-commit Stage:** Run git-clang-tidy over staged diffs to prevent unformatted or guideline-violating code from being committed.
@@ -260,7 +260,7 @@ Embed verification gates directly into the Conan-CMake development lifecycle:
    * Job A: conan install . \-pr:b=default \-pr:h=profiles/sanitizer-asan && cmake \--build \--preset conan-relwithdebinfo && ctest
    * Job B: conan install . \-pr:b=default \-pr:h=profiles/sanitizer-tsan && cmake \--build \--preset conan-relwithdebinfo && ctest
 
-## Appendix: Lightweight not\_null Implementation {#appendix:-lightweight-not_null-implementation}
+## Appendix: Lightweight not\_null Implementation
 
 ```c
 #pragma once
