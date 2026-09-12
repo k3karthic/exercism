@@ -1,6 +1,7 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
+# To regenerate this file, run: ./gradlew :testcontainers:dependencies --write-locks
 ch.qos.logback:logback-classic:1.5.34=ktlint
 ch.qos.logback:logback-core:1.5.34=ktlint
 com.fasterxml.jackson.core:jackson-annotations:2.18.9=testCompileClasspath,testRuntimeClasspath
@@ -95,10 +96,10 @@ org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0=compileClasspath,runtimeCla
 org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.11.0=testCompileClasspath,testRuntimeClasspath
 org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0=testCompileClasspath,testRuntimeClasspath
-org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-backend:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
-org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-cli:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
-org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-common:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
-org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-k2:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-backend:2.4.0-0.11.0-grpc-189=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-cli:2.4.0-0.11.0-grpc-189=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-common:2.4.0-0.11.0-grpc-189=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-k2:2.4.0-0.11.0-grpc-189=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
 org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.1=ktlintReporter
 org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.1=ktlintReporter
 org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1=ktlintReporter
@@ -120,4 +121,4 @@ org.testcontainers:junit-jupiter:1.21.4=testCompileClasspath,testRuntimeClasspat
 org.testcontainers:testcontainers-bom:1.21.4=testCompileClasspath,testRuntimeClasspath
 org.testcontainers:testcontainers:1.21.4=testCompileClasspath,testRuntimeClasspath
 redis.clients.authentication:redis-authx-core:0.1.1-beta2=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-empty=annotationProcessor,implementationDependenciesMetadata,kotlinCompilerPluginClasspath,kotlinNativeCompilerPluginClasspath,kotlinScriptDefExtensions,testAnnotationProcessor,testImplementationDependenciesMetadata,testKotlinScriptDefExtensions
+empty=annotationProcessor,implementationDependenciesMetadata,kotlinCompilerPluginClasspath,kotlinNativeCompilerPluginClasspath,kotlinScriptDefExtensions,proto,protoImport,testAnnotationProcessor,testImplementationDependenciesMetadata,testKotlinScriptDefExtensions,testProto,testProtoImport

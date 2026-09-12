@@ -9,7 +9,7 @@ To build and run the application, use the *Gradle* tool window by clicking the G
 or run it directly from the terminal:
 
 * Run `./gradlew run` to build and run the application.
-* Run `./gradlew writeDependencyLocks --write-locks` to lock dependencies.
+* Run `./gradlew writeDependencyLocks --write-locks --no-configuration-cache` to lock dependencies.
 * Run `./gradlew checkDependencyAge` to check lockfiles and flag direct dependencies whose released versions are older than 365 days.
 * Run `./gradlew ktlintFormat` to format Kotlin sources.
 * Run `./gradlew build` to only build the application.

@@ -4,6 +4,7 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven("https://redirector.kotlinlang.org/maven/kxrpc-grpc")
     }
 
     // Reuse the version catalog from the main build.

@@ -36,5 +36,6 @@ include(":rabbitmq")
 include(":durableexecution")
 include(":debugger")
 include(":unixdomainsockets")
+include(":grpc")
 
 rootProject.name = "kotlin"
