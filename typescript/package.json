@@ -8,6 +8,7 @@
   "main": "dist/index.js",
   "scripts": {
     "main": "tsx index.ts",
+    "check:dependency-age": "tsx scripts/check-dependency-age.ts",
     "format": "prettier . --write",
     "test": "vitest",
     "test:openapi": "vitest run openapi/openapi.test.ts",
