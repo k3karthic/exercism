@@ -8,16 +8,6 @@ plugins {
     application
 }
 
-// Force netty to 4.2.17.Final to fix CVE-2026-75595 and CVE-2026-75596.
-configurations.all {
-    resolutionStrategy.eachDependency {
-        if (requested.group == "io.netty") {
-            useVersion("4.2.17.Final")
-            because("CVE-2026-75595, CVE-2026-75596")
-        }
-    }
-}
-
 dependencies {
     implementation(libs.rabbitmq)
 
