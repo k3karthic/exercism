@@ -3,7 +3,8 @@
 # This file is expected to be part of source control.
 ch.qos.logback:logback-classic:1.5.34=ktlint
 ch.qos.logback:logback-core:1.5.34=ktlint
-com.fasterxml.jackson.core:jackson-annotations:2.20=testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson.core:jackson-annotations:2.18.9=testCompileClasspath,testRuntimeClasspath
+com.fasterxml.jackson:jackson-bom:2.18.9=testCompileClasspath,testRuntimeClasspath
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
 com.github.ajalt.clikt:clikt:5.0.2=ktlint
 com.github.docker-java:docker-java-api:3.7.1=testCompileClasspath,testRuntimeClasspath
@@ -86,6 +87,10 @@ org.jetbrains.kotlin:kotlin-tooling-core:2.4.0=kotlinBuildToolsApiClasspath,kotl
 org.jetbrains.kotlin:kotlin-tooling-core:2.4.20=kotlinAbiValidationCompatClasspath
 org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4=ktlint,ktlintBaselineReporter,ktlintRuleset
 org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0=kotlinAbiValidationCompatClasspath,kotlinBuildToolsApiClasspath,kotlinCompilerClasspath,kotlinKlibCommonizerClasspath
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-backend:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-cli:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-common:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
+org.jetbrains.kotlinx:kotlinx-rpc-compiler-plugin-k2:2.4.0-0.10.3=kotlinCompilerPluginClasspathMain,kotlinCompilerPluginClasspathTest
 org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.1=ktlintReporter
 org.jetbrains.kotlinx:kotlinx-serialization-core:1.4.1=ktlintReporter
 org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1=ktlintReporter
