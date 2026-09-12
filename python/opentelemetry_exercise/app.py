@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, AsyncGenerator, Callable, Sequence
 
-import httpx
+import httpx2 as httpx
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request
 from opentelemetry import metrics, trace

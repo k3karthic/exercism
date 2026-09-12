@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx2 import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
@@ -24,7 +24,7 @@ def pg_url():
 
 @pytest.fixture
 async def client(pg_url: str):
-    """Fresh schema + httpx client per test; get_session is overridden."""
+    """Fresh schema + httpx2 client per test; get_session is overridden."""
     engine = create_async_engine(pg_url, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(lambda x: Base.metadata.create_all(bind=x))

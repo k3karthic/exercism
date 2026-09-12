@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Any
 from urllib.parse import quote
 
-import httpx
+import httpx2
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
@@ -28,7 +28,7 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
+    *, client: AuthenticatedClient | Client, response: httpx2.Response
 ) -> (
     DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError | None
 ):
@@ -51,7 +51,7 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: AuthenticatedClient | Client, response: httpx.Response
+    *, client: AuthenticatedClient | Client, response: httpx2.Response
 ) -> Response[
     DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError
 ]:
@@ -77,7 +77,7 @@ def sync_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         Response[DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError]
@@ -108,7 +108,7 @@ def sync(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError
@@ -134,7 +134,7 @@ async def asyncio_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         Response[DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError]
@@ -163,7 +163,7 @@ async def asyncio(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
-        httpx.TimeoutException: If the request takes longer than Client.timeout.
+        httpx2.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
         DeletePetPetPetIdDeleteResponseDeletePetPetPetidDelete | HTTPValidationError

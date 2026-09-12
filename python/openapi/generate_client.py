@@ -9,6 +9,8 @@ from typing import Sequence
 
 from openapi.server import app
 
+DEFAULT_TEMPLATE_PATH = Path(__file__).with_name("templates")
+
 
 def _build_command(
     *,
@@ -18,6 +20,7 @@ def _build_command(
     meta: str,
     overwrite: bool,
     fail_on_warning: bool,
+    template_path: Path,
 ) -> list[str]:
     command = [
         "openapi-python-client",
@@ -28,6 +31,8 @@ def _build_command(
         str(output_path),
         "--meta",
         meta,
+        "--custom-template-path",
+        str(template_path),
     ]
     if overwrite:
         command.append("--overwrite")
@@ -43,6 +48,7 @@ def _generate_from_schema_file(
     meta: str,
     overwrite: bool,
     fail_on_warning: bool,
+    template_path: Path,
 ) -> None:
     command = _build_command(
         source_flag="--path",
@@ -51,6 +57,7 @@ def _generate_from_schema_file(
         meta=meta,
         overwrite=overwrite,
         fail_on_warning=fail_on_warning,
+        template_path=template_path,
     )
     subprocess.run(command, check=True)
 
@@ -58,16 +65,18 @@ def _generate_from_schema_file(
 def generate_client(
     *,
     url: str | None = None,
-    path: str | None = None,
+    path: str | Path | None = None,
     output_path: str | Path = Path("generated-client"),
     meta: str = "none",
     overwrite: bool = True,
     fail_on_warning: bool = False,
+    template_path: str | Path = DEFAULT_TEMPLATE_PATH,
 ) -> None:
     if url and path:
         raise ValueError("Provide either url or path, not both.")
 
     output_dir = Path(output_path)
+    template_dir = Path(template_path)
     if url is not None:
         command = _build_command(
             source_flag="--url",
@@ -76,6 +85,7 @@ def generate_client(
             meta=meta,
             overwrite=overwrite,
             fail_on_warning=fail_on_warning,
+            template_path=template_dir,
         )
         subprocess.run(command, check=True)
         return
@@ -87,6 +97,7 @@ def generate_client(
             meta=meta,
             overwrite=overwrite,
             fail_on_warning=fail_on_warning,
+            template_path=template_dir,
         )
         return
 
@@ -102,6 +113,7 @@ def generate_client(
             meta=meta,
             overwrite=overwrite,
             fail_on_warning=fail_on_warning,
+            template_path=template_dir,
         )
     finally:
         temp_path.unlink(missing_ok=True)
@@ -137,6 +149,12 @@ def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=False,
         help="Treat generator warnings as errors.",
     )
+    parser.add_argument(
+        "--custom-template-path",
+        default=DEFAULT_TEMPLATE_PATH,
+        type=Path,
+        help="Directory containing template overrides for openapi-python-client.",
+    )
     return parser.parse_args(argv)
 
 
@@ -149,6 +167,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         meta=args.meta,
         overwrite=args.overwrite,
         fail_on_warning=args.fail_on_warning,
+        template_path=args.custom_template_path,
     )
     return 0
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import parse_qs, urljoin, urlparse
 
-import httpx
+import httpx2 as httpx
 import jwt
 import pytest
 from fastapi import FastAPI

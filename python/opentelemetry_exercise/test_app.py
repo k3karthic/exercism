@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 
-import httpx
+import httpx2 as httpx
 import pytest
-from httpx import ASGITransport
+from httpx2 import ASGITransport
 from fastapi import FastAPI
 
 from opentelemetry_exercise.app import (
