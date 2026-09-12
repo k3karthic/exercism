@@ -9,6 +9,7 @@ plugins {
 
 dependencies {
     implementation(libs.bundles.kotlinxRpc)
+    implementation(libs.clikt)
 
     testImplementation(kotlin("test"))
 }
