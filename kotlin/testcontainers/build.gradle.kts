@@ -8,14 +8,15 @@ plugins {
     application
 }
 
-// Force netty to 4.2.16.Final to fix GHSA-mfg7-5gfp-c4w3 (netty-codec-dns memory leak),
+// Force netty to 4.2.17.Final to fix GHSA-mfg7-5gfp-c4w3 (netty-codec-dns memory leak),
 // CVE-2026-44249 (netty-handler IPv6 bypass), CVE-2026-45674, CVE-2026-47691,
-// CVE-2026-45673 (netty-resolver-dns). Netty 4.2.13.Final is pulled in transitively by lettuce.
+// CVE-2026-45673 (netty-resolver-dns), and CVE-2026-75595/CVE-2026-75596.
+// Netty 4.2.13.Final is pulled in transitively by lettuce.
 configurations.all {
     resolutionStrategy.eachDependency {
         if (requested.group == "io.netty") {
-            useVersion("4.2.16.Final")
-            because("GHSA-mfg7-5gfp-c4w3, CVE-2026-44249, CVE-2026-45674, CVE-2026-47691, CVE-2026-45673")
+            useVersion("4.2.17.Final")
+            because("GHSA-mfg7-5gfp-c4w3, CVE-2026-44249, CVE-2026-45674, CVE-2026-47691, CVE-2026-45673, CVE-2026-75595, CVE-2026-75596")
         }
     }
 }
