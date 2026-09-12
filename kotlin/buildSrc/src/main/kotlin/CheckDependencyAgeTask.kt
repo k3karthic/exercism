@@ -10,20 +10,22 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecOperations
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.time.Duration
 import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.ZonedDateTime
+import java.time.ZoneOffset
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import kotlin.math.max
-import javax.inject.Inject
 
 private const val MAX_DEPENDENCY_AGE_DAYS = 365L
+private const val MAVEN_CENTRAL_BASE_URL = "https://repo.maven.apache.org/maven2"
 
 abstract class CheckDependencyAgeTask : DefaultTask() {
-
-    @get:Inject
-    abstract val execOperations: ExecOperations
 
     @get:InputFiles
     abstract val lockfiles: ConfigurableFileCollection
@@ -39,9 +41,10 @@ abstract class CheckDependencyAgeTask : DefaultTask() {
         val rootDir = rootDirectory.get().asFile
         val directDependencyCoordinates = directDependencies.get()
         val lockfileFiles = lockfiles.files.sortedBy { it.relativeTo(rootDir).path }
+        val releaseInstantCache = mutableMapOf<String, Instant>()
 
         val staleDependencies = lockfileFiles.flatMap { lockfile ->
-            findStaleEntries(lockfile, directDependencyCoordinates, rootDir)
+            findStaleEntries(lockfile, directDependencyCoordinates, releaseInstantCache)
         }
 
         logger.lifecycle(
@@ -57,7 +60,8 @@ abstract class CheckDependencyAgeTask : DefaultTask() {
                     appendLine(
                         "- ${stale.lockfile.relativeTo(rootDir).path}: " +
                             "${stale.coordinate.group}:${stale.coordinate.name}:${stale.coordinate.version} " +
-                            "last updated ${stale.ageDays} days ago"
+                            "released on ${stale.publishedAt.atZone(ZoneOffset.UTC).toLocalDate()} " +
+                            "(${stale.ageDays} days ago)"
                     )
                 }
             }
@@ -68,76 +72,64 @@ abstract class CheckDependencyAgeTask : DefaultTask() {
     private fun findStaleEntries(
         lockfile: File,
         directDependencies: Set<String>,
-        rootDir: File,
+        releaseInstantCache: MutableMap<String, Instant>,
     ): List<StaleDependency> {
-        val blameTimestamps = gitBlameTimestamps(lockfile, rootDir)
         val fileLines = lockfile.readLines()
         val now = Instant.now()
 
-        return fileLines.mapIndexedNotNull { index, line ->
-            val coordinate = line.toDependencyCoordinate() ?: return@mapIndexedNotNull null
+        return fileLines.mapNotNull { line ->
+            val coordinate = line.toDependencyCoordinate() ?: return@mapNotNull null
             val coordinateKey = coordinate.toCoordinateKey()
             if (coordinateKey !in directDependencies) {
-                return@mapIndexedNotNull null
+                return@mapNotNull null
             }
 
-            val lastUpdated = blameTimestamps[index + 1]
-                ?: throw GradleException(
-                    "Missing git blame metadata for ${lockfile.relativeTo(rootDir).path} line ${index + 1}"
-                )
-            val ageDays = max(
-                0L,
-                Duration.between(Instant.ofEpochSecond(lastUpdated), now).toDays()
-            )
+            val publishedAt = dependencyReleaseInstant(coordinate, releaseInstantCache)
+            val ageDays = max(0L, Duration.between(publishedAt, now).toDays())
 
             if (ageDays > MAX_DEPENDENCY_AGE_DAYS) {
-                StaleDependency(lockfile, coordinate, ageDays)
+                StaleDependency(lockfile, coordinate, publishedAt, ageDays)
             } else {
                 null
             }
         }
     }
 
-    private fun gitBlameTimestamps(lockfile: File, rootDir: File): Map<Int, Long> {
-        val relativePath = lockfile.relativeTo(rootDir).path
-        val stdout = ByteArrayOutputStream()
-        val stderr = ByteArrayOutputStream()
+    private fun dependencyReleaseInstant(
+        coordinate: DependencyCoordinate,
+        releaseInstantCache: MutableMap<String, Instant>,
+    ): Instant {
+        val cacheKey = coordinate.toCoordinateKey()
+        releaseInstantCache[cacheKey]?.let { return it }
 
-        val result = execOperations.exec {
-            commandLine("git", "blame", "--line-porcelain", "--", relativePath)
-            workingDir = rootDir
-            standardOutput = stdout
-            errorOutput = stderr
-            isIgnoreExitValue = true
-        }
+        val releaseUrl = mavenCentralReleaseUrl(coordinate)
+        val response = newHttpClient().send(
+            HttpRequest.newBuilder(URI.create(releaseUrl))
+                .GET()
+                .header("accept", "application/xml,application/octet-stream;q=0.9,*/*;q=0.8")
+                .header("user-agent", "dependency-age-checker")
+                .build(),
+            HttpResponse.BodyHandlers.discarding(),
+        )
 
-        if (result.exitValue != 0) {
+        if (response.statusCode() != 200) {
             throw GradleException(
-                "Failed to inspect git history for ${relativePath}: ${stderr.toString().trim()}"
+                "Failed to determine release date for ${coordinate.group}:${coordinate.name}:${coordinate.version} " +
+                    "from ${releaseUrl}: HTTP ${response.statusCode()}"
             )
         }
 
-        val timestamps = mutableMapOf<Int, Long>()
-        var lineNumber = 0
-        var currentTimestamp = 0L
-
-        stdout
-            .toString()
-            .lineSequence()
-            .forEach { outputLine ->
-                when {
-                    outputLine.startsWith("author-time ") -> {
-                        currentTimestamp = outputLine.substringAfter(' ').toLong()
-                    }
-
-                    outputLine.startsWith("\t") -> {
-                        lineNumber += 1
-                        timestamps[lineNumber] = currentTimestamp
-                    }
-                }
+        val lastModified = response.headers().firstValue("Last-Modified")
+            .orElseThrow {
+                GradleException(
+                    "Missing Last-Modified header for ${coordinate.group}:${coordinate.name}:${coordinate.version} " +
+                        "at ${releaseUrl}"
+                )
             }
 
-        return timestamps
+        return ZonedDateTime.parse(lastModified, DateTimeFormatter.RFC_1123_DATE_TIME)
+            .toInstant()
+            .also { releaseInstantCache[cacheKey] = it }
     }
 
     private fun String.toDependencyCoordinate(): DependencyCoordinate? {
@@ -156,6 +148,24 @@ abstract class CheckDependencyAgeTask : DefaultTask() {
 
     private fun DependencyCoordinate.toCoordinateKey(): String = "$group:$name:$version"
 
+    private fun mavenCentralReleaseUrl(coordinate: DependencyCoordinate): String {
+        val groupPath = coordinate.group.replace('.', '/')
+        return buildString {
+            append(MAVEN_CENTRAL_BASE_URL)
+            append('/')
+            append(groupPath)
+            append('/')
+            append(coordinate.name)
+            append('/')
+            append(coordinate.version)
+            append('/')
+            append(coordinate.name)
+            append('-')
+            append(coordinate.version)
+            append(".pom")
+        }
+    }
+
     private data class DependencyCoordinate(
         val group: String,
         val name: String,
@@ -165,6 +175,12 @@ abstract class CheckDependencyAgeTask : DefaultTask() {
     private data class StaleDependency(
         val lockfile: File,
         val coordinate: DependencyCoordinate,
+        val publishedAt: Instant,
         val ageDays: Long,
     )
+
+    private fun newHttpClient(): HttpClient =
+        HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build()
 }
