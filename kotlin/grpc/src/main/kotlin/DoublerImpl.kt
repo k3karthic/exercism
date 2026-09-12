@@ -5,13 +5,12 @@ import doubler_service.DoubleResponse
 import doubler_service.Doubler
 import doubler_service.invoke
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.concurrent.Executors
 import kotlin.collections.remove
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -23,7 +22,7 @@ data class ProcessedRequest(
 )
 
 class DoublerImpl : Doubler {
-    val externalScope: CoroutineScope = CoroutineScope(Executors.newFixedThreadPool(1).asCoroutineDispatcher())
+    val externalScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
     val requestsCache: MutableMap<String, ProcessedRequest> = mutableMapOf()
 
     private var job: Job? = null
@@ -69,7 +68,7 @@ class DoublerImpl : Doubler {
         ttlSeconds: Long = 300,
     ) {
         while (isActive) {
-            delay(1.seconds)
+            delay(5.seconds)
             requestsCache.forEach { (id, x) ->
                 if (Clock.System.now().epochSeconds - x.timestampInSeconds > ttlSeconds) {
                     requestsCache.remove(id)

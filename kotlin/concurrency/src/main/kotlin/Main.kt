@@ -1,14 +1,13 @@
 package com.github.k3karthic.concurrency
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.milliseconds
 
 suspend fun worker(
@@ -23,8 +22,7 @@ suspend fun worker(
 }
 
 fun runDemo(): Array<Int> {
-    val dispatcher = Executors.newFixedThreadPool(1).asCoroutineDispatcher()
-    val scope = CoroutineScope(dispatcher)
+    val scope = CoroutineScope(Dispatchers.Default)
 
     val inputChannel = Channel<Int>(UNLIMITED)
     val outputChannel = Channel<Int>(UNLIMITED)
@@ -47,7 +45,6 @@ fun runDemo(): Array<Int> {
     }
 
     scope.cancel()
-    dispatcher.close()
 
     return results
 }
