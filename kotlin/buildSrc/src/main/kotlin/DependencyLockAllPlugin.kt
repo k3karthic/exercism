@@ -11,8 +11,6 @@ class DependencyLockAllPlugin : Plugin<Project> {
             "dependency-lock-all plugin must be applied to the root project only, " + "but was applied to '${project.path}'"
         }
 
-        project.allprojects { dependencyLocking.lockAllConfigurations() }
-
         val projectsToLock = project.rootProject.allprojects.toList()
 
         project.tasks.register("writeDependencyLocks") {
