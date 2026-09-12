@@ -45,6 +45,11 @@ const channelOptions = {
 } satisfies grpc.ChannelOptions;
 
 function resolveProtoPath(): string {
+  const sharedProtoPath = join(__dirname, "../../grpc/doubler_service.proto");
+  if (existsSync(sharedProtoPath)) {
+    return sharedProtoPath;
+  }
+
   const localProtoPath = join(__dirname, "doubler_service.proto");
   if (existsSync(localProtoPath)) {
     return localProtoPath;

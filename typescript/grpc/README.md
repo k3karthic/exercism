@@ -7,7 +7,7 @@ locally and are ignored by git.
 To regenerate them:
 
 ```bash
-npx proto-loader-gen-types --keepCase --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --importFileExtension=.js --outDir grpc/generated grpc/doubler_service.proto
+npx proto-loader-gen-types --keepCase --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --importFileExtension=.js --outDir grpc/generated ../../grpc/doubler_service.proto
 ```
 
 ```bash

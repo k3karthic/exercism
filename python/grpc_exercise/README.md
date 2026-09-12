@@ -1,7 +1,7 @@
 ## Generate Proto Types & Stubs
 
 ```bash
-uv run python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. doubler_service.proto
+uv run python -m grpc_tools.protoc -I../../grpc --python_out=. --grpc_python_out=. ../../grpc/doubler_service.proto
 ```
 
 If Pyright flags the generated gRPC files, add this line at the very top of the file:
