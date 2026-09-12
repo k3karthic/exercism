@@ -51,13 +51,14 @@
     "@temporalio/testing": "^1.21.1",
     "@temporalio/worker": "^1.21.1",
     "@temporalio/workflow": "^1.21.1",
-    "express": "^4.21.2",
+    "express": "^4.22.2",
     "jsonwebtoken": "^9.0.2",
     "redis": "^5.12.1",
     "swagger-ui-express": "^5.0.1",
     "testcontainers": "^12.0.1"
   },
   "overrides": {
-    "js-yaml": "4.3.0"
+    "js-yaml": "4.3.2",
+    "qs": "^6.16.0"
   }
 }
