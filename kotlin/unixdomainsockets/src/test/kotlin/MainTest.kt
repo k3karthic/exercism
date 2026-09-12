@@ -13,6 +13,6 @@ internal class MainTest {
 
         val result = runDemo(tempFile.absolutePath)
 
-        assertEquals(result.input * result.input, result.output)
+        assertEquals(result.input * 2, result.output)
     }
 }

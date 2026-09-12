@@ -69,7 +69,7 @@ class Server(
                 if (m.containsKey(requestId)) {
                     result = m[requestId]
                 } else {
-                    result = Response(requestId = requestId, result = number * number, ts = LocalTime.now())
+                    result = Response(requestId = requestId, result = number * 2, ts = LocalTime.now())
                     m[requestId] = result
                 }
 

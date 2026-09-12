@@ -11,6 +11,6 @@ internal class MainTest {
             val num = Random.nextInt(0, 100)
             val result = runDemo(50051, num)
 
-            assertEquals(num * num, result.result)
+            assertEquals(num * 2, result.result)
         }
 }

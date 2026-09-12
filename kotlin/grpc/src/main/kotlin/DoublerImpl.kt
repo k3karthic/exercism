@@ -54,7 +54,7 @@ class DoublerImpl : Doubler {
         val x =
             DoubleResponse.Companion.invoke {
                 requestId = message.requestId
-                result = message.number * message.number
+                result = message.number * 2
             }
 
         saveRequest(x.requestId, x.result)
