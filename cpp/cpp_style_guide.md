@@ -125,11 +125,12 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 ### Standard Library Hardening Flags
 
-> * **LLVM Clang (libc++):**
->   `# Injected via Conan profile or CMake Preset`
->   `target_compile_definitions(${PROJECT_NAME} PRIVATE`
->       `$<$<CXX_COMPILER_ID:Clang>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>`
->   `)`
+```
+# Injected via Conan profile or CMake Preset
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    $<$<CXX_COMPILER_ID:Clang>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST>
+)
+```
 
 ## 4\. Concurrency Safety: Thread Safety Analysis {#4.-concurrency-safety:-thread-safety-analysis}
 
