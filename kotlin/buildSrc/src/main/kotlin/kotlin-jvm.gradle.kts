@@ -9,6 +9,7 @@ plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin in JVM projects.
     kotlin("jvm")
     id("org.jetbrains.kotlinx.rpc.plugin")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 kotlin {
@@ -65,5 +66,13 @@ tasks.withType<Test>().configureEach {
             TestLogEvent.PASSED,
             TestLogEvent.SKIPPED
         )
+    }
+}
+
+ktlint {
+    filter {
+        exclude { element ->
+            element.file.path.contains("build/protoBuild") || element.file.path.contains("/generated/")
+        }
     }
 }
