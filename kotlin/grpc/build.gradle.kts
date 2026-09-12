@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.clikt)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinxCoroutinesTest)
 }
 
 application {

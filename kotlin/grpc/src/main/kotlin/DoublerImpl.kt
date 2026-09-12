@@ -11,7 +11,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.collections.remove
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -55,7 +54,7 @@ class DoublerImpl : Doubler {
         val x =
             DoubleResponse.Companion.invoke {
                 requestId = message.requestId
-                result = message.number * 2
+                result = message.number * message.number
             }
 
         saveRequest(x.requestId, x.result)
