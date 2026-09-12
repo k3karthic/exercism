@@ -10,6 +10,8 @@ or run it directly from the terminal:
 
 * Run `./gradlew run` to build and run the application.
 * Run `./gradlew writeDependencyLocks --write-locks` to lock dependencies.
+* Run `./gradlew checkDependencyAge` to check lockfiles and flag direct dependencies that have not changed in 365 days.
+* Run `./gradlew ktlintFormat` to format Kotlin sources.
 * Run `./gradlew build` to only build the application.
 * Run `./gradlew check` to run all checks, including tests.
 * Run `./gradlew clean` to clean all build outputs.
@@ -32,3 +34,11 @@ and both a build cache and a configuration cache (see `gradle.properties`).
 ```bash
 ./gradlew :scan
 ```
+
+## Check dependency age
+
+```bash
+./gradlew checkDependencyAge
+```
+
+This task scans each `gradle.lockfile`, matches the direct dependencies declared by the build, and fails if any locked direct dependency has not been updated in the last 365 days.
