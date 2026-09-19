@@ -12,12 +12,12 @@ import kotlin.time.Duration.Companion.milliseconds
 
 suspend fun worker(
     inputChannel: Channel<Int>,
-    outputChannel: Channel<Int>,
+    outputChannel: Channel<Pair<Int, Int>>,
 ) {
     while (true) {
         val x = inputChannel.receive()
         delay(1.milliseconds)
-        outputChannel.send(x * 2)
+        outputChannel.send(x to x * 2)
     }
 }
 
@@ -25,7 +25,7 @@ fun runDemo(): Array<Int> {
     val scope = CoroutineScope(Dispatchers.Default)
 
     val inputChannel = Channel<Int>(UNLIMITED)
-    val outputChannel = Channel<Int>(UNLIMITED)
+    val outputChannel = Channel<Pair<Int, Int>>(UNLIMITED)
 
     runBlocking {
         for (x in 1..3) {
@@ -40,7 +40,8 @@ fun runDemo(): Array<Int> {
     val results: Array<Int> = Array(3) { 0 }
     runBlocking {
         for (i in 0..2) {
-            results[i] = outputChannel.receive()
+            val (input, output) = outputChannel.receive()
+            results[input - 1] = output
         }
     }
 
