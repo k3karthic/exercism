@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.bundles.temporal)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.mockk)
 }
 
 application {

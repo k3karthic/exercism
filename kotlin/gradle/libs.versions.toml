@@ -19,6 +19,7 @@ temporal = "1.37.0"
 clikt = "5.1.0"
 kotlinxRpc = "0.11.0-grpc-189"
 grpcJava = "1.84.0"
+mockk = "1.14.11"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -46,6 +47,7 @@ kotlinxRpcProtobuf = { module = "org.jetbrains.kotlinx:kotlinx-rpc-protobuf", ve
 kotlinxRpcClient = { module = "org.jetbrains.kotlinx:kotlinx-rpc-grpc-client", version.ref = "kotlinxRpc" }
 kotlinxRpcServer = { module = "org.jetbrains.kotlinx:kotlinx-rpc-grpc-server", version.ref = "kotlinxRpc" }
 grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpcJava" }
+mockk = { module = "io.mockk:mockk-jvm", version.ref = "mockk" }
 
 # Libraries can be bundled together for easier import
 [bundles]
