@@ -1,14 +1,14 @@
 # OpenTelemetry sample
 
 This sample shows manual OpenTelemetry traces, metrics, and logs in TypeScript,
-plus context propagation between two HTTP services.
+plus context propagation between two service classes.
 
 ## What it does
 
-- `service_1` sends five messages to `service_2`
+- `Service1` sends five messages directly to `Service2`
 - `service_2` doubles numeric values and rejects one invalid message
 - both services emit traces, metrics, and logs
-- trace context is propagated with W3C headers
+- trace context is propagated through the active OpenTelemetry context
 
 ## Run OpenObserve locally
 
@@ -78,19 +78,15 @@ podman run --rm \
 
 ## Run the sample
 
-Start `service_2`:
-
-```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 npx tsx opentelemetry/app.ts --service service_2 --port 8002
-```
-
-In another terminal run the driver:
+The CLI creates both service classes in one process:
 
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 npx tsx opentelemetry/app.ts
 ```
 
-The driver sends `1`, `2`, `oops`, `3`, and `4`, then exits.
+`Service1` sends `1`, `2`, `oops`, `3`, and `4` directly to `Service2`, then
+exits. Each class exports telemetry with its own service name, so the trace
+graph shows both `service_1` and `service_2`.
 
 ## Auto instrumentation
 
@@ -102,19 +98,10 @@ npm install --save @opentelemetry/api @opentelemetry/auto-instrumentations-node
 
 See the official guide: https://opentelemetry.io/docs/zero-code/js/
 
-Then run the same commands with the Node preload hook:
+Then run the same command with the Node preload hook:
 
 ```bash
-OTEL_SERVICE_NAME=service_2 \
-OTEL_RESOURCE_ATTRIBUTES=service.name=service_2 \
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
-OTEL_EXPORTER_OTLP_INSECURE=true \
-NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register \
-npx tsx opentelemetry/app.ts --service service_2 --port 8002
-
-OTEL_SERVICE_NAME=service_1 \
-OTEL_RESOURCE_ATTRIBUTES=service.name=service_1 \
+OTEL_SERVICE_NAME=otel-sample \
 OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
 OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
 OTEL_EXPORTER_OTLP_INSECURE=true \
