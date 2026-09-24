@@ -1,14 +1,14 @@
 # OpenTelemetry sample
 
 This sample shows manual OpenTelemetry traces, metrics, and logs in Python, plus
-context propagation between two HTTP services.
+context propagation between two service classes.
 
 ## What it does
 
-- `service_1` sends five messages to `service_2`
-- `service_2` doubles numeric values and rejects one invalid message
+- `Service1` sends five messages to `Service2`
+- `Service2` doubles numeric values and rejects one invalid message
 - both services emit traces, metrics, and logs
-- trace context is propagated with W3C headers
+- trace context is propagated through the active OpenTelemetry context
 
 ## Run OpenObserve locally
 
@@ -78,41 +78,30 @@ podman run --rm \
 
 ## Run the sample
 
-Start `service_2`:
+Start both service classes in one process:
 
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 uv run python app.py --service service_2 --port 8002
+OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
+uv run python app.py
 ```
 
-In another terminal run the driver:
-
-```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 uv run python app.py --service service_1 --service-2-url http://127.0.0.1:8002
-```
-
-The driver sends `1`, `2`, `oops`, `3`, and `4`, then exits.
+The CLI creates both service classes in the same Python process. `Service1`
+sends `1`, `2`, `oops`, `3`, and `4` directly to `Service2`, then exits.
+Each class exports telemetry with its own service name, so the trace graph shows
+both `service_1` and `service_2`.
 
 ## Auto instrumentation
 
-Install the `opentelemetry-distro` package plus the FastAPI, HTTPX, and logging
-instrumentations, then run the same commands through `opentelemetry-instrument`:
+Install the `opentelemetry-distro` package plus the logging instrumentation,
+then run the command through `opentelemetry-instrument`:
 
 See the official guide: https://opentelemetry.io/docs/zero-code/python/
 
 ```bash
-OTEL_SERVICE_NAME=service_2 \
-OTEL_RESOURCE_ATTRIBUTES=service.name=service_2 \
 OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
 OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
 OTEL_EXPORTER_OTLP_INSECURE=true \
-uv run opentelemetry-instrument python app.py --service service_2 --port 8002
-
-OTEL_SERVICE_NAME=service_1 \
-OTEL_RESOURCE_ATTRIBUTES=service.name=service_1 \
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
-OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
-OTEL_EXPORTER_OTLP_INSECURE=true \
-uv run opentelemetry-instrument python app.py --service service_1 --service-2-url http://127.0.0.1:8002
+uv run opentelemetry-instrument python app.py
 ```
 
 ## Run the tests
