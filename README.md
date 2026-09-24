@@ -25,10 +25,10 @@ Categories:
     * [gRPC](https://grpc.io/)
     * [Kafka](https://kafka.apache.org/)
     * [RabbitMQ](https://www.rabbitmq.com/)
-    * Keycloak
+    * Keycloak - Excluding Zig, C++
     * [OpenTelemetry](https://opentelemetry.io/)
-    * NUMA Aware (hwloc) - Zig, Rust, C++
-    * [OpenAPI](https://www.openapis.org)
+    * NUMA Aware (hwloc) - Only Zig, Rust, C++
+    * [OpenAPI](https://www.openapis.org) - Excluding Zig, C++
     * Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
     * Multi Memory
