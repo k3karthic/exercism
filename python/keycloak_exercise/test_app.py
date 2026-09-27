@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from html.parser import HTMLParser
@@ -8,7 +9,9 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import httpx2 as httpx
 import jwt
 import pytest
+from requests.exceptions import HTTPError
 from fastapi import FastAPI
+from testcontainers.core.config import testcontainers_config
 from testcontainers.keycloak import KeycloakContainer
 from testcontainers.redis import RedisContainer
 
@@ -30,6 +33,23 @@ POST_LOGOUT_REDIRECT_URI = f"{APP_BASE_URL}/"
 class KeycloakRuntime:
     container: KeycloakContainer
     client_secret: str
+
+
+class _RetryingKeycloakContainer(KeycloakContainer):
+    def _readiness_probe(self) -> None:
+        started_at = time.monotonic()
+        while True:
+            try:
+                super()._readiness_probe()
+                return
+            except HTTPError as error:
+                if error.response is None or error.response.status_code != 404:
+                    raise
+                if time.monotonic() - started_at >= testcontainers_config.timeout:
+                    raise TimeoutError(
+                        "Keycloak did not become ready before the startup timeout"
+                    ) from error
+                time.sleep(testcontainers_config.sleep_time)
 
 
 class _FormParser(HTMLParser):
@@ -64,7 +84,7 @@ def redis_container() -> Generator[RedisContainer, None, None]:
 
 @pytest.fixture(scope="session")
 def keycloak_runtime() -> Generator[KeycloakRuntime, None, None]:
-    with KeycloakContainer("quay.io/keycloak/keycloak:latest") as container:
+    with _RetryingKeycloakContainer("quay.io/keycloak/keycloak:latest") as container:
         admin = container.get_client()
         admin.create_realm(payload={"realm": REALM, "enabled": True})
         admin.connection.realm_name = REALM
