@@ -280,6 +280,15 @@ async def test_order_search_query_method(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["orders"]
 
+    post_resp = await client.post(
+        "/store/order/search",
+        params={"page": 1, "pageSize": 10},
+        json={"status": ["delivered"], "complete": True, "sortOrder": "desc"},
+        headers=HEADERS,
+    )
+    assert post_resp.status_code == 200, post_resp.text
+    assert post_resp.json()["orders"]
+
 
 async def test_pet_search_query_method(client: AsyncClient):
     await create_pet(client, "Searchable", status="available")
@@ -298,3 +307,12 @@ async def test_pet_search_query_method(client: AsyncClient):
     )
     assert resp.status_code == 200
     assert resp.json()["results"]
+
+    post_resp = await client.post(
+        "/pet/search",
+        params={"limit": 10, "offset": 0},
+        json={"name": "Search*", "status": ["available"], "sortOrder": "asc"},
+        headers=HEADERS,
+    )
+    assert post_resp.status_code == 200, post_resp.text
+    assert post_resp.json()["results"]

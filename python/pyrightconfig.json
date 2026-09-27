@@ -1,4 +1,7 @@
 {
+  "exclude": [
+    "openapi/generated/**"
+  ],
   "venvPath": ".",
   "venv": ".venv"
 }

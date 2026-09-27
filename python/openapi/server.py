@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from sqlalchemy import (
     JSON,
@@ -24,6 +25,14 @@ from sqlalchemy import (
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import Field, SQLModel
+
+from openapi.generated.server.apis.default_api_base import BaseDefaultApi
+from openapi.generated.server.main import app
+from openapi.generated.server.models.api_response import (
+    ApiResponse as GeneratedApiResponse,
+)
+from openapi.generated.server.models.order import Order as GeneratedOrder
+from openapi.generated.server.models.pet import Pet as GeneratedPet
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -310,13 +319,12 @@ async def lifespan(app: FastAPI):  # noqa: ARG001
     yield
 
 
-app = FastAPI(title="Petstore", version="1.0.13", lifespan=lifespan)
+app.router.lifespan_context = lifespan
 
 # ── Pet routes ────────────────────────────────────────────────────────────────
 # Specific paths are registered before parameterised ones to avoid shadowing.
 
 
-@app.post("/pet", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def add_pet(
     pet: Pet,
     session: AsyncSession = Depends(get_session),
@@ -324,7 +332,6 @@ async def add_pet(
     return await Pet.create(session, pet)
 
 
-@app.put("/pet", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def update_pet(
     pet: Pet,
     session: AsyncSession = Depends(get_session),
@@ -337,11 +344,6 @@ async def update_pet(
     return row
 
 
-@app.get(
-    "/pet/findByStatus",
-    response_model=list[Pet],
-    dependencies=[Depends(require_api_key)],
-)
 async def find_pets_by_status(
     status: PetStatus = Query(PetStatus.available),
     session: AsyncSession = Depends(get_session),
@@ -350,11 +352,6 @@ async def find_pets_by_status(
     return rows
 
 
-@app.get(
-    "/pet/findByTags",
-    response_model=list[Pet],
-    dependencies=[Depends(require_api_key)],
-)
 async def find_pets_by_tags(
     tags: list[str] = Query(default=[]),
     session: AsyncSession = Depends(get_session),
@@ -363,16 +360,12 @@ async def find_pets_by_tags(
     return rows
 
 
-@app.api_route(
-    "/pet/search", methods=["QUERY"], dependencies=[Depends(require_api_key)]
-)
 async def search_pets(
-    request: Request,
+    criteria: dict[str, Any] = Body(...),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
-    criteria = await request.json()
     result = await session.execute(select(Pet))
     rows = [row for row in result.scalars().all() if _pet_matches_search(row, criteria)]
     sort_field = str(criteria.get("sortBy") or "name")
@@ -389,7 +382,6 @@ async def search_pets(
     }
 
 
-@app.get("/pet/{petId}", response_model=Pet, dependencies=[Depends(require_api_key)])
 async def get_pet_by_id(
     petId: int,
     session: AsyncSession = Depends(get_session),
@@ -400,7 +392,6 @@ async def get_pet_by_id(
     return row
 
 
-@app.post("/pet/{petId}", status_code=200, dependencies=[Depends(require_api_key)])
 async def update_pet_with_form(
     petId: int,
     name: Optional[str] = Query(None),
@@ -418,7 +409,6 @@ async def update_pet_with_form(
     return {}
 
 
-@app.delete("/pet/{petId}", status_code=200, dependencies=[Depends(require_api_key)])
 async def delete_pet(
     petId: int,
     session: AsyncSession = Depends(get_session),
@@ -428,20 +418,14 @@ async def delete_pet(
     return {}
 
 
-@app.post(
-    "/pet/{petId}/uploadImage",
-    response_model=ApiResponse,
-    dependencies=[Depends(require_api_key)],
-)
 async def upload_pet_image(
     petId: int,
-    request: Request,
+    data: bytes = Body(default=b"", media_type="application/octet-stream"),
     additionalMetadata: Optional[str] = Query(None),
     session: AsyncSession = Depends(get_session),
 ) -> ApiResponse:
     if await Pet.get(session, petId) is None:
         raise HTTPException(status_code=404, detail="Pet not found")
-    data = await request.body()
     return ApiResponse(
         code=200,
         type="unknown",
@@ -452,16 +436,10 @@ async def upload_pet_image(
 # ── Store routes ──────────────────────────────────────────────────────────────
 
 
-@app.get(
-    "/store/inventory",
-    response_model=dict[str, int],
-    dependencies=[Depends(require_api_key)],
-)
 async def get_inventory(session: AsyncSession = Depends(get_session)) -> dict[str, int]:
     return await Pet.inventory(session)
 
 
-@app.post("/store/order", response_model=Order, dependencies=[Depends(require_api_key)])
 async def place_order(
     order: Order,
     session: AsyncSession = Depends(get_session),
@@ -469,16 +447,12 @@ async def place_order(
     return await Order.create(session, order)
 
 
-@app.api_route(
-    "/store/order/search", methods=["QUERY"], dependencies=[Depends(require_api_key)]
-)
 async def search_orders(
-    request: Request,
+    criteria: dict[str, Any] = Body(...),
     page: int = Query(default=1, ge=1),
     pageSize: int = Query(default=20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, Any]:
-    criteria = await request.json()
     result = await session.execute(select(Order))
     rows = [
         row for row in result.scalars().all() if _order_matches_search(row, criteria)
@@ -510,11 +484,6 @@ async def search_orders(
     }
 
 
-@app.get(
-    "/store/order/{orderId}",
-    response_model=Order,
-    dependencies=[Depends(require_api_key)],
-)
 async def get_order_by_id(
     orderId: int,
     session: AsyncSession = Depends(get_session),
@@ -525,9 +494,6 @@ async def get_order_by_id(
     return row
 
 
-@app.delete(
-    "/store/order/{orderId}", status_code=200, dependencies=[Depends(require_api_key)]
-)
 async def delete_order(
     orderId: int,
     session: AsyncSession = Depends(get_session),
@@ -535,6 +501,199 @@ async def delete_order(
     if not await Order.delete(session, orderId):
         raise HTTPException(status_code=404, detail="Order not found")
     return {}
+
+
+@asynccontextmanager
+async def _session_scope() -> AsyncIterator[AsyncSession]:
+    dependency = app.dependency_overrides.get(get_session, get_session)
+    session_generator = dependency()
+    try:
+        session = await anext(session_generator)
+    except StopAsyncIteration as error:
+        raise RuntimeError(
+            "Session dependency did not yield a database session"
+        ) from error
+    try:
+        yield session
+    finally:
+        await session_generator.aclose()
+
+
+def _generated_pet(pet: Pet) -> GeneratedPet:
+    return GeneratedPet.model_validate(pet.model_dump(by_alias=True))
+
+
+def _generated_order(order: Order) -> GeneratedOrder:
+    return GeneratedOrder.model_validate(order.model_dump(by_alias=True))
+
+
+class PetstoreApi(BaseDefaultApi):
+    async def add_pet_pet_post(self, pet: GeneratedPet) -> GeneratedPet:
+        async with _session_scope() as session:
+            result = await add_pet(
+                Pet.model_validate(pet.model_dump(exclude_unset=True)),
+                session=session,
+            )
+        return _generated_pet(result)
+
+    async def update_pet_pet_put(self, pet: GeneratedPet) -> GeneratedPet:
+        async with _session_scope() as session:
+            result = await update_pet(
+                Pet.model_validate(pet.model_dump(exclude_unset=True)),
+                session=session,
+            )
+        return _generated_pet(result)
+
+    async def find_pets_by_status_pet_find_by_status_get(
+        self, status: Optional[Any]
+    ) -> List[GeneratedPet]:
+        query_status = PetStatus(status or PetStatus.available.value)
+        async with _session_scope() as session:
+            results = await find_pets_by_status(query_status, session=session)
+        return [_generated_pet(pet) for pet in results]
+
+    async def find_pets_by_tags_pet_find_by_tags_get(
+        self, tags: Optional[List[Optional[str]]]
+    ) -> List[GeneratedPet]:
+        tag_names = [tag for tag in tags or [] if tag is not None]
+        async with _session_scope() as session:
+            results = await find_pets_by_tags(tag_names, session=session)
+        return [_generated_pet(pet) for pet in results]
+
+    async def search_pets_pet_search_post(
+        self, request_body: Dict[str, Any], limit: Optional[int], offset: Optional[int]
+    ) -> Dict[str, object]:
+        async with _session_scope() as session:
+            return await search_pets(
+                request_body,
+                limit=limit if limit is not None else 20,
+                offset=offset if offset is not None else 0,
+                session=session,
+            )
+
+    async def get_pet_by_id_pet_pet_id_get(self, petId: int) -> GeneratedPet:
+        async with _session_scope() as session:
+            result = await get_pet_by_id(petId, session=session)
+        return _generated_pet(result)
+
+    async def update_pet_with_form_pet_pet_id_post(
+        self, petId: int, name: Optional[str], status: Optional[str]
+    ) -> Dict[str, object]:
+        async with _session_scope() as session:
+            return await update_pet_with_form(
+                petId,
+                name=name,
+                status=status,
+                session=session,
+            )
+
+    async def delete_pet_pet_pet_id_delete(self, petId: int) -> Dict[str, object]:
+        async with _session_scope() as session:
+            return await delete_pet(petId, session=session)
+
+    async def upload_pet_image_pet_pet_id_upload_image_post(
+        self,
+        petId: int,
+        additional_metadata: Optional[str],
+        body: Optional[Union[bytes, str, Tuple[str, bytes]]],
+    ) -> GeneratedApiResponse:
+        if isinstance(body, bytes):
+            data = body
+        elif isinstance(body, str):
+            data = body.encode()
+        elif body is None:
+            data = b""
+        else:
+            data = body[1]
+        async with _session_scope() as session:
+            result = await upload_pet_image(
+                petId,
+                data=data,
+                additionalMetadata=additional_metadata,
+                session=session,
+            )
+        return GeneratedApiResponse.model_validate(result.model_dump())
+
+    async def get_inventory_store_inventory_get(self) -> Dict[str, int]:
+        async with _session_scope() as session:
+            return await get_inventory(session=session)
+
+    async def place_order_store_order_post(
+        self, order: GeneratedOrder
+    ) -> GeneratedOrder:
+        async with _session_scope() as session:
+            result = await place_order(
+                Order.model_validate(order.model_dump(exclude_unset=True)),
+                session=session,
+            )
+        return _generated_order(result)
+
+    async def search_orders_store_order_search_post(
+        self,
+        request_body: Dict[str, Any],
+        page: Optional[int],
+        page_size: Optional[int],
+    ) -> Dict[str, object]:
+        async with _session_scope() as session:
+            return await search_orders(
+                request_body,
+                page=page if page is not None else 1,
+                pageSize=page_size if page_size is not None else 20,
+                session=session,
+            )
+
+    async def get_order_by_id_store_order_order_id_get(
+        self, orderId: int
+    ) -> GeneratedOrder:
+        async with _session_scope() as session:
+            result = await get_order_by_id(orderId, session=session)
+        return _generated_order(result)
+
+    async def delete_order_store_order_order_id_delete(
+        self, orderId: int
+    ) -> Dict[str, object]:
+        async with _session_scope() as session:
+            return await delete_order(orderId, session=session)
+
+
+@app.middleware("http")
+async def enforce_api_key(request: Request, call_next):
+    path = request.url.path
+    if (
+        path == "/pet"
+        or path.startswith("/pet/")
+        or path == "/store"
+        or path.startswith("/store/")
+    ) and request.headers.get("api_key") != API_KEY:
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+    return await call_next(request)
+
+
+@app.api_route("/pet/search", methods=["QUERY"], include_in_schema=False)
+async def search_pets_query(
+    request: Request,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> Dict[str, object]:
+    criteria = await request.json()
+    async with _session_scope() as session:
+        return await search_pets(criteria, limit=limit, offset=offset, session=session)
+
+
+@app.api_route("/store/order/search", methods=["QUERY"], include_in_schema=False)
+async def search_orders_query(
+    request: Request,
+    page: int = Query(default=1, ge=1),
+    pageSize: int = Query(default=20, ge=1, le=100),
+) -> Dict[str, object]:
+    criteria = await request.json()
+    async with _session_scope() as session:
+        return await search_orders(
+            criteria,
+            page=page,
+            pageSize=pageSize,
+            session=session,
+        )
 
 
 if __name__ == "__main__":
