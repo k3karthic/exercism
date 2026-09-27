@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import HTTPException
@@ -32,7 +32,9 @@ def _order_schema(row: Order) -> OrderSchema:
             "id": row.id,
             "pet_id": row.pet_id,
             "quantity": row.quantity,
-            "ship_date": row.ship_date,
+            "ship_date": row.ship_date.isoformat()
+            if row.ship_date is not None
+            else None,
             "status": row.status,
             "complete": row.complete,
         }
@@ -59,7 +61,12 @@ def _pet_matches_search(row: Pet, criteria: dict[str, Any]) -> bool:
         return False
 
     tags = criteria.get("tags") or []
-    if tags and not set(tags).issubset(set(row.tags or [])):
+    tag_names = {
+        tag["name"]
+        for tag in row.tags or []
+        if isinstance(tag, dict) and isinstance(tag.get("name"), str)
+    }
+    if tags and not set(tags).issubset(tag_names):
         return False
 
     return True
@@ -86,14 +93,10 @@ def _order_matches_search(row: Order, criteria: dict[str, Any]) -> bool:
     if date_range and row.ship_date is None:
         return False
     if date_range.get("from") is not None and row.ship_date is not None:
-        if row.ship_date < datetime.fromisoformat(
-            date_range["from"].replace("Z", "+00:00")
-        ):
+        if row.ship_date < _parse_datetime(date_range["from"]):
             return False
     if date_range.get("to") is not None and row.ship_date is not None:
-        if row.ship_date > datetime.fromisoformat(
-            date_range["to"].replace("Z", "+00:00")
-        ):
+        if row.ship_date > _parse_datetime(date_range["to"]):
             return False
 
     quantity_range = criteria.get("quantityRange") or {}
@@ -111,14 +114,21 @@ def _order_matches_search(row: Order, criteria: dict[str, Any]) -> bool:
     return True
 
 
+def _parse_datetime(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+
+
 async def add_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
     row = Pet(
-        id=pet.id,
+        id=int(pet.id) if pet.id is not None else None,
         name=pet.name,
         status=pet.status,
         photo_urls=pet.photo_urls or [],
-        category=pet.category,
-        tags=list(dict.fromkeys(pet.tags or [])),
+        category=pet.category.model_dump(mode="json", exclude_none=True)
+        if pet.category is not None
+        else None,
+        tags=[tag.model_dump(mode="json", exclude_none=True) for tag in pet.tags or []],
     )
     session.add(row)
     await session.commit()
@@ -129,14 +139,20 @@ async def add_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
 async def update_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
     if pet.id is None:
         raise HTTPException(status_code=400, detail="Pet ID required for update")
-    row = await Pet.get(session, pet.id)
+    row = await Pet.get(session, int(pet.id))
     if row is None:
         raise HTTPException(status_code=404, detail="Pet not found")
     row.name = pet.name
     row.status = pet.status
     row.photo_urls = pet.photo_urls or []
-    row.category = pet.category
-    row.tags = list(dict.fromkeys(pet.tags or []))
+    row.category = (
+        pet.category.model_dump(mode="json", exclude_none=True)
+        if pet.category is not None
+        else None
+    )
+    row.tags = [
+        tag.model_dump(mode="json", exclude_none=True) for tag in pet.tags or []
+    ]
     await session.commit()
     await session.refresh(row)
     return _pet_schema(row)
@@ -227,11 +243,13 @@ async def get_inventory(session: AsyncSession) -> dict[str, int]:
 
 async def place_order(session: AsyncSession, order: OrderSchema) -> OrderSchema:
     row = Order(
-        id=order.id,
-        pet_id=order.pet_id,
-        quantity=order.quantity,
-        ship_date=order.ship_date,
-        status=order.status,
+        id=int(order.id) if order.id is not None else None,
+        pet_id=int(order.pet_id) if order.pet_id is not None else None,
+        quantity=int(order.quantity) if order.quantity is not None else None,
+        ship_date=_parse_datetime(order.ship_date)
+        if order.ship_date is not None
+        else datetime.now(timezone.utc),
+        status=order.status.value if order.status is not None else None,
         complete=order.complete or False,
     )
     session.add(row)

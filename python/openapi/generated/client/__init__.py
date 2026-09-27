@@ -18,7 +18,8 @@ __version__ = "1.0.0"
 
 # Define package exports
 __all__ = [
-    "DefaultApi",
+    "PetApi",
+    "StoreApi",
     "ApiResponse",
     "ApiClient",
     "Configuration",
@@ -29,16 +30,25 @@ __all__ = [
     "ApiAttributeError",
     "ApiException",
     "ApiResponse",
-    "HTTPValidationError",
-    "LocationInner",
+    "Category",
+    "DateRange",
+    "ErrorResponse",
     "Order",
+    "OrderSearchCriteria",
+    "OrderSearchResults",
+    "OrderSearchResultsPagination",
+    "OrderStatus",
     "Pet",
+    "PetSearchCriteria",
+    "PetSearchResults",
     "PetStatus",
-    "ValidationError",
+    "QuantityRange",
+    "Tag",
 ]
 
 # import apis into sdk package
-from openapi.generated.client.api.default_api import DefaultApi as DefaultApi
+from openapi.generated.client.api.pet_api import PetApi as PetApi
+from openapi.generated.client.api.store_api import StoreApi as StoreApi
 
 # import ApiClient
 from openapi.generated.client.api_response import ApiResponse as ApiResponse
@@ -53,9 +63,17 @@ from openapi.generated.client.exceptions import ApiException as ApiException
 
 # import models into sdk package
 from openapi.generated.client.models.api_response import ApiResponse as ApiResponse
-from openapi.generated.client.models.http_validation_error import HTTPValidationError as HTTPValidationError
-from openapi.generated.client.models.location_inner import LocationInner as LocationInner
+from openapi.generated.client.models.category import Category as Category
+from openapi.generated.client.models.date_range import DateRange as DateRange
+from openapi.generated.client.models.error_response import ErrorResponse as ErrorResponse
 from openapi.generated.client.models.order import Order as Order
+from openapi.generated.client.models.order_search_criteria import OrderSearchCriteria as OrderSearchCriteria
+from openapi.generated.client.models.order_search_results import OrderSearchResults as OrderSearchResults
+from openapi.generated.client.models.order_search_results_pagination import OrderSearchResultsPagination as OrderSearchResultsPagination
+from openapi.generated.client.models.order_status import OrderStatus as OrderStatus
 from openapi.generated.client.models.pet import Pet as Pet
+from openapi.generated.client.models.pet_search_criteria import PetSearchCriteria as PetSearchCriteria
+from openapi.generated.client.models.pet_search_results import PetSearchResults as PetSearchResults
 from openapi.generated.client.models.pet_status import PetStatus as PetStatus
-from openapi.generated.client.models.validation_error import ValidationError as ValidationError
+from openapi.generated.client.models.quantity_range import QuantityRange as QuantityRange
+from openapi.generated.client.models.tag import Tag as Tag

@@ -19,7 +19,7 @@ from fastapi.security.api_key import APIKeyCookie, APIKeyHeader, APIKeyQuery  # 
 from openapi.generated.server.models.extra_models import TokenModel
 
 
-def get_token_APIKeyHeader(
+def get_token_api_key(
     token_api_key_header: str = Security(
         APIKeyHeader(name="api_key", auto_error=False)
     ),

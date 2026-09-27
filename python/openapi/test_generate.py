@@ -77,6 +77,7 @@ def test_normalize_fastapi_query_types_preserves_path_validation(
     api_file.write_text(
         "limit: Annotated[int, Field(le=100, strict=True, ge=1)] = Query(20)\n"
         "offset: Annotated[int, Field(strict=True, ge=0)] = Query(0)\n"
+        "page: Optional[StrictInt] = Query(1)\n"
         "pet_id: StrictInt = Path(...)\n",
         encoding="utf-8",
     )
@@ -86,6 +87,7 @@ def test_normalize_fastapi_query_types_preserves_path_validation(
     assert api_file.read_text(encoding="utf-8") == (
         "limit: Annotated[int, Field(le=100, ge=1)] = Query(20)\n"
         "offset: Annotated[int, Field(ge=0)] = Query(0)\n"
+        "page: Optional[int] = Query(1)\n"
         "pet_id: StrictInt = Path(...)\n"
     )
 

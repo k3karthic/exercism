@@ -8,7 +8,7 @@ import {
   type PetSearchCriteria,
   type PetSearchResults,
   type Tag,
-} from "./models.js";
+} from "./generated/client/models/index.ts";
 
 function clonePet(pet: Pet): Pet {
   const cloned: Pet = {

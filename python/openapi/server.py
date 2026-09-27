@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Security
@@ -10,12 +10,16 @@ from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from openapi.database import get_session, init_db
-from openapi.generated.server.apis.default_api_base import BaseDefaultApi
+from openapi.generated.server.apis.pet_api_base import BasePetApi
+from openapi.generated.server.apis.store_api_base import BaseStoreApi
 from openapi.generated.server.main import app
-from openapi.generated.server.security_api import get_token_APIKeyHeader
 from openapi.generated.server.models.api_response import ApiResponse
 from openapi.generated.server.models.order import Order
+from openapi.generated.server.models.order_search_criteria import OrderSearchCriteria
 from openapi.generated.server.models.pet import Pet
+from openapi.generated.server.models.pet_search_criteria import PetSearchCriteria
+from openapi.generated.server.models.pet_status import PetStatus
+from openapi.generated.server.security_api import get_token_api_key
 from openapi.service import (
     add_pet,
     delete_order,
@@ -46,7 +50,6 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 
 app.router.lifespan_context = lifespan
 
-
 _api_key_header = APIKeyHeader(name="api_key", auto_error=False)
 
 
@@ -57,7 +60,7 @@ async def require_api_key(
         raise HTTPException(status_code=403, detail="Forbidden")
 
 
-app.dependency_overrides[get_token_APIKeyHeader] = require_api_key
+app.dependency_overrides[get_token_api_key] = require_api_key
 
 
 @asynccontextmanager
@@ -76,56 +79,62 @@ async def _session_scope() -> AsyncIterator[AsyncSession]:
         await session_generator.aclose()
 
 
-class PetstoreApi(BaseDefaultApi):
-    async def add_pet_pet_post(self, pet: Pet) -> Pet:
+def _criteria_dict(criteria: PetSearchCriteria | OrderSearchCriteria) -> dict[str, Any]:
+    return criteria.model_dump(mode="json", by_alias=True, exclude_none=True)
+
+
+class PetstoreApi(BasePetApi, BaseStoreApi):
+    async def add_pet(self, pet: Pet) -> Pet:
         async with _session_scope() as session:
             return await add_pet(session, pet)
 
-    async def update_pet_pet_put(self, pet: Pet) -> Pet:
+    async def update_pet(self, pet: Pet) -> Pet:
         async with _session_scope() as session:
             return await update_pet(session, pet)
 
-    async def find_pets_by_status_pet_find_by_status_get(
-        self, status: Optional[Any]
-    ) -> List[Pet]:
+    async def find_pets_by_status(self, status: Optional[PetStatus]) -> list[Pet]:
         async with _session_scope() as session:
-            return await find_pets_by_status(session, str(status or "available"))
+            return await find_pets_by_status(
+                session, status.value if status is not None else "available"
+            )
 
-    async def find_pets_by_tags_pet_find_by_tags_get(
-        self, tags: Optional[List[Optional[str]]]
-    ) -> List[Pet]:
-        tag_names = [tag for tag in tags or [] if tag is not None]
+    async def find_pets_by_tags(self, tags: Optional[list[str]]) -> list[Pet]:
         async with _session_scope() as session:
-            return await find_pets_by_tags(session, tag_names)
+            return await find_pets_by_tags(session, tags or [])
 
-    async def search_pets_pet_search_post(
-        self, request_body: Dict[str, Any], limit: Optional[int], offset: Optional[int]
-    ) -> Dict[str, object]:
+    async def search_pets(
+        self, pet_search_criteria: PetSearchCriteria, limit: Any, offset: Any
+    ) -> Any:
         async with _session_scope() as session:
             return await search_pets(
                 session,
-                request_body,
-                limit=limit if limit is not None else 20,
-                offset=offset if offset is not None else 0,
+                _criteria_dict(pet_search_criteria),
+                limit=int(limit if limit is not None else 20),
+                offset=int(offset if offset is not None else 0),
             )
 
-    async def get_pet_by_id_pet_pet_id_get(self, petId: int) -> Pet:
+    async def get_pet_by_id(self, petId: int | float) -> Pet:
         async with _session_scope() as session:
-            return await get_pet_by_id(session, petId)
+            return await get_pet_by_id(session, int(petId))
 
-    async def update_pet_with_form_pet_pet_id_post(
-        self, petId: int, name: Optional[str], status: Optional[str]
-    ) -> Dict[str, object]:
+    async def update_pet_with_form(
+        self, petId: int | float, name: Optional[str], status: Optional[PetStatus]
+    ) -> object:
         async with _session_scope() as session:
-            return await update_pet_with_form(session, petId, name, status)
+            return await update_pet_with_form(
+                session,
+                int(petId),
+                name,
+                status.value if status is not None else None,
+            )
 
-    async def delete_pet_pet_pet_id_delete(self, petId: int) -> Dict[str, object]:
+    async def delete_pet(self, petId: int | float) -> object:
         async with _session_scope() as session:
-            return await delete_pet(session, petId)
+            return await delete_pet(session, int(petId))
 
-    async def upload_pet_image_pet_pet_id_upload_image_post(
+    async def upload_pet_image(
         self,
-        petId: int,
+        petId: int | float,
         additional_metadata: Optional[str],
         body: Optional[Union[bytes, str, Tuple[str, bytes]]],
     ) -> ApiResponse:
@@ -138,39 +147,36 @@ class PetstoreApi(BaseDefaultApi):
         else:
             data = body[1]
         async with _session_scope() as session:
-            return await upload_pet_image(session, petId, data, additional_metadata)
+            return await upload_pet_image(
+                session, int(petId), data, additional_metadata
+            )
 
-    async def get_inventory_store_inventory_get(self) -> Dict[str, int]:
+    async def get_inventory(self) -> dict[str, int]:
         async with _session_scope() as session:
             return await get_inventory(session)
 
-    async def place_order_store_order_post(self, order: Order) -> Order:
+    async def place_order(self, order: Order) -> Order:
         async with _session_scope() as session:
             return await place_order(session, order)
 
-    async def search_orders_store_order_search_post(
-        self,
-        request_body: Dict[str, Any],
-        page: Optional[int],
-        page_size: Optional[int],
-    ) -> Dict[str, object]:
+    async def search_orders(
+        self, order_search_criteria: OrderSearchCriteria, page: Any, page_size: Any
+    ) -> Any:
         async with _session_scope() as session:
             return await search_orders(
                 session,
-                request_body,
-                page=page if page is not None else 1,
-                page_size=page_size if page_size is not None else 20,
+                _criteria_dict(order_search_criteria),
+                page=int(page if page is not None else 1),
+                page_size=int(page_size if page_size is not None else 20),
             )
 
-    async def get_order_by_id_store_order_order_id_get(self, orderId: int) -> Order:
+    async def get_order_by_id(self, orderId: int | float) -> Order:
         async with _session_scope() as session:
-            return await get_order_by_id(session, orderId)
+            return await get_order_by_id(session, int(orderId))
 
-    async def delete_order_store_order_order_id_delete(
-        self, orderId: int
-    ) -> Dict[str, object]:
+    async def delete_order(self, orderId: int | float) -> object:
         async with _session_scope() as session:
-            return await delete_order(session, orderId)
+            return await delete_order(session, int(orderId))
 
 
 if __name__ == "__main__":

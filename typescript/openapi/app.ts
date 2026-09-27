@@ -1,75 +1,110 @@
 import express, {
+  type ErrorRequestHandler,
+  type Express,
   type NextFunction,
-  type Request as ExRequest,
-  type Response as ExResponse,
+  type Request,
+  type Response,
 } from "express";
+import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import swaggerUi from "swagger-ui-express";
-import { ValidateError } from "tsoa";
 
-import { RegisterRoutes } from "./build/routes.js";
-
-const swaggerDocument = JSON.parse(
-  readFileSync(new URL("./build/swagger.json", import.meta.url), "utf8"),
+const API_KEY = "some-api-key";
+const API_SPEC_PATH = resolve(process.cwd(), "../openapi/petstore.json");
+const SERVER_SPEC_PATH = new URL(
+  "./generated/server/api/openapi.yaml",
+  import.meta.url,
 );
+const swaggerDocument = JSON.parse(readFileSync(API_SPEC_PATH, "utf8"));
 
-function hasHttpStatus(
-  error: unknown,
-): error is { status: number; message?: string } {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-
-  const candidate = error as { status?: unknown; message?: unknown };
-  return typeof candidate.status === "number";
+interface GeneratedExpressServer {
+  app: Express;
+  setupMiddleware(): void;
 }
 
-export const app = express();
+type GeneratedExpressServerConstructor = new (
+  port: number,
+  openApiYaml: string,
+) => GeneratedExpressServer;
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(express.raw({ type: "application/octet-stream" }));
+const require = createRequire(import.meta.url);
+const GeneratedExpressServer = require(
+  "./generated/server/expressServer.js",
+) as GeneratedExpressServerConstructor;
 
-app.use(
-  ["/openapi", "/docs", "/swagger"],
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument),
+function requiresApiKey(request: Request): boolean {
+  return (
+    request.path === "/pet" ||
+    request.path.startsWith("/pet/") ||
+    request.path === "/store" ||
+    request.path.startsWith("/store/")
+  );
+}
+
+class PetstoreExpressServer extends GeneratedExpressServer {
+  override setupMiddleware(): void {
+    this.app.use(express.raw({ type: "application/octet-stream" }));
+    this.app.use(
+      (request: Request, response: Response, next: NextFunction): void => {
+        if (requiresApiKey(request) && request.header("api_key") !== API_KEY) {
+          response.status(403).json({ message: "Forbidden" });
+          return;
+        }
+        next();
+      },
+    );
+    this.app.use(
+      ["/openapi", "/docs", "/swagger"],
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDocument),
+    );
+    super.setupMiddleware();
+  }
+}
+
+const generatedServer = new PetstoreExpressServer(
+  3000,
+  fileURLToPath(SERVER_SPEC_PATH),
 );
 
-RegisterRoutes(app);
+export const app = generatedServer.app;
 
-app.use((_request, response: ExResponse) => {
-  response.status(404).json({
-    message: "Not Found",
+const errorHandler: ErrorRequestHandler = (
+  error: unknown,
+  _request,
+  response,
+  next,
+): void => {
+  if (typeof error !== "object" || error === null || !("status" in error)) {
+    next(error);
+    return;
+  }
+
+  const candidate = error as { status: unknown; message?: unknown; errors?: unknown };
+  if (typeof candidate.status !== "number") {
+    next(error);
+    return;
+  }
+
+  if (candidate.status === 400 && candidate.errors !== undefined) {
+    response.status(422).json({
+      message: "Validation Failed",
+      details: candidate.errors,
+    });
+    return;
+  }
+
+  response.status(candidate.status).json({
+    message:
+      typeof candidate.message === "string"
+        ? candidate.message
+        : "Request failed",
   });
+};
+
+app.use((_request: Request, response: Response): void => {
+  response.status(404).json({ message: "Not Found" });
 });
-
-app.use(
-  (
-    error: unknown,
-    request: ExRequest,
-    response: ExResponse,
-    next: NextFunction,
-  ): ExResponse | void => {
-    if (error instanceof ValidateError) {
-      return response.status(422).json({
-        message: "Validation Failed",
-        details: error.fields,
-      });
-    }
-
-    if (hasHttpStatus(error)) {
-      return response.status(error.status).json({
-        message: error.message ?? "Request failed",
-      });
-    }
-
-    if (error instanceof Error) {
-      return response.status(500).json({
-        message: "Internal Server Error",
-      });
-    }
-
-    return next(error);
-  },
-);
+app.use(errorHandler);

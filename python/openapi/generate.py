@@ -85,6 +85,8 @@ def _normalize_fastapi_query_types(package: Path) -> None:
             line.replace("strict=True, ", "")
             .replace(", strict=True", "")
             .replace("strict=True", "")
+            .replace("StrictInt", "int")
+            .replace("StrictFloat", "float")
             if "= Query(" in line
             else line
             for line in lines

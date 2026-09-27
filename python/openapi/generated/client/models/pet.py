@@ -19,6 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi.generated.client.models.category import Category
+from openapi.generated.client.models.pet_status import PetStatus
+from openapi.generated.client.models.tag import Tag
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -29,10 +32,10 @@ class Pet(BaseModel):
     """ # noqa: E501
     id: Optional[StrictInt] = None
     name: StrictStr
-    photo_urls: Optional[Any] = Field(default=None, alias="photoUrls")
-    category: Optional[Any] = None
-    tags: Optional[List[StrictStr]] = None
-    status: Optional[StrictStr] = None
+    photo_urls: List[StrictStr] = Field(alias="photoUrls")
+    category: Optional[Category] = None
+    tags: Optional[List[Tag]] = None
+    status: Optional[PetStatus] = None
     __properties: ClassVar[List[str]] = ["id", "name", "photoUrls", "category", "tags", "status"]
 
     model_config = ConfigDict(
@@ -74,26 +77,15 @@ class Pet(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if id (nullable) is None
-        # and model_fields_set contains the field
-        if self.id is None and "id" in self.model_fields_set:
-            _dict['id'] = None
-
-        # set to None if photo_urls (nullable) is None
-        # and model_fields_set contains the field
-        if self.photo_urls is None and "photo_urls" in self.model_fields_set:
-            _dict['photoUrls'] = None
-
-        # set to None if category (nullable) is None
-        # and model_fields_set contains the field
-        if self.category is None and "category" in self.model_fields_set:
-            _dict['category'] = None
-
-        # set to None if status (nullable) is None
-        # and model_fields_set contains the field
-        if self.status is None and "status" in self.model_fields_set:
-            _dict['status'] = None
-
+        # override the default output from pydantic by calling `to_dict()` of category
+        if self.category:
+            _dict['category'] = self.category.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in tags (list)
+        _items = []
+        if self.tags:
+            for _item_tags in self.tags:
+                _items.append(_item_tags.to_dict() if _item_tags is not None else None)
+            _dict['tags'] = _items
         return _dict
 
     @classmethod
@@ -109,8 +101,8 @@ class Pet(BaseModel):
             "id": obj.get("id"),
             "name": obj.get("name"),
             "photoUrls": obj.get("photoUrls"),
-            "category": obj.get("category"),
-            "tags": obj.get("tags"),
+            "category": Category.from_dict(obj["category"]) if obj.get("category") is not None else None,
+            "tags": [Tag.from_dict(_item) for _item in obj["tags"]] if obj.get("tags") is not None else None,
             "status": obj.get("status")
         })
         return _obj

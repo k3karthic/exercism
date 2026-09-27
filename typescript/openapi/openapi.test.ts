@@ -3,7 +3,7 @@ import type { Response as SupertestResponse } from "supertest";
 import { beforeEach, expect, test } from "vitest";
 
 import { app } from "./app.js";
-import { OrderStatus, PetStatus } from "./models.js";
+import { OrderStatus, PetStatus } from "./generated/client/models/index.ts";
 import { petStore } from "./store.js";
 
 const API_KEY = "some-api-key";

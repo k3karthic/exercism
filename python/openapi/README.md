@@ -48,6 +48,18 @@ Edit `../openapi/petstore.json` as the source of truth, then regenerate.
 The search operations use `POST` with JSON request bodies, as defined in the
 OpenAPI spec.
 
+The shared `Pet.tags` schema uses Tag objects (`{"id": 1, "name": "friendly"}`).
+Before starting the updated server against a database created by the older
+string-array schema, run the migration once:
+
+```bash
+psql -h localhost -U postgres -d petstore \
+  -f openapi/migrations/001_pet_tags_to_jsonb.sql
+```
+
+The migration preserves each existing tag name as a Tag object without an ID.
+New installations use the JSONB schema directly.
+
 ## Call the server through the generated client
 
 ```bash

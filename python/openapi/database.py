@@ -15,7 +15,7 @@ from sqlalchemy import (
     func,
     select,
 )
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -38,8 +38,8 @@ class Pet(Base):
         "photo_urls", JSON, nullable=False, default=list
     )
     category: Mapped[Any | None] = mapped_column(JSON, nullable=True)
-    tags: Mapped[list[str]] = mapped_column(
-        postgresql.ARRAY(String()), nullable=False, default=list
+    tags: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, default=list
     )
     status: Mapped[str | None] = mapped_column(nullable=True)
 
@@ -72,7 +72,13 @@ class Pet(Base):
         return [
             pet
             for pet in result.scalars().all()
-            if set(tag_names).issubset(set(pet.tags or []))
+            if set(tag_names).issubset(
+                {
+                    tag["name"]
+                    for tag in pet.tags or []
+                    if isinstance(tag, dict) and isinstance(tag.get("name"), str)
+                }
+            )
         ]
 
     @classmethod

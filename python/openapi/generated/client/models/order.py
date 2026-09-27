@@ -17,9 +17,9 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from openapi.generated.client.models.order_status import OrderStatus
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -29,12 +29,12 @@ class Order(BaseModel):
     Order
     """ # noqa: E501
     id: Optional[StrictInt] = None
-    pet_id: Optional[StrictInt] = None
+    pet_id: Optional[StrictInt] = Field(default=None, alias="petId")
     quantity: Optional[StrictInt] = None
-    ship_date: Optional[datetime] = None
-    status: Optional[StrictStr] = None
-    complete: Optional[StrictBool] = False
-    __properties: ClassVar[List[str]] = ["id", "pet_id", "quantity", "ship_date", "status", "complete"]
+    ship_date: Optional[StrictStr] = Field(default=None, alias="shipDate")
+    status: Optional[OrderStatus] = None
+    complete: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["id", "petId", "quantity", "shipDate", "status", "complete"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -75,31 +75,6 @@ class Order(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if id (nullable) is None
-        # and model_fields_set contains the field
-        if self.id is None and "id" in self.model_fields_set:
-            _dict['id'] = None
-
-        # set to None if pet_id (nullable) is None
-        # and model_fields_set contains the field
-        if self.pet_id is None and "pet_id" in self.model_fields_set:
-            _dict['pet_id'] = None
-
-        # set to None if quantity (nullable) is None
-        # and model_fields_set contains the field
-        if self.quantity is None and "quantity" in self.model_fields_set:
-            _dict['quantity'] = None
-
-        # set to None if ship_date (nullable) is None
-        # and model_fields_set contains the field
-        if self.ship_date is None and "ship_date" in self.model_fields_set:
-            _dict['ship_date'] = None
-
-        # set to None if status (nullable) is None
-        # and model_fields_set contains the field
-        if self.status is None and "status" in self.model_fields_set:
-            _dict['status'] = None
-
         return _dict
 
     @classmethod
@@ -113,10 +88,10 @@ class Order(BaseModel):
 
         _obj = cls.model_validate({
             "id": obj.get("id"),
-            "pet_id": obj.get("pet_id"),
+            "petId": obj.get("petId"),
             "quantity": obj.get("quantity"),
-            "ship_date": obj.get("ship_date"),
+            "shipDate": obj.get("shipDate"),
             "status": obj.get("status"),
-            "complete": obj.get("complete") if obj.get("complete") is not None else False
+            "complete": obj.get("complete")
         })
         return _obj

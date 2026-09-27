@@ -14,7 +14,8 @@
 
 from fastapi import FastAPI
 
-from openapi.generated.server.apis.default_api import router as DefaultApiRouter
+from openapi.generated.server.apis.pet_api import router as PetApiRouter
+from openapi.generated.server.apis.store_api import router as StoreApiRouter
 
 app = FastAPI(
     title="Petstore",
@@ -22,4 +23,5 @@ app = FastAPI(
     version="1.0.13",
 )
 
-app.include_router(DefaultApiRouter)
+app.include_router(PetApiRouter)
+app.include_router(StoreApiRouter)

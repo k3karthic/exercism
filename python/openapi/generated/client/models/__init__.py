@@ -14,9 +14,17 @@
 
 # import models into model package
 from openapi.generated.client.models.api_response import ApiResponse
-from openapi.generated.client.models.http_validation_error import HTTPValidationError
-from openapi.generated.client.models.location_inner import LocationInner
+from openapi.generated.client.models.category import Category
+from openapi.generated.client.models.date_range import DateRange
+from openapi.generated.client.models.error_response import ErrorResponse
 from openapi.generated.client.models.order import Order
+from openapi.generated.client.models.order_search_criteria import OrderSearchCriteria
+from openapi.generated.client.models.order_search_results import OrderSearchResults
+from openapi.generated.client.models.order_search_results_pagination import OrderSearchResultsPagination
+from openapi.generated.client.models.order_status import OrderStatus
 from openapi.generated.client.models.pet import Pet
+from openapi.generated.client.models.pet_search_criteria import PetSearchCriteria
+from openapi.generated.client.models.pet_search_results import PetSearchResults
 from openapi.generated.client.models.pet_status import PetStatus
-from openapi.generated.client.models.validation_error import ValidationError
+from openapi.generated.client.models.quantity_range import QuantityRange
+from openapi.generated.client.models.tag import Tag

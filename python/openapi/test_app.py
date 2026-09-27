@@ -150,7 +150,7 @@ async def test_find_by_tags(client: AsyncClient):
             "name": "TaggedPet",
             "photoUrls": [],
             "status": "available",
-            "tags": ["fluffy"],
+            "tags": [{"id": 3, "name": "fluffy"}],
         },
         headers=HEADERS,
     )
@@ -162,6 +162,7 @@ async def test_find_by_tags(client: AsyncClient):
     assert resp.status_code == 200
     names = [p["name"] for p in resp.json()]
     assert "TaggedPet" in names
+    assert resp.json()[0]["tags"] == [{"id": 3, "name": "fluffy"}]
 
 
 async def test_upload_image(client: AsyncClient):
@@ -272,7 +273,7 @@ async def test_order_search(client: AsyncClient):
         json={
             "status": ["delivered"],
             "complete": True,
-            "sortBy": "ship_date",
+            "sortBy": "shipDate",
             "sortOrder": "desc",
         },
         headers=HEADERS,

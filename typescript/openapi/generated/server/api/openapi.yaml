@@ -1,0 +1,809 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  license:
+    name: ISC
+  title: Petstore
+  version: 1.0.13
+servers:
+- url: /
+tags:
+- description: Operations about pets
+  name: Pet
+- description: Operations about store orders
+  name: Store
+paths:
+  /store/inventory:
+    get:
+      operationId: GetInventory
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record_string.number_"
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Store
+      x-eov-operation-handler: controllers/StoreController
+  /store/order:
+    post:
+      operationId: PlaceOrder
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Store
+      x-codegen-request-body-name: order
+      x-eov-operation-handler: controllers/StoreController
+  /store/order/search:
+    post:
+      operationId: SearchOrders
+      parameters:
+      - explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 20
+          type: integer
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderSearchCriteria"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSearchResults"
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Store
+      x-codegen-request-body-name: orderSearchCriteria
+      x-eov-operation-handler: controllers/StoreController
+  /store/order/{orderId}:
+    delete:
+      operationId: DeleteOrder
+      parameters:
+      - explode: false
+        in: path
+        name: orderId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Record_string.never_"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Store
+      x-eov-operation-handler: controllers/StoreController
+    get:
+      operationId: GetOrderById
+      parameters:
+      - explode: false
+        in: path
+        name: orderId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Order"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Store
+      x-eov-operation-handler: controllers/StoreController
+  /pet:
+    post:
+      operationId: AddPet
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Pet"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-codegen-request-body-name: pet
+      x-eov-operation-handler: controllers/PetController
+    put:
+      operationId: UpdatePet
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Pet"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Pet"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-codegen-request-body-name: pet
+      x-eov-operation-handler: controllers/PetController
+  /pet/findByStatus:
+    get:
+      operationId: FindPetsByStatus
+      parameters:
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          $ref: "#/components/schemas/PetStatus"
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Pet"
+                type: array
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+  /pet/findByTags:
+    get:
+      operationId: FindPetsByTags
+      parameters:
+      - explode: true
+        in: query
+        name: tags
+        required: false
+        schema:
+          default: []
+          items:
+            type: string
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Pet"
+                type: array
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+  /pet/search:
+    post:
+      operationId: SearchPets
+      parameters:
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PetSearchCriteria"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetSearchResults"
+          description: Ok
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-codegen-request-body-name: petSearchCriteria
+      x-eov-operation-handler: controllers/PetController
+  /pet/{petId}:
+    delete:
+      operationId: DeletePet
+      parameters:
+      - explode: false
+        in: path
+        name: petId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Record_string.never_"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+    get:
+      operationId: GetPetById
+      parameters:
+      - explode: false
+        in: path
+        name: petId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Pet"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+    post:
+      operationId: UpdatePetWithForm
+      parameters:
+      - explode: false
+        in: path
+        name: petId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          $ref: "#/components/schemas/PetStatus"
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/Record_string.never_"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+  /pet/{petId}/uploadImage:
+    post:
+      operationId: UploadPetImage
+      parameters:
+      - explode: false
+        in: path
+        name: petId
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: additionalMetadata
+        required: false
+        schema:
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              format: binary
+              type: string
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                nullable: true
+          description: Ok
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: ""
+      security:
+      - api_key: []
+      tags:
+      - Pet
+      x-eov-operation-handler: controllers/PetController
+components:
+  examples: {}
+  headers: {}
+  parameters: {}
+  requestBodies: {}
+  responses: {}
+  schemas:
+    Record_string.number_:
+      additionalProperties:
+        type: integer
+      description: Construct a type with a set of properties K of type T
+      properties: {}
+      type: object
+    OrderStatus:
+      enum:
+      - placed
+      - approved
+      - delivered
+      type: string
+    Order:
+      additionalProperties: false
+      example:
+        id: 0
+        petId: 6
+        quantity: 1
+        shipDate: shipDate
+        status: placed
+        complete: true
+      properties:
+        id:
+          type: integer
+        petId:
+          type: integer
+        quantity:
+          type: integer
+        shipDate:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        complete:
+          type: boolean
+      type: object
+    OrderSearchResults:
+      additionalProperties: false
+      example:
+        orders:
+        - id: 0
+          petId: 6
+          quantity: 1
+          shipDate: shipDate
+          status: placed
+          complete: true
+        - id: 0
+          petId: 6
+          quantity: 1
+          shipDate: shipDate
+          status: placed
+          complete: true
+        pagination:
+          totalResults: 0
+          totalPages: 6
+          pageSize: 1
+          page: 5
+      properties:
+        orders:
+          items:
+            $ref: "#/components/schemas/Order"
+          type: array
+        pagination:
+          $ref: "#/components/schemas/OrderSearchResults_pagination"
+      required:
+      - orders
+      - pagination
+      type: object
+    DateRange:
+      additionalProperties: false
+      example:
+        from: from
+        to: to
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+      type: object
+    QuantityRange:
+      additionalProperties: false
+      example:
+        min: 1
+        max: 5
+      properties:
+        min:
+          type: integer
+        max:
+          type: integer
+      type: object
+    OrderSearchCriteria:
+      additionalProperties: false
+      example:
+        orderId: 0
+        petId: 6
+        status:
+        - placed
+        - placed
+        complete: true
+        dateRange:
+          from: from
+          to: to
+        quantityRange:
+          min: 1
+          max: 5
+        sortBy: shipDate
+        sortOrder: asc
+      properties:
+        orderId:
+          type: integer
+        petId:
+          type: integer
+        status:
+          items:
+            $ref: "#/components/schemas/OrderStatus"
+          type: array
+        complete:
+          type: boolean
+        dateRange:
+          $ref: "#/components/schemas/DateRange"
+        quantityRange:
+          $ref: "#/components/schemas/QuantityRange"
+        sortBy:
+          enum:
+          - shipDate
+          - petId
+          - quantity
+          - status
+          - id
+          type: string
+        sortOrder:
+          enum:
+          - asc
+          - desc
+          type: string
+      type: object
+    Record_string.unknown_:
+      additionalProperties: {}
+      description: Construct a type with a set of properties K of type T
+      properties: {}
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      example:
+        message: message
+        details:
+          key: ""
+      properties:
+        message:
+          type: string
+        details:
+          additionalProperties: {}
+          description: Construct a type with a set of properties K of type T
+          properties: {}
+          type: object
+      required:
+      - message
+      type: object
+    Record_string.never_:
+      description: Construct a type with a set of properties K of type T
+      properties: {}
+      type: object
+    Category:
+      additionalProperties: false
+      example:
+        id: 6
+        name: name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      type: object
+    Tag:
+      additionalProperties: false
+      example:
+        id: 1
+        name: name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      type: object
+    PetStatus:
+      enum:
+      - available
+      - pending
+      - sold
+      type: string
+    Pet:
+      additionalProperties: false
+      example:
+        id: 0
+        name: name
+        photoUrls:
+        - photoUrls
+        - photoUrls
+        category:
+          id: 6
+          name: name
+        tags:
+        - id: 1
+          name: name
+        - id: 1
+          name: name
+        status: available
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        photoUrls:
+          items:
+            type: string
+          type: array
+        category:
+          $ref: "#/components/schemas/Category"
+        tags:
+          items:
+            $ref: "#/components/schemas/Tag"
+          type: array
+        status:
+          $ref: "#/components/schemas/PetStatus"
+      required:
+      - name
+      - photoUrls
+      type: object
+    PetSearchResults:
+      additionalProperties: false
+      example:
+        results:
+        - id: 0
+          name: name
+          photoUrls:
+          - photoUrls
+          - photoUrls
+          category:
+            id: 6
+            name: name
+          tags:
+          - id: 1
+            name: name
+          - id: 1
+            name: name
+          status: available
+        - id: 0
+          name: name
+          photoUrls:
+          - photoUrls
+          - photoUrls
+          category:
+            id: 6
+            name: name
+          tags:
+          - id: 1
+            name: name
+          - id: 1
+            name: name
+          status: available
+        total: 0
+        limit: 6
+        offset: 1
+        hasMore: true
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/Pet"
+          type: array
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+        hasMore:
+          type: boolean
+      required:
+      - hasMore
+      - limit
+      - offset
+      - results
+      - total
+      type: object
+    PetSearchCriteria:
+      additionalProperties: false
+      example:
+        name: name
+        status:
+        - available
+        - available
+        tags:
+        - tags
+        - tags
+        sortBy: name
+        sortOrder: asc
+      properties:
+        name:
+          type: string
+        status:
+          items:
+            $ref: "#/components/schemas/PetStatus"
+          type: array
+        tags:
+          items:
+            type: string
+          type: array
+        sortBy:
+          enum:
+          - name
+          - status
+          type: string
+        sortOrder:
+          enum:
+          - asc
+          - desc
+          type: string
+      type: object
+    ApiResponse:
+      additionalProperties: false
+      properties:
+        code:
+          type: integer
+        type:
+          type: string
+        message:
+          type: string
+      type: object
+    OrderSearchResults_pagination:
+      example:
+        totalResults: 0
+        totalPages: 6
+        pageSize: 1
+        page: 5
+      properties:
+        totalResults:
+          type: integer
+        totalPages:
+          type: integer
+        pageSize:
+          type: integer
+        page:
+          type: integer
+      required:
+      - page
+      - pageSize
+      - totalPages
+      - totalResults
+      type: object
+  securitySchemes:
+    api_key:
+      in: header
+      name: api_key
+      type: apiKey

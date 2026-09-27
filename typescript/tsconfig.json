@@ -40,8 +40,10 @@
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "exclude": ["openapi/api-client/**"]
+  "exclude": ["openapi/generated/**"]
 }

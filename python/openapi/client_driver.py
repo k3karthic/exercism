@@ -4,7 +4,7 @@ import argparse
 import json
 from typing import Sequence
 
-from openapi.generated.client.api.default_api import DefaultApi
+from openapi.generated.client.api.store_api import StoreApi
 from openapi.generated.client.api_client import ApiClient
 from openapi.generated.client.configuration import Configuration
 
@@ -12,10 +12,10 @@ from openapi.generated.client.configuration import Configuration
 def fetch_inventory(base_url: str, api_key: str) -> dict[str, int]:
     configuration = Configuration(
         host=base_url,
-        api_key={"APIKeyHeader": api_key},
+        api_key={"api_key": api_key},
     )
     with ApiClient(configuration=configuration) as client:
-        inventory = DefaultApi(api_client=client).get_inventory_store_inventory_get()
+        inventory = StoreApi(api_client=client).get_inventory()
     if inventory is None:
         raise RuntimeError("Inventory request returned no data")
     return inventory
