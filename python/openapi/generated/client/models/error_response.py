@@ -30,8 +30,7 @@ class ErrorResponse(BaseModel):
 
     message: StrictStr
     details: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Construct a type with a set of properties K of type T",
+        default=None, description="Additional context associated with an error."
     )
     __properties: ClassVar[List[str]] = ["message", "details"]
 

@@ -25,7 +25,7 @@ export interface ErrorResponse {
    */
   message: string;
   /**
-   * Construct a type with a set of properties K of type T
+   * Additional context associated with an error.
    */
   details?: { [key: string]: any };
 }

@@ -1,11 +1,42 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
 import pytest
 
 from openapi import generate
+
+
+def test_spec_uses_descriptive_schemas_for_records_and_empty_responses() -> None:
+    spec = json.loads(generate.SPEC_PATH.read_text(encoding="utf-8"))
+    schemas = spec["components"]["schemas"]
+
+    assert {"Inventory", "ErrorDetails", "EmptyResponse"} <= schemas.keys()
+    assert not any(name.startswith("Record_string.") for name in schemas)
+    assert schemas["Inventory"]["additionalProperties"] == {"type": "integer"}
+    assert schemas["ErrorDetails"]["additionalProperties"] is True
+    assert schemas["EmptyResponse"]["additionalProperties"] is False
+
+    responses = spec["paths"]
+    assert (
+        responses["/store/inventory"]["get"]["responses"]["200"]["content"][
+            "application/json"
+        ]["schema"]["$ref"]
+        == "#/components/schemas/Inventory"
+    )
+    for operation in (
+        responses["/pet/{petId}"]["post"],
+        responses["/pet/{petId}"]["delete"],
+        responses["/store/order/{orderId}"]["delete"],
+    ):
+        assert (
+            operation["responses"]["200"]["content"]["application/json"]["schema"][
+                "$ref"
+            ]
+            == "#/components/schemas/EmptyResponse"
+        )
 
 
 def test_generate_package_replaces_only_generated_target(

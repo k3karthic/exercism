@@ -7,13 +7,12 @@
     "requestBodies": {},
     "responses": {},
     "schemas": {
-      "Record_string.number_": {
-        "properties": {},
+      "Inventory": {
         "additionalProperties": {
           "type": "integer"
         },
         "type": "object",
-        "description": "Construct a type with a set of properties K of type T"
+        "description": "Pet counts keyed by status."
       },
       "OrderStatus": {
         "enum": [
@@ -154,11 +153,10 @@
         "type": "object",
         "additionalProperties": false
       },
-      "Record_string.unknown_": {
-        "properties": {},
-        "additionalProperties": {},
+      "ErrorDetails": {
         "type": "object",
-        "description": "Construct a type with a set of properties K of type T"
+        "additionalProperties": true,
+        "description": "Additional context associated with an error."
       },
       "ErrorResponse": {
         "properties": {
@@ -166,7 +164,7 @@
             "type": "string"
           },
           "details": {
-            "$ref": "#/components/schemas/Record_string.unknown_"
+            "$ref": "#/components/schemas/ErrorDetails"
           }
         },
         "required": [
@@ -175,10 +173,10 @@
         "type": "object",
         "additionalProperties": false
       },
-      "Record_string.never_": {
-        "properties": {},
+      "EmptyResponse": {
         "type": "object",
-        "description": "Construct a type with a set of properties K of type T"
+        "additionalProperties": false,
+        "description": "An empty JSON object."
       },
       "Category": {
         "properties": {
@@ -354,7 +352,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Record_string.number_"
+                  "$ref": "#/components/schemas/Inventory"
                 }
               }
             }
@@ -521,12 +519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/Record_string.never_"
-                    },
-                    {}
-                  ]
+                  "$ref": "#/components/schemas/EmptyResponse"
                 }
               }
             }
@@ -843,12 +836,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/Record_string.never_"
-                    },
-                    {}
-                  ]
+                  "$ref": "#/components/schemas/EmptyResponse"
                 }
               }
             }
@@ -907,12 +895,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/Record_string.never_"
-                    },
-                    {}
-                  ]
+                  "$ref": "#/components/schemas/EmptyResponse"
                 }
               }
             }

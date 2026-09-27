@@ -22,7 +22,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Record_string.number_"
+                $ref: "#/components/schemas/Inventory"
           description: Ok
       security:
         - api_key: []
@@ -107,9 +107,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Record_string.never_"
-                nullable: true
+                $ref: "#/components/schemas/EmptyResponse"
           description: Ok
         "404":
           content:
@@ -313,9 +311,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Record_string.never_"
-                nullable: true
+                $ref: "#/components/schemas/EmptyResponse"
           description: Ok
         "404":
           content:
@@ -387,9 +383,7 @@ paths:
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/Record_string.never_"
-                nullable: true
+                $ref: "#/components/schemas/EmptyResponse"
           description: Ok
         "404":
           content:
@@ -454,11 +448,10 @@ components:
   requestBodies: {}
   responses: {}
   schemas:
-    Record_string.number_:
+    Inventory:
       additionalProperties:
         type: integer
-      description: Construct a type with a set of properties K of type T
-      properties: {}
+      description: Pet counts keyed by status.
       type: object
     OrderStatus:
       enum:
@@ -589,10 +582,9 @@ components:
             - desc
           type: string
       type: object
-    Record_string.unknown_:
-      additionalProperties: {}
-      description: Construct a type with a set of properties K of type T
-      properties: {}
+    ErrorDetails:
+      additionalProperties: true
+      description: Additional context associated with an error.
       type: object
     ErrorResponse:
       additionalProperties: false
@@ -604,16 +596,15 @@ components:
         message:
           type: string
         details:
-          additionalProperties: {}
-          description: Construct a type with a set of properties K of type T
-          properties: {}
+          additionalProperties: true
+          description: Additional context associated with an error.
           type: object
       required:
         - message
       type: object
-    Record_string.never_:
-      description: Construct a type with a set of properties K of type T
-      properties: {}
+    EmptyResponse:
+      additionalProperties: false
+      description: An empty JSON object.
       type: object
     Category:
       additionalProperties: false
