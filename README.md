@@ -23,9 +23,9 @@ Categories:
     * Parallelism
     * UNIX Domain Sockets
     * [gRPC](https://grpc.io/)
-    * [Kafka](https://kafka.apache.org/)
-    * [RabbitMQ](https://www.rabbitmq.com/)
-    * Keycloak - Excluding Zig, C++
+    * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
+    * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/))
+    * [Keycloak](https://www.keycloak.org/) - Excluding Zig, C++
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Only Zig, Rust, C++
     * [OpenAPI](https://www.openapis.org) - Excluding Zig, C++
