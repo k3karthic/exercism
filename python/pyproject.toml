@@ -48,6 +48,7 @@ dev = [
     "psycopg2-binary>=2.9.0",
     "pyright>=1.1.409",
     "pytest-asyncio>=0.24.0",
+    "pytest-xdist>=3.8.0",
     "pytest>=9.0.3",
     "ruff>=0.15.14",
     "testcontainers[keycloak,postgres,rabbitmq,redis]>=4.14.2",

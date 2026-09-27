@@ -5,7 +5,7 @@ format:
 	uv run ruff check --fix .
 
 test:
-	uv run pytest
+	uv run pytest -n auto --maxprocesses=8
 
 check:
 	uv run python check_dependency_releases.py
