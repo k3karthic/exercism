@@ -19,12 +19,11 @@ from fastapi import (  # noqa: F401
     Query,
     Response,
     Security,
-    status,
 )
 
 from openapi.generated.server.models.extra_models import TokenModel  # noqa: F401
 from pydantic import StrictBytes, StrictInt, StrictStr
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 from openapi.generated.server.models.api_response import ApiResponse
 from openapi.generated.server.models.error_response import ErrorResponse
 from openapi.generated.server.models.pet import Pet
@@ -50,11 +49,8 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     response_model_by_alias=True,
 )
 async def update_pet(
-    pet: Pet = Body(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    pet: Pet = Body(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Pet:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -70,11 +66,8 @@ async def update_pet(
     response_model_by_alias=True,
 )
 async def add_pet(
-    pet: Pet = Body(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    pet: Pet = Body(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Pet:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -90,11 +83,8 @@ async def add_pet(
     response_model_by_alias=True,
 )
 async def find_pets_by_status(
-    status: Optional[PetStatus] = Query(None, description="", alias="status")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    status: Optional[PetStatus] = Query(None, description="", alias="status"),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> List[Pet]:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -110,11 +100,8 @@ async def find_pets_by_status(
     response_model_by_alias=True,
 )
 async def find_pets_by_tags(
-    tags: Optional[List[StrictStr]] = Query([], description="", alias="tags")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    tags: Optional[List[StrictStr]] = Query([], description="", alias="tags"),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> List[Pet]:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -130,19 +117,16 @@ async def find_pets_by_tags(
     response_model_by_alias=True,
 )
 async def search_pets(
-    pet_search_criteria: PetSearchCriteria = Body(..., description="")
-,
-    limit: Optional[int] = Query(20, description="", alias="limit")
-,
-    offset: Optional[int] = Query(0, description="", alias="offset")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    pet_search_criteria: PetSearchCriteria = Body(..., description=""),
+    limit: Optional[int] = Query(20, description="", alias="limit"),
+    offset: Optional[int] = Query(0, description="", alias="offset"),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> PetSearchResults:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BasePetApi.subclasses[0]().search_pets(pet_search_criteria, limit, offset)
+    return await BasePetApi.subclasses[0]().search_pets(
+        pet_search_criteria, limit, offset
+    )
 
 
 @router.get(
@@ -155,11 +139,8 @@ async def search_pets(
     response_model_by_alias=True,
 )
 async def get_pet_by_id(
-    petId: StrictInt = Path(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    petId: StrictInt = Path(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Pet:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -176,15 +157,10 @@ async def get_pet_by_id(
     response_model_by_alias=True,
 )
 async def update_pet_with_form(
-    petId: StrictInt = Path(..., description="")
-,
-    name: Optional[StrictStr] = Query(None, description="", alias="name")
-,
-    status: Optional[PetStatus] = Query(None, description="", alias="status")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    petId: StrictInt = Path(..., description=""),
+    name: Optional[StrictStr] = Query(None, description="", alias="name"),
+    status: Optional[PetStatus] = Query(None, description="", alias="status"),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> object:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -201,11 +177,8 @@ async def update_pet_with_form(
     response_model_by_alias=True,
 )
 async def delete_pet(
-    petId: StrictInt = Path(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    petId: StrictInt = Path(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> object:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -222,16 +195,17 @@ async def delete_pet(
     response_model_by_alias=True,
 )
 async def upload_pet_image(
-    petId: StrictInt = Path(..., description="")
-,
-    additional_metadata: Optional[StrictStr] = Query(None, description="", alias="additionalMetadata")
-,
-    body: Optional[Union[StrictBytes, StrictStr, Tuple[StrictStr, StrictBytes]]] = Body(None, description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
+    petId: StrictInt = Path(..., description=""),
+    additional_metadata: Optional[StrictStr] = Query(
+        None, description="", alias="additionalMetadata"
     ),
+    body: Optional[Union[StrictBytes, StrictStr, Tuple[StrictStr, StrictBytes]]] = Body(
+        None, description=""
+    ),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> ApiResponse:
     if not BasePetApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BasePetApi.subclasses[0]().upload_pet_image(petId, additional_metadata, body)
+    return await BasePetApi.subclasses[0]().upload_pet_image(
+        petId, additional_metadata, body
+    )

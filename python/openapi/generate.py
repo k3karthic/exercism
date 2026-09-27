@@ -94,6 +94,19 @@ def _normalize_fastapi_query_types(package: Path) -> None:
         api_file.write_text("".join(normalized_lines), encoding="utf-8")
 
 
+def _remove_generated_import_conflicts(package: Path) -> None:
+    for api_file in package.rglob("*_api.py"):
+        source = api_file.read_text(encoding="utf-8")
+        if api_file.parent.name == "api":
+            source = source.replace(
+                "from openapi.generated.client.models.api_response import ApiResponse\n",
+                "",
+            )
+        elif api_file.parent.name == "apis":
+            source = source.replace("    status,\n", "")
+        api_file.write_text(source, encoding="utf-8")
+
+
 def _normalize_generated_whitespace(package: Path) -> None:
     for generated_file in package.rglob("*.py"):
         lines = generated_file.read_text(encoding="utf-8").splitlines()
@@ -105,6 +118,12 @@ def _normalize_generated_whitespace(package: Path) -> None:
 
 def _normalize_fastapi_server(package: Path) -> None:
     _normalize_fastapi_query_types(package)
+    _remove_generated_import_conflicts(package)
+    _normalize_generated_whitespace(package)
+
+
+def _normalize_python_client(package: Path) -> None:
+    _remove_generated_import_conflicts(package)
     _normalize_generated_whitespace(package)
 
 
@@ -129,7 +148,7 @@ def generate() -> None:
         package_name="openapi.generated.client",
         target=GENERATED_ROOT / "client",
         additional_properties={},
-        postprocess=_normalize_generated_whitespace,
+        postprocess=_normalize_python_client,
     )
 
 

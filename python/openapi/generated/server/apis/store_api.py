@@ -19,12 +19,11 @@ from fastapi import (  # noqa: F401
     Query,
     Response,
     Security,
-    status,
 )
 
 from openapi.generated.server.models.extra_models import TokenModel  # noqa: F401
 from pydantic import StrictInt
-from typing import Any, Dict, Optional
+from typing import Optional
 from openapi.generated.server.models.error_response import ErrorResponse
 from openapi.generated.server.models.order import Order
 from openapi.generated.server.models.order_search_criteria import OrderSearchCriteria
@@ -47,9 +46,7 @@ for _, name, _ in pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + "."):
     response_model_by_alias=True,
 )
 async def get_inventory(
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Dict[str, int]:
     if not BaseStoreApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -65,11 +62,8 @@ async def get_inventory(
     response_model_by_alias=True,
 )
 async def place_order(
-    order: Order = Body(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    order: Order = Body(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Order:
     if not BaseStoreApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -85,19 +79,16 @@ async def place_order(
     response_model_by_alias=True,
 )
 async def search_orders(
-    order_search_criteria: OrderSearchCriteria = Body(..., description="")
-,
-    page: Optional[int] = Query(1, description="", alias="page")
-,
-    page_size: Optional[int] = Query(20, description="", alias="pageSize")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    order_search_criteria: OrderSearchCriteria = Body(..., description=""),
+    page: Optional[int] = Query(1, description="", alias="page"),
+    page_size: Optional[int] = Query(20, description="", alias="pageSize"),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> OrderSearchResults:
     if not BaseStoreApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
-    return await BaseStoreApi.subclasses[0]().search_orders(order_search_criteria, page, page_size)
+    return await BaseStoreApi.subclasses[0]().search_orders(
+        order_search_criteria, page, page_size
+    )
 
 
 @router.get(
@@ -110,11 +101,8 @@ async def search_orders(
     response_model_by_alias=True,
 )
 async def get_order_by_id(
-    orderId: StrictInt = Path(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    orderId: StrictInt = Path(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> Order:
     if not BaseStoreApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
@@ -131,11 +119,8 @@ async def get_order_by_id(
     response_model_by_alias=True,
 )
 async def delete_order(
-    orderId: StrictInt = Path(..., description="")
-,
-    token_api_key: TokenModel = Security(
-        get_token_api_key
-    ),
+    orderId: StrictInt = Path(..., description=""),
+    token_api_key: TokenModel = Security(get_token_api_key),
 ) -> object:
     if not BaseStoreApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
