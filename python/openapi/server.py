@@ -5,11 +5,11 @@ from contextlib import asynccontextmanager
 from typing import Any, Optional, Tuple, Union
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Security
+from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from openapi.database import get_session, init_db
+from openapi.database import get_session
 from openapi.generated.server.apis.pet_api_base import BasePetApi
 from openapi.generated.server.apis.store_api_base import BaseStoreApi
 from openapi.generated.server.main import app
@@ -40,15 +40,6 @@ from openapi.service import (
 __all__ = ["API_KEY", "app"]
 
 API_KEY = "some-api-key"
-
-
-@asynccontextmanager
-async def lifespan(application: FastAPI) -> AsyncIterator[None]:
-    await init_db()
-    yield
-
-
-app.router.lifespan_context = lifespan
 
 _api_key_header = APIKeyHeader(name="api_key", auto_error=False)
 

@@ -17,8 +17,13 @@ In another terminal run:
 
 ```bash
 DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres \
+  uv run alembic -c openapi/alembic.ini upgrade head
+DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres \
   uv run uvicorn openapi.server:app --reload
 ```
+
+Alembic manages the schema; the server no longer auto-creates tables at
+startup (`create_all` is reserved for the test suite's ephemeral database).
 
 To connect with `psql`:
 
@@ -48,9 +53,32 @@ Edit `../openapi/petstore.json` as the source of truth, then regenerate.
 The search operations use `POST` with JSON request bodies, as defined in the
 OpenAPI spec.
 
+## Database schema migrations
+
+[Alembic](https://alembic.sqlalchemy.org/) manages the `pet`/`order` table
+schema, using the SQLAlchemy models in `database.py` as the single source of
+truth (`openapi/alembic/env.py` autogenerates diffs against `Base.metadata`).
+`create_all` is only used by the test suite's ephemeral Testcontainers
+database; the running server relies exclusively on applied migrations.
+`alembic.ini` lives in this directory (`openapi/`) rather than at the
+`python/` root, so other exercises can configure their own Alembic setups
+independently. From `python/`:
+
+```bash
+# apply all pending migrations (creates the pet/order tables on a fresh database)
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/petstore \
+  uv run alembic -c openapi/alembic.ini upgrade head
+
+# after changing a model in database.py, generate a new revision
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/petstore \
+  uv run alembic -c openapi/alembic.ini revision --autogenerate -m "describe the change"
+```
+
+Revisions live under `openapi/alembic/versions/`.
+
 The shared `Pet.tags` schema uses Tag objects (`{"id": 1, "name": "friendly"}`).
-Before starting the updated server against a database created by the older
-string-array schema, run the migration once:
+Databases created before Alembic was adopted, with the older string-array
+schema, need a one-time manual migration:
 
 ```bash
 psql -h localhost -U postgres -d petstore \
@@ -58,7 +86,8 @@ psql -h localhost -U postgres -d petstore \
 ```
 
 The migration preserves each existing tag name as a Tag object without an ID.
-New installations use the JSONB schema directly.
+New installations created via `alembic upgrade head` use the JSONB schema
+directly and do not need this script.
 
 ## Call the server through the generated client
 
