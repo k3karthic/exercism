@@ -21,7 +21,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "******localhost:5432/petstore",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/petstore",
 )
 
 
