@@ -76,6 +76,9 @@ async function adaptGeneratedServer(serverPath: string): Promise<void> {
     );
   }
 
+  // The generated controller never forwards the raw request body for this
+  // operation, so uploadPetImage's service call is always missing image
+  // bytes. Patch the handler to pass `request.body` through explicitly.
   await replaceText(
     join(serverPath, "controllers", "PetController.js"),
     `const uploadPetImage = async (request, response) => {
@@ -88,11 +91,17 @@ async function adaptGeneratedServer(serverPath: string): Promise<void> {
 };`,
   );
 
+  // `js-yaml.safeLoad` was removed in js-yaml v4 (in favor of `load`, which
+  // is safe by default), but the generator template still emits the old API
+  // name, so calling it throws at startup unless it's rewritten.
   await replaceText(
     join(serverPath, "expressServer.js"),
     "jsYaml.safeLoad(",
     "jsYaml.load(",
   );
+  // The handwritten app.ts wrapper already registers express.json() before
+  // mounting the generated server. Removing the generator's own duplicate
+  // registration avoids double body-parsing/registration conflicts.
   await replaceText(
     join(serverPath, "expressServer.js"),
     "    this.app.use(express.json());\n",
