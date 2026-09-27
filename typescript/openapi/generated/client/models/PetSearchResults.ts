@@ -13,14 +13,14 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
-import type { Pet } from './Pet.ts';
+import { mapValues } from "../runtime.ts";
+import type { Pet } from "./Pet.ts";
 import {
-    PetFromJSON,
-    PetFromJSONTyped,
-    PetToJSON,
-    PetToJSONTyped,
-} from './Pet.ts';
+  PetFromJSON,
+  PetFromJSONTyped,
+  PetToJSON,
+  PetToJSONTyped,
+} from "./Pet.ts";
 
 /**
  *
@@ -28,73 +28,79 @@ import {
  * @interface PetSearchResults
  */
 export interface PetSearchResults {
-    /**
-     *
-     */
-    results: Array<Pet>;
-    /**
-     *
-     */
-    total: number;
-    /**
-     *
-     */
-    limit: number;
-    /**
-     *
-     */
-    offset: number;
-    /**
-     *
-     */
-    hasMore: boolean;
+  /**
+   *
+   */
+  results: Array<Pet>;
+  /**
+   *
+   */
+  total: number;
+  /**
+   *
+   */
+  limit: number;
+  /**
+   *
+   */
+  offset: number;
+  /**
+   *
+   */
+  hasMore: boolean;
 }
 
 /**
  * Check if a given object implements the PetSearchResults interface.
  */
-export function instanceOfPetSearchResults(value: object): value is PetSearchResults {
-    if (!('results' in value) || value['results'] === undefined) return false;
-    if (!('total' in value) || value['total'] === undefined) return false;
-    if (!('limit' in value) || value['limit'] === undefined) return false;
-    if (!('offset' in value) || value['offset'] === undefined) return false;
-    if (!('hasMore' in value) || value['hasMore'] === undefined) return false;
-    return true;
+export function instanceOfPetSearchResults(
+  value: object,
+): value is PetSearchResults {
+  if (!("results" in value) || value["results"] === undefined) return false;
+  if (!("total" in value) || value["total"] === undefined) return false;
+  if (!("limit" in value) || value["limit"] === undefined) return false;
+  if (!("offset" in value) || value["offset"] === undefined) return false;
+  if (!("hasMore" in value) || value["hasMore"] === undefined) return false;
+  return true;
 }
 
 export function PetSearchResultsFromJSON(json: any): PetSearchResults {
-    return PetSearchResultsFromJSONTyped(json, false);
+  return PetSearchResultsFromJSONTyped(json, false);
 }
 
-export function PetSearchResultsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetSearchResults {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'results': ((json['results'] as Array<any>).map(PetFromJSON)),
-        'total': json['total'],
-        'limit': json['limit'],
-        'offset': json['offset'],
-        'hasMore': json['hasMore'],
-    };
+export function PetSearchResultsFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): PetSearchResults {
+  if (json == null) {
+    return json;
+  }
+  return {
+    results: (json["results"] as Array<any>).map(PetFromJSON),
+    total: json["total"],
+    limit: json["limit"],
+    offset: json["offset"],
+    hasMore: json["hasMore"],
+  };
 }
 
 export function PetSearchResultsToJSON(json: any): PetSearchResults {
-    return PetSearchResultsToJSONTyped(json, false);
+  return PetSearchResultsToJSONTyped(json, false);
 }
 
-export function PetSearchResultsToJSONTyped(value?: PetSearchResults | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function PetSearchResultsToJSONTyped(
+  value?: PetSearchResults | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'results': ((value['results'] as Array<any>).map(PetToJSON)),
-        'total': value['total'],
-        'limit': value['limit'],
-        'offset': value['offset'],
-        'hasMore': value['hasMore'],
-    };
+  return {
+    results: (value["results"] as Array<any>).map(PetToJSON),
+    total: value["total"],
+    limit: value["limit"],
+    offset: value["offset"],
+    hasMore: value["hasMore"],
+  };
 }

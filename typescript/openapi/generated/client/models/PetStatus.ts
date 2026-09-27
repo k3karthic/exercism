@@ -19,35 +19,40 @@
  * @enum {string}
  */
 export enum PetStatus {
-    Available = 'available',
-    Pending = 'pending',
-    Sold = 'sold'
+  Available = "available",
+  Pending = "pending",
+  Sold = "sold",
 }
 
-
 export function instanceOfPetStatus(value: any): boolean {
-    for (const key in PetStatus) {
-        if (Object.prototype.hasOwnProperty.call(PetStatus, key)) {
-            if (PetStatus[key as keyof typeof PetStatus] === value) {
-                return true;
-            }
-        }
+  for (const key in PetStatus) {
+    if (Object.prototype.hasOwnProperty.call(PetStatus, key)) {
+      if (PetStatus[key as keyof typeof PetStatus] === value) {
+        return true;
+      }
     }
-    return false;
+  }
+  return false;
 }
 
 export function PetStatusFromJSON(json: any): PetStatus {
-    return PetStatusFromJSONTyped(json, false);
+  return PetStatusFromJSONTyped(json, false);
 }
 
-export function PetStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetStatus {
-    return json as PetStatus;
+export function PetStatusFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): PetStatus {
+  return json as PetStatus;
 }
 
 export function PetStatusToJSON(value?: PetStatus | null): any {
-    return value as any;
+  return value as any;
 }
 
-export function PetStatusToJSONTyped(value: any, ignoreDiscriminator: boolean): PetStatus {
-    return value as PetStatus;
+export function PetStatusToJSONTyped(
+  value: any,
+  ignoreDiscriminator: boolean,
+): PetStatus {
+  return value as PetStatus;
 }

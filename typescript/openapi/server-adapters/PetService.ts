@@ -54,11 +54,7 @@ export function updatePet({ pet }: { pet: Pet }): Pet {
   return updated;
 }
 
-export function findPetsByStatus({
-  status,
-}: {
-  status?: PetStatus;
-}): Pet[] {
+export function findPetsByStatus({ status }: { status?: PetStatus }): Pet[] {
   return petStore.findPetsByStatus(status ?? ("available" as PetStatus));
 }
 
@@ -108,7 +104,7 @@ export function uploadPetImage({
   if (petStore.getPet(petId) === undefined) {
     throw new PetNotFoundError();
   }
-  const length = Buffer.isBuffer(body) ? body.length : body?.length ?? 0;
+  const length = Buffer.isBuffer(body) ? body.length : (body?.length ?? 0);
   return {
     code: 200,
     type: "unknown",

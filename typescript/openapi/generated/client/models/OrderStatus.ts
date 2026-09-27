@@ -19,35 +19,40 @@
  * @enum {string}
  */
 export enum OrderStatus {
-    Placed = 'placed',
-    Approved = 'approved',
-    Delivered = 'delivered'
+  Placed = "placed",
+  Approved = "approved",
+  Delivered = "delivered",
 }
 
-
 export function instanceOfOrderStatus(value: any): boolean {
-    for (const key in OrderStatus) {
-        if (Object.prototype.hasOwnProperty.call(OrderStatus, key)) {
-            if (OrderStatus[key as keyof typeof OrderStatus] === value) {
-                return true;
-            }
-        }
+  for (const key in OrderStatus) {
+    if (Object.prototype.hasOwnProperty.call(OrderStatus, key)) {
+      if (OrderStatus[key as keyof typeof OrderStatus] === value) {
+        return true;
+      }
     }
-    return false;
+  }
+  return false;
 }
 
 export function OrderStatusFromJSON(json: any): OrderStatus {
-    return OrderStatusFromJSONTyped(json, false);
+  return OrderStatusFromJSONTyped(json, false);
 }
 
-export function OrderStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderStatus {
-    return json as OrderStatus;
+export function OrderStatusFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): OrderStatus {
+  return json as OrderStatus;
 }
 
 export function OrderStatusToJSON(value?: OrderStatus | null): any {
-    return value as any;
+  return value as any;
 }
 
-export function OrderStatusToJSONTyped(value: any, ignoreDiscriminator: boolean): OrderStatus {
-    return value as OrderStatus;
+export function OrderStatusToJSONTyped(
+  value: any,
+  ignoreDiscriminator: boolean,
+): OrderStatus {
+  return value as OrderStatus;
 }

@@ -13,63 +13,69 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface ModelApiResponse
  */
 export interface ModelApiResponse {
-    /**
-     *
-     */
-    code?: number;
-    /**
-     *
-     */
-    type?: string;
-    /**
-     *
-     */
-    message?: string;
+  /**
+   *
+   */
+  code?: number;
+  /**
+   *
+   */
+  type?: string;
+  /**
+   *
+   */
+  message?: string;
 }
 
 /**
  * Check if a given object implements the ModelApiResponse interface.
  */
-export function instanceOfModelApiResponse(value: object): value is ModelApiResponse {
-    return true;
+export function instanceOfModelApiResponse(
+  value: object,
+): value is ModelApiResponse {
+  return true;
 }
 
 export function ModelApiResponseFromJSON(json: any): ModelApiResponse {
-    return ModelApiResponseFromJSONTyped(json, false);
+  return ModelApiResponseFromJSONTyped(json, false);
 }
 
-export function ModelApiResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelApiResponse {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'code': json['code'] == null ? undefined : json['code'],
-        'type': json['type'] == null ? undefined : json['type'],
-        'message': json['message'] == null ? undefined : json['message'],
-    };
+export function ModelApiResponseFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): ModelApiResponse {
+  if (json == null) {
+    return json;
+  }
+  return {
+    code: json["code"] == null ? undefined : json["code"],
+    type: json["type"] == null ? undefined : json["type"],
+    message: json["message"] == null ? undefined : json["message"],
+  };
 }
 
 export function ModelApiResponseToJSON(json: any): ModelApiResponse {
-    return ModelApiResponseToJSONTyped(json, false);
+  return ModelApiResponseToJSONTyped(json, false);
 }
 
-export function ModelApiResponseToJSONTyped(value?: ModelApiResponse | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function ModelApiResponseToJSONTyped(
+  value?: ModelApiResponse | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'code': value['code'],
-        'type': value['type'],
-        'message': value['message'],
-    };
+  return {
+    code: value["code"],
+    type: value["type"],
+    message: value["message"],
+  };
 }

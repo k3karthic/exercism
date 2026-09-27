@@ -13,73 +13,85 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface OrderSearchResultsPagination
  */
 export interface OrderSearchResultsPagination {
-    /**
-     *
-     */
-    totalResults: number;
-    /**
-     *
-     */
-    totalPages: number;
-    /**
-     *
-     */
-    pageSize: number;
-    /**
-     *
-     */
-    page: number;
+  /**
+   *
+   */
+  totalResults: number;
+  /**
+   *
+   */
+  totalPages: number;
+  /**
+   *
+   */
+  pageSize: number;
+  /**
+   *
+   */
+  page: number;
 }
 
 /**
  * Check if a given object implements the OrderSearchResultsPagination interface.
  */
-export function instanceOfOrderSearchResultsPagination(value: object): value is OrderSearchResultsPagination {
-    if (!('totalResults' in value) || value['totalResults'] === undefined) return false;
-    if (!('totalPages' in value) || value['totalPages'] === undefined) return false;
-    if (!('pageSize' in value) || value['pageSize'] === undefined) return false;
-    if (!('page' in value) || value['page'] === undefined) return false;
-    return true;
+export function instanceOfOrderSearchResultsPagination(
+  value: object,
+): value is OrderSearchResultsPagination {
+  if (!("totalResults" in value) || value["totalResults"] === undefined)
+    return false;
+  if (!("totalPages" in value) || value["totalPages"] === undefined)
+    return false;
+  if (!("pageSize" in value) || value["pageSize"] === undefined) return false;
+  if (!("page" in value) || value["page"] === undefined) return false;
+  return true;
 }
 
-export function OrderSearchResultsPaginationFromJSON(json: any): OrderSearchResultsPagination {
-    return OrderSearchResultsPaginationFromJSONTyped(json, false);
+export function OrderSearchResultsPaginationFromJSON(
+  json: any,
+): OrderSearchResultsPagination {
+  return OrderSearchResultsPaginationFromJSONTyped(json, false);
 }
 
-export function OrderSearchResultsPaginationFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderSearchResultsPagination {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'totalResults': json['totalResults'],
-        'totalPages': json['totalPages'],
-        'pageSize': json['pageSize'],
-        'page': json['page'],
-    };
+export function OrderSearchResultsPaginationFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): OrderSearchResultsPagination {
+  if (json == null) {
+    return json;
+  }
+  return {
+    totalResults: json["totalResults"],
+    totalPages: json["totalPages"],
+    pageSize: json["pageSize"],
+    page: json["page"],
+  };
 }
 
-export function OrderSearchResultsPaginationToJSON(json: any): OrderSearchResultsPagination {
-    return OrderSearchResultsPaginationToJSONTyped(json, false);
+export function OrderSearchResultsPaginationToJSON(
+  json: any,
+): OrderSearchResultsPagination {
+  return OrderSearchResultsPaginationToJSONTyped(json, false);
 }
 
-export function OrderSearchResultsPaginationToJSONTyped(value?: OrderSearchResultsPagination | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function OrderSearchResultsPaginationToJSONTyped(
+  value?: OrderSearchResultsPagination | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'totalResults': value['totalResults'],
-        'totalPages': value['totalPages'],
-        'pageSize': value['pageSize'],
-        'page': value['page'],
-    };
+  return {
+    totalResults: value["totalResults"],
+    totalPages: value["totalPages"],
+    pageSize: value["pageSize"],
+    page: value["page"],
+  };
 }

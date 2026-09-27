@@ -13,21 +13,21 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
-import type { Order } from './Order.ts';
+import { mapValues } from "../runtime.ts";
+import type { Order } from "./Order.ts";
 import {
-    OrderFromJSON,
-    OrderFromJSONTyped,
-    OrderToJSON,
-    OrderToJSONTyped,
-} from './Order.ts';
-import type { OrderSearchResultsPagination } from './OrderSearchResultsPagination.ts';
+  OrderFromJSON,
+  OrderFromJSONTyped,
+  OrderToJSON,
+  OrderToJSONTyped,
+} from "./Order.ts";
+import type { OrderSearchResultsPagination } from "./OrderSearchResultsPagination.ts";
 import {
-    OrderSearchResultsPaginationFromJSON,
-    OrderSearchResultsPaginationFromJSONTyped,
-    OrderSearchResultsPaginationToJSON,
-    OrderSearchResultsPaginationToJSONTyped,
-} from './OrderSearchResultsPagination.ts';
+  OrderSearchResultsPaginationFromJSON,
+  OrderSearchResultsPaginationFromJSONTyped,
+  OrderSearchResultsPaginationToJSON,
+  OrderSearchResultsPaginationToJSONTyped,
+} from "./OrderSearchResultsPagination.ts";
 
 /**
  *
@@ -35,52 +35,59 @@ import {
  * @interface OrderSearchResults
  */
 export interface OrderSearchResults {
-    /**
-     *
-     */
-    orders: Array<Order>;
-    /**
-     *
-     */
-    pagination: OrderSearchResultsPagination;
+  /**
+   *
+   */
+  orders: Array<Order>;
+  /**
+   *
+   */
+  pagination: OrderSearchResultsPagination;
 }
 
 /**
  * Check if a given object implements the OrderSearchResults interface.
  */
-export function instanceOfOrderSearchResults(value: object): value is OrderSearchResults {
-    if (!('orders' in value) || value['orders'] === undefined) return false;
-    if (!('pagination' in value) || value['pagination'] === undefined) return false;
-    return true;
+export function instanceOfOrderSearchResults(
+  value: object,
+): value is OrderSearchResults {
+  if (!("orders" in value) || value["orders"] === undefined) return false;
+  if (!("pagination" in value) || value["pagination"] === undefined)
+    return false;
+  return true;
 }
 
 export function OrderSearchResultsFromJSON(json: any): OrderSearchResults {
-    return OrderSearchResultsFromJSONTyped(json, false);
+  return OrderSearchResultsFromJSONTyped(json, false);
 }
 
-export function OrderSearchResultsFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderSearchResults {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'orders': ((json['orders'] as Array<any>).map(OrderFromJSON)),
-        'pagination': OrderSearchResultsPaginationFromJSON(json['pagination']),
-    };
+export function OrderSearchResultsFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): OrderSearchResults {
+  if (json == null) {
+    return json;
+  }
+  return {
+    orders: (json["orders"] as Array<any>).map(OrderFromJSON),
+    pagination: OrderSearchResultsPaginationFromJSON(json["pagination"]),
+  };
 }
 
 export function OrderSearchResultsToJSON(json: any): OrderSearchResults {
-    return OrderSearchResultsToJSONTyped(json, false);
+  return OrderSearchResultsToJSONTyped(json, false);
 }
 
-export function OrderSearchResultsToJSONTyped(value?: OrderSearchResults | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function OrderSearchResultsToJSONTyped(
+  value?: OrderSearchResults | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'orders': ((value['orders'] as Array<any>).map(OrderToJSON)),
-        'pagination': OrderSearchResultsPaginationToJSON(value['pagination']),
-    };
+  return {
+    orders: (value["orders"] as Array<any>).map(OrderToJSON),
+    pagination: OrderSearchResultsPaginationToJSON(value["pagination"]),
+  };
 }

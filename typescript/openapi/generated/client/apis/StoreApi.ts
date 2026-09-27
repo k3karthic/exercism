@@ -13,306 +13,354 @@
  * Do not edit the class manually.
  */
 
-import * as runtime from '../runtime.ts';
+import * as runtime from "../runtime.ts";
 import {
-    type ErrorResponse,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
-} from '../models/ErrorResponse.ts';
+  type ErrorResponse,
+  ErrorResponseFromJSON,
+  ErrorResponseToJSON,
+} from "../models/ErrorResponse.ts";
+import { type Order, OrderFromJSON, OrderToJSON } from "../models/Order.ts";
 import {
-    type Order,
-    OrderFromJSON,
-    OrderToJSON,
-} from '../models/Order.ts';
+  type OrderSearchCriteria,
+  OrderSearchCriteriaFromJSON,
+  OrderSearchCriteriaToJSON,
+} from "../models/OrderSearchCriteria.ts";
 import {
-    type OrderSearchCriteria,
-    OrderSearchCriteriaFromJSON,
-    OrderSearchCriteriaToJSON,
-} from '../models/OrderSearchCriteria.ts';
-import {
-    type OrderSearchResults,
-    OrderSearchResultsFromJSON,
-    OrderSearchResultsToJSON,
-} from '../models/OrderSearchResults.ts';
+  type OrderSearchResults,
+  OrderSearchResultsFromJSON,
+  OrderSearchResultsToJSON,
+} from "../models/OrderSearchResults.ts";
 
 export interface DeleteOrderRequest {
-    /**
-     *
-     */
-    orderId: number;
+  /**
+   *
+   */
+  orderId: number;
 }
 
 export interface GetOrderByIdRequest {
-    /**
-     *
-     */
-    orderId: number;
+  /**
+   *
+   */
+  orderId: number;
 }
 
 export interface PlaceOrderRequest {
-    /**
-     *
-     */
-    order: Order;
+  /**
+   *
+   */
+  order: Order;
 }
 
 export interface SearchOrdersRequest {
-    /**
-     *
-     */
-    orderSearchCriteria: OrderSearchCriteria;
-    /**
-     *
-     */
-    page?: number;
-    /**
-     *
-     */
-    pageSize?: number;
+  /**
+   *
+   */
+  orderSearchCriteria: OrderSearchCriteria;
+  /**
+   *
+   */
+  page?: number;
+  /**
+   *
+   */
+  pageSize?: number;
 }
 
 /**
  *
  */
 export class StoreApi extends runtime.BaseAPI {
-
-    /**
-     * Creates request options for deleteOrder without sending the request
-     */
-    async deleteOrderRequestOpts(requestParameters: DeleteOrderRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['orderId'] == null) {
-            throw new runtime.RequiredError(
-                'orderId',
-                'Required parameter "orderId" was null or undefined when calling deleteOrder().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
-        }
-
-
-        let urlPath = `/store/order/{orderId}`;
-        urlPath = urlPath.replace('{orderId}', encodeURIComponent(String(requestParameters['orderId'])));
-
-        return {
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        };
+  /**
+   * Creates request options for deleteOrder without sending the request
+   */
+  async deleteOrderRequestOpts(
+    requestParameters: DeleteOrderRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["orderId"] == null) {
+      throw new runtime.RequiredError(
+        "orderId",
+        'Required parameter "orderId" was null or undefined when calling deleteOrder().',
+      );
     }
 
-    /**
-     */
-    async deleteOrderRaw(requestParameters: DeleteOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<object>> {
-        const requestOptions = await this.deleteOrderRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+    const queryParameters: any = {};
 
-        return new runtime.JSONApiResponse<any>(response);
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
     }
 
-    /**
-     */
-    async deleteOrder(requestParameters: DeleteOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<object> {
-        const response = await this.deleteOrderRaw(requestParameters, initOverrides);
-        return await response.value();
+    let urlPath = `/store/order/{orderId}`;
+    urlPath = urlPath.replace(
+      "{orderId}",
+      encodeURIComponent(String(requestParameters["orderId"])),
+    );
+
+    return {
+      path: urlPath,
+      method: "DELETE",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async deleteOrderRaw(
+    requestParameters: DeleteOrderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<object>> {
+    const requestOptions = await this.deleteOrderRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse<any>(response);
+  }
+
+  /**
+   */
+  async deleteOrder(
+    requestParameters: DeleteOrderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<object> {
+    const response = await this.deleteOrderRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for getInventory without sending the request
+   */
+  async getInventoryRequestOpts(): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
     }
 
-    /**
-     * Creates request options for getInventory without sending the request
-     */
-    async getInventoryRequestOpts(): Promise<runtime.RequestOpts> {
-        const queryParameters: any = {};
+    let urlPath = `/store/inventory`;
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
 
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
-        }
+  /**
+   */
+  async getInventoryRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<{ [key: string]: number }>> {
+    const requestOptions = await this.getInventoryRequestOpts();
+    const response = await this.request(requestOptions, initOverrides);
 
+    return new runtime.JSONApiResponse<any>(response);
+  }
 
-        let urlPath = `/store/inventory`;
+  /**
+   */
+  async getInventory(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<{ [key: string]: number }> {
+    const response = await this.getInventoryRaw(initOverrides);
+    return await response.value();
+  }
 
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
+  /**
+   * Creates request options for getOrderById without sending the request
+   */
+  async getOrderByIdRequestOpts(
+    requestParameters: GetOrderByIdRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["orderId"] == null) {
+      throw new runtime.RequiredError(
+        "orderId",
+        'Required parameter "orderId" was null or undefined when calling getOrderById().',
+      );
     }
 
-    /**
-     */
-    async getInventoryRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<{ [key: string]: number; }>> {
-        const requestOptions = await this.getInventoryRequestOpts();
-        const response = await this.request(requestOptions, initOverrides);
+    const queryParameters: any = {};
 
-        return new runtime.JSONApiResponse<any>(response);
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
     }
 
-    /**
-     */
-    async getInventory(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: number; }> {
-        const response = await this.getInventoryRaw(initOverrides);
-        return await response.value();
+    let urlPath = `/store/order/{orderId}`;
+    urlPath = urlPath.replace(
+      "{orderId}",
+      encodeURIComponent(String(requestParameters["orderId"])),
+    );
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async getOrderByIdRaw(
+    requestParameters: GetOrderByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Order>> {
+    const requestOptions =
+      await this.getOrderByIdRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      OrderFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   */
+  async getOrderById(
+    requestParameters: GetOrderByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Order> {
+    const response = await this.getOrderByIdRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for placeOrder without sending the request
+   */
+  async placeOrderRequestOpts(
+    requestParameters: PlaceOrderRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["order"] == null) {
+      throw new runtime.RequiredError(
+        "order",
+        'Required parameter "order" was null or undefined when calling placeOrder().',
+      );
     }
 
-    /**
-     * Creates request options for getOrderById without sending the request
-     */
-    async getOrderByIdRequestOpts(requestParameters: GetOrderByIdRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['orderId'] == null) {
-            throw new runtime.RequiredError(
-                'orderId',
-                'Required parameter "orderId" was null or undefined when calling getOrderById().'
-            );
-        }
+    const queryParameters: any = {};
 
-        const queryParameters: any = {};
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    headerParameters["Content-Type"] = "application/json";
 
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
-        }
-
-
-        let urlPath = `/store/order/{orderId}`;
-        urlPath = urlPath.replace('{orderId}', encodeURIComponent(String(requestParameters['orderId'])));
-
-        return {
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        };
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
     }
 
-    /**
-     */
-    async getOrderByIdRaw(requestParameters: GetOrderByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Order>> {
-        const requestOptions = await this.getOrderByIdRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+    let urlPath = `/store/order`;
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => OrderFromJSON(jsonValue));
+    return {
+      path: urlPath,
+      method: "POST",
+      headers: headerParameters,
+      query: queryParameters,
+      body: OrderToJSON(requestParameters["order"]),
+    };
+  }
+
+  /**
+   */
+  async placeOrderRaw(
+    requestParameters: PlaceOrderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Order>> {
+    const requestOptions = await this.placeOrderRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      OrderFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   */
+  async placeOrder(
+    requestParameters: PlaceOrderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Order> {
+    const response = await this.placeOrderRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for searchOrders without sending the request
+   */
+  async searchOrdersRequestOpts(
+    requestParameters: SearchOrdersRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["orderSearchCriteria"] == null) {
+      throw new runtime.RequiredError(
+        "orderSearchCriteria",
+        'Required parameter "orderSearchCriteria" was null or undefined when calling searchOrders().',
+      );
     }
 
-    /**
-     */
-    async getOrderById(requestParameters: GetOrderByIdRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Order> {
-        const response = await this.getOrderByIdRaw(requestParameters, initOverrides);
-        return await response.value();
+    const queryParameters: any = {};
+
+    if (requestParameters["page"] != null) {
+      queryParameters["page"] = requestParameters["page"];
     }
 
-    /**
-     * Creates request options for placeOrder without sending the request
-     */
-    async placeOrderRequestOpts(requestParameters: PlaceOrderRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['order'] == null) {
-            throw new runtime.RequiredError(
-                'order',
-                'Required parameter "order" was null or undefined when calling placeOrder().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
-        }
-
-
-        let urlPath = `/store/order`;
-
-        return {
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OrderToJSON(requestParameters['order']),
-        };
+    if (requestParameters["pageSize"] != null) {
+      queryParameters["pageSize"] = requestParameters["pageSize"];
     }
 
-    /**
-     */
-    async placeOrderRaw(requestParameters: PlaceOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Order>> {
-        const requestOptions = await this.placeOrderRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => OrderFromJSON(jsonValue));
+    headerParameters["Content-Type"] = "application/json";
+
+    if (this.configuration && this.configuration.apiKey) {
+      headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
     }
 
-    /**
-     */
-    async placeOrder(requestParameters: PlaceOrderRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Order> {
-        const response = await this.placeOrderRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
+    let urlPath = `/store/order/search`;
 
-    /**
-     * Creates request options for searchOrders without sending the request
-     */
-    async searchOrdersRequestOpts(requestParameters: SearchOrdersRequest): Promise<runtime.RequestOpts> {
-        if (requestParameters['orderSearchCriteria'] == null) {
-            throw new runtime.RequiredError(
-                'orderSearchCriteria',
-                'Required parameter "orderSearchCriteria" was null or undefined when calling searchOrders().'
-            );
-        }
+    return {
+      path: urlPath,
+      method: "POST",
+      headers: headerParameters,
+      query: queryParameters,
+      body: OrderSearchCriteriaToJSON(requestParameters["orderSearchCriteria"]),
+    };
+  }
 
-        const queryParameters: any = {};
+  /**
+   */
+  async searchOrdersRaw(
+    requestParameters: SearchOrdersRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<OrderSearchResults>> {
+    const requestOptions =
+      await this.searchOrdersRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
 
-        if (requestParameters['page'] != null) {
-            queryParameters['page'] = requestParameters['page'];
-        }
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      OrderSearchResultsFromJSON(jsonValue),
+    );
+  }
 
-        if (requestParameters['pageSize'] != null) {
-            queryParameters['pageSize'] = requestParameters['pageSize'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["api_key"] = await this.configuration.apiKey("api_key"); // api_key authentication
-        }
-
-
-        let urlPath = `/store/order/search`;
-
-        return {
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: OrderSearchCriteriaToJSON(requestParameters['orderSearchCriteria']),
-        };
-    }
-
-    /**
-     */
-    async searchOrdersRaw(requestParameters: SearchOrdersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderSearchResults>> {
-        const requestOptions = await this.searchOrdersRequestOpts(requestParameters);
-        const response = await this.request(requestOptions, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => OrderSearchResultsFromJSON(jsonValue));
-    }
-
-    /**
-     */
-    async searchOrders(requestParameters: SearchOrdersRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderSearchResults> {
-        const response = await this.searchOrdersRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
+  /**
+   */
+  async searchOrders(
+    requestParameters: SearchOrdersRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<OrderSearchResults> {
+    const response = await this.searchOrdersRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
 }

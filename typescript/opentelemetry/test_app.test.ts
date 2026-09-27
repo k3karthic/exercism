@@ -12,9 +12,7 @@ import {
 const services: Array<Service1 | Service2> = [];
 
 afterEach(async () => {
-  await Promise.all(
-    services.map((service) => service.telemetry.shutdown()),
-  );
+  await Promise.all(services.map((service) => service.telemetry.shutdown()));
   services.length = 0;
 });
 

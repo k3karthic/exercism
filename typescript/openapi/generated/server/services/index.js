@@ -1,5 +1,5 @@
-const PetService = require('./PetService');
-const StoreService = require('./StoreService');
+const PetService = require("./PetService");
+const StoreService = require("./StoreService");
 
 module.exports = {
   PetService,

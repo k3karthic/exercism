@@ -13,57 +13,61 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface DateRange
  */
 export interface DateRange {
-    /**
-     *
-     */
-    from?: string;
-    /**
-     *
-     */
-    to?: string;
+  /**
+   *
+   */
+  from?: string;
+  /**
+   *
+   */
+  to?: string;
 }
 
 /**
  * Check if a given object implements the DateRange interface.
  */
 export function instanceOfDateRange(value: object): value is DateRange {
-    return true;
+  return true;
 }
 
 export function DateRangeFromJSON(json: any): DateRange {
-    return DateRangeFromJSONTyped(json, false);
+  return DateRangeFromJSONTyped(json, false);
 }
 
-export function DateRangeFromJSONTyped(json: any, ignoreDiscriminator: boolean): DateRange {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'from': json['from'] == null ? undefined : json['from'],
-        'to': json['to'] == null ? undefined : json['to'],
-    };
+export function DateRangeFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): DateRange {
+  if (json == null) {
+    return json;
+  }
+  return {
+    from: json["from"] == null ? undefined : json["from"],
+    to: json["to"] == null ? undefined : json["to"],
+  };
 }
 
 export function DateRangeToJSON(json: any): DateRange {
-    return DateRangeToJSONTyped(json, false);
+  return DateRangeToJSONTyped(json, false);
 }
 
-export function DateRangeToJSONTyped(value?: DateRange | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function DateRangeToJSONTyped(
+  value?: DateRange | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'from': value['from'],
-        'to': value['to'],
-    };
+  return {
+    from: value["from"],
+    to: value["to"],
+  };
 }

@@ -13,57 +13,61 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface QuantityRange
  */
 export interface QuantityRange {
-    /**
-     *
-     */
-    min?: number;
-    /**
-     *
-     */
-    max?: number;
+  /**
+   *
+   */
+  min?: number;
+  /**
+   *
+   */
+  max?: number;
 }
 
 /**
  * Check if a given object implements the QuantityRange interface.
  */
 export function instanceOfQuantityRange(value: object): value is QuantityRange {
-    return true;
+  return true;
 }
 
 export function QuantityRangeFromJSON(json: any): QuantityRange {
-    return QuantityRangeFromJSONTyped(json, false);
+  return QuantityRangeFromJSONTyped(json, false);
 }
 
-export function QuantityRangeFromJSONTyped(json: any, ignoreDiscriminator: boolean): QuantityRange {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'min': json['min'] == null ? undefined : json['min'],
-        'max': json['max'] == null ? undefined : json['max'],
-    };
+export function QuantityRangeFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): QuantityRange {
+  if (json == null) {
+    return json;
+  }
+  return {
+    min: json["min"] == null ? undefined : json["min"],
+    max: json["max"] == null ? undefined : json["max"],
+  };
 }
 
 export function QuantityRangeToJSON(json: any): QuantityRange {
-    return QuantityRangeToJSONTyped(json, false);
+  return QuantityRangeToJSONTyped(json, false);
 }
 
-export function QuantityRangeToJSONTyped(value?: QuantityRange | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function QuantityRangeToJSONTyped(
+  value?: QuantityRange | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'min': value['min'],
-        'max': value['max'],
-    };
+  return {
+    min: value["min"],
+    max: value["max"],
+  };
 }

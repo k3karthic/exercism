@@ -15,7 +15,10 @@ import { fileURLToPath } from "node:url";
 
 const OPENAPI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SPEC_PATH = join(OPENAPI_ROOT, "openapi", "petstore.json");
-const GENERATED_ROOT = join(dirname(fileURLToPath(import.meta.url)), "generated");
+const GENERATED_ROOT = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "generated",
+);
 
 interface GeneratedTarget {
   name: "server" | "client";
@@ -108,14 +111,20 @@ async function adaptGeneratedServer(serverPath: string): Promise<void> {
       if (!["get", "post", "put", "patch", "delete"].includes(method)) {
         continue;
       }
-      if (operation.operationId === undefined || operation.tags?.[0] === undefined) {
-        throw new Error(`OpenAPI operation is missing an operationId or tag: ${method}`);
+      if (
+        operation.operationId === undefined ||
+        operation.tags?.[0] === undefined
+      ) {
+        throw new Error(
+          `OpenAPI operation is missing an operationId or tag: ${method}`,
+        );
       }
       const controllerName = `${operation.tags[0]}Controller`;
       const methodName =
         operation.operationId.charAt(0).toLowerCase() +
         operation.operationId.slice(1);
-      const controllerAliases = aliases.get(controllerName) ?? new Set<string>();
+      const controllerAliases =
+        aliases.get(controllerName) ?? new Set<string>();
       controllerAliases.add(
         `module.exports.${operation.operationId} = ${methodName};`,
       );

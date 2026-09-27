@@ -13,14 +13,14 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
-import type { PetStatus } from './PetStatus.ts';
+import { mapValues } from "../runtime.ts";
+import type { PetStatus } from "./PetStatus.ts";
 import {
-    PetStatusFromJSON,
-    PetStatusFromJSONTyped,
-    PetStatusToJSON,
-    PetStatusToJSONTyped,
-} from './PetStatus.ts';
+  PetStatusFromJSON,
+  PetStatusFromJSONTyped,
+  PetStatusToJSON,
+  PetStatusToJSONTyped,
+} from "./PetStatus.ts";
 
 /**
  *
@@ -28,86 +28,97 @@ import {
  * @interface PetSearchCriteria
  */
 export interface PetSearchCriteria {
-    /**
-     *
-     */
-    name?: string;
-    /**
-     *
-     */
-    status?: Array<PetStatus>;
-    /**
-     *
-     */
-    tags?: Array<string>;
-    /**
-     *
-     */
-    sortBy?: PetSearchCriteriaSortByEnum;
-    /**
-     *
-     */
-    sortOrder?: PetSearchCriteriaSortOrderEnum;
+  /**
+   *
+   */
+  name?: string;
+  /**
+   *
+   */
+  status?: Array<PetStatus>;
+  /**
+   *
+   */
+  tags?: Array<string>;
+  /**
+   *
+   */
+  sortBy?: PetSearchCriteriaSortByEnum;
+  /**
+   *
+   */
+  sortOrder?: PetSearchCriteriaSortOrderEnum;
 }
 
 /**
-* @export
-* @enum {string}
-*/
+ * @export
+ * @enum {string}
+ */
 export enum PetSearchCriteriaSortByEnum {
-    Name = 'name',
-    Status = 'status'
+  Name = "name",
+  Status = "status",
 }
 /**
-* @export
-* @enum {string}
-*/
+ * @export
+ * @enum {string}
+ */
 export enum PetSearchCriteriaSortOrderEnum {
-    Asc = 'asc',
-    Desc = 'desc'
+  Asc = "asc",
+  Desc = "desc",
 }
-
 
 /**
  * Check if a given object implements the PetSearchCriteria interface.
  */
-export function instanceOfPetSearchCriteria(value: object): value is PetSearchCriteria {
-    return true;
+export function instanceOfPetSearchCriteria(
+  value: object,
+): value is PetSearchCriteria {
+  return true;
 }
 
 export function PetSearchCriteriaFromJSON(json: any): PetSearchCriteria {
-    return PetSearchCriteriaFromJSONTyped(json, false);
+  return PetSearchCriteriaFromJSONTyped(json, false);
 }
 
-export function PetSearchCriteriaFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetSearchCriteria {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'name': json['name'] == null ? undefined : json['name'],
-        'status': json['status'] == null ? undefined : ((json['status'] as Array<any>).map(PetStatusFromJSON)),
-        'tags': json['tags'] == null ? undefined : json['tags'],
-        'sortBy': json['sortBy'] == null ? undefined : json['sortBy'],
-        'sortOrder': json['sortOrder'] == null ? undefined : json['sortOrder'],
-    };
+export function PetSearchCriteriaFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): PetSearchCriteria {
+  if (json == null) {
+    return json;
+  }
+  return {
+    name: json["name"] == null ? undefined : json["name"],
+    status:
+      json["status"] == null
+        ? undefined
+        : (json["status"] as Array<any>).map(PetStatusFromJSON),
+    tags: json["tags"] == null ? undefined : json["tags"],
+    sortBy: json["sortBy"] == null ? undefined : json["sortBy"],
+    sortOrder: json["sortOrder"] == null ? undefined : json["sortOrder"],
+  };
 }
 
 export function PetSearchCriteriaToJSON(json: any): PetSearchCriteria {
-    return PetSearchCriteriaToJSONTyped(json, false);
+  return PetSearchCriteriaToJSONTyped(json, false);
 }
 
-export function PetSearchCriteriaToJSONTyped(value?: PetSearchCriteria | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function PetSearchCriteriaToJSONTyped(
+  value?: PetSearchCriteria | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'name': value['name'],
-        'status': value['status'] == null ? undefined : ((value['status'] as Array<any>).map(PetStatusToJSON)),
-        'tags': value['tags'],
-        'sortBy': value['sortBy'],
-        'sortOrder': value['sortOrder'],
-    };
+  return {
+    name: value["name"],
+    status:
+      value["status"] == null
+        ? undefined
+        : (value["status"] as Array<any>).map(PetStatusToJSON),
+    tags: value["tags"],
+    sortBy: value["sortBy"],
+    sortOrder: value["sortOrder"],
+  };
 }

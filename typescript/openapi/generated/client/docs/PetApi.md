@@ -1,26 +1,22 @@
 # PetApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to _http://localhost_
 
-| Method | HTTP request | Description |
-|------------- | ------------- | -------------|
-| [**addPet**](PetApi.md#addpet) | **POST** /pet |  |
-| [**deletePet**](PetApi.md#deletepet) | **DELETE** /pet/{petId} |  |
-| [**findPetsByStatus**](PetApi.md#findpetsbystatus) | **GET** /pet/findByStatus |  |
-| [**findPetsByTags**](PetApi.md#findpetsbytags) | **GET** /pet/findByTags |  |
-| [**getPetById**](PetApi.md#getpetbyid) | **GET** /pet/{petId} |  |
-| [**searchPets**](PetApi.md#searchpets) | **POST** /pet/search |  |
-| [**updatePet**](PetApi.md#updatepet) | **PUT** /pet |  |
-| [**updatePetWithForm**](PetApi.md#updatepetwithform) | **POST** /pet/{petId} |  |
-| [**uploadPetImage**](PetApi.md#uploadpetimage) | **POST** /pet/{petId}/uploadImage |  |
-
-
+| Method                                               | HTTP request                      | Description |
+| ---------------------------------------------------- | --------------------------------- | ----------- |
+| [**addPet**](PetApi.md#addpet)                       | **POST** /pet                     |             |
+| [**deletePet**](PetApi.md#deletepet)                 | **DELETE** /pet/{petId}           |             |
+| [**findPetsByStatus**](PetApi.md#findpetsbystatus)   | **GET** /pet/findByStatus         |             |
+| [**findPetsByTags**](PetApi.md#findpetsbytags)       | **GET** /pet/findByTags           |             |
+| [**getPetById**](PetApi.md#getpetbyid)               | **GET** /pet/{petId}              |             |
+| [**searchPets**](PetApi.md#searchpets)               | **POST** /pet/search              |             |
+| [**updatePet**](PetApi.md#updatepet)                 | **PUT** /pet                      |             |
+| [**updatePetWithForm**](PetApi.md#updatepetwithform) | **POST** /pet/{petId}             |             |
+| [**uploadPetImage**](PetApi.md#uploadpetimage)       | **POST** /pet/{petId}/uploadImage |             |
 
 ## addPet
 
 > Pet addPet(pet)
-
-
 
 ### Example
 
@@ -58,10 +54,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **pet** | [Pet](Pet.md) |  | |
+| Name    | Type          | Description | Notes |
+| ------- | ------------- | ----------- | ----- |
+| **pet** | [Pet](Pet.md) |             |       |
 
 ### Return type
 
@@ -76,29 +71,23 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## deletePet
 
 > object deletePet(petId)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  PetApi,
-} from '';
-import type { DeletePetRequest } from '';
+import { Configuration, PetApi } from "";
+import type { DeletePetRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -127,10 +116,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **petId** | `number` |  | [Defaults to `undefined`] |
+| Name      | Type     | Description | Notes                     |
+| --------- | -------- | ----------- | ------------------------- |
+| **petId** | `number` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -145,21 +133,18 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
-| **404** |  |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
+| **404**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## findPetsByStatus
 
 > Array&lt;Pet&gt; findPetsByStatus(status)
-
-
 
 ### Example
 
@@ -197,10 +182,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **status** | `PetStatus` |  | [Optional] [Defaults to `undefined`] [Enum: available, pending, sold] |
+| Name       | Type        | Description | Notes                                                                 |
+| ---------- | ----------- | ----------- | --------------------------------------------------------------------- |
+| **status** | `PetStatus` |             | [Optional] [Defaults to `undefined`] [Enum: available, pending, sold] |
 
 ### Return type
 
@@ -215,20 +199,17 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## findPetsByTags
 
 > Array&lt;Pet&gt; findPetsByTags(tags)
-
-
 
 ### Example
 
@@ -266,10 +247,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **tags** | `Array<string>` |  | [Optional] |
+| Name     | Type            | Description | Notes      |
+| -------- | --------------- | ----------- | ---------- |
+| **tags** | `Array<string>` |             | [Optional] |
 
 ### Return type
 
@@ -284,29 +264,23 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## getPetById
 
 > Pet getPetById(petId)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  PetApi,
-} from '';
-import type { GetPetByIdRequest } from '';
+import { Configuration, PetApi } from "";
+import type { GetPetByIdRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -335,10 +309,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **petId** | `number` |  | [Defaults to `undefined`] |
+| Name      | Type     | Description | Notes                     |
+| --------- | -------- | ----------- | ------------------------- |
+| **petId** | `number` |             | [Defaults to `undefined`] |
 
 ### Return type
 
@@ -353,21 +326,18 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
-| **404** |  |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
+| **404**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## searchPets
 
 > PetSearchResults searchPets(petSearchCriteria, limit, offset)
-
-
 
 ### Example
 
@@ -409,12 +379,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **petSearchCriteria** | [PetSearchCriteria](PetSearchCriteria.md) |  | |
-| **limit** | `number` |  | [Optional] [Defaults to `20`] |
-| **offset** | `number` |  | [Optional] [Defaults to `0`] |
+| Name                  | Type                                      | Description | Notes                         |
+| --------------------- | ----------------------------------------- | ----------- | ----------------------------- |
+| **petSearchCriteria** | [PetSearchCriteria](PetSearchCriteria.md) |             |                               |
+| **limit**             | `number`                                  |             | [Optional] [Defaults to `20`] |
+| **offset**            | `number`                                  |             | [Optional] [Defaults to `0`]  |
 
 ### Return type
 
@@ -429,20 +398,17 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## updatePet
 
 > Pet updatePet(pet)
-
-
 
 ### Example
 
@@ -480,10 +446,9 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **pet** | [Pet](Pet.md) |  | |
+| Name    | Type          | Description | Notes |
+| ------- | ------------- | ----------- | ----- |
+| **pet** | [Pet](Pet.md) |             |       |
 
 ### Return type
 
@@ -498,21 +463,18 @@ example().catch(console.error);
 - **Content-Type**: `application/json`
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
-| **404** |  |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
+| **404**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## updatePetWithForm
 
 > object updatePetWithForm(petId, name, status)
-
-
 
 ### Example
 
@@ -554,12 +516,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **petId** | `number` |  | [Defaults to `undefined`] |
-| **name** | `string` |  | [Optional] [Defaults to `undefined`] |
-| **status** | `PetStatus` |  | [Optional] [Defaults to `undefined`] [Enum: available, pending, sold] |
+| Name       | Type        | Description | Notes                                                                 |
+| ---------- | ----------- | ----------- | --------------------------------------------------------------------- |
+| **petId**  | `number`    |             | [Defaults to `undefined`]                                             |
+| **name**   | `string`    |             | [Optional] [Defaults to `undefined`]                                  |
+| **status** | `PetStatus` |             | [Optional] [Defaults to `undefined`] [Enum: available, pending, sold] |
 
 ### Return type
 
@@ -574,30 +535,24 @@ example().catch(console.error);
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
-| **404** |  |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
+| **404**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
 
 ## uploadPetImage
 
 > ModelApiResponse uploadPetImage(petId, additionalMetadata, body)
 
-
-
 ### Example
 
 ```ts
-import {
-  Configuration,
-  PetApi,
-} from '';
-import type { UploadPetImageRequest } from '';
+import { Configuration, PetApi } from "";
+import type { UploadPetImageRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -630,12 +585,11 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **petId** | `number` |  | [Defaults to `undefined`] |
-| **additionalMetadata** | `string` |  | [Optional] [Defaults to `undefined`] |
-| **body** | `Blob` |  | [Optional] |
+| Name                   | Type     | Description | Notes                                |
+| ---------------------- | -------- | ----------- | ------------------------------------ |
+| **petId**              | `number` |             | [Defaults to `undefined`]            |
+| **additionalMetadata** | `string` |             | [Optional] [Defaults to `undefined`] |
+| **body**               | `Blob`   |             | [Optional]                           |
 
 ### Return type
 
@@ -650,11 +604,11 @@ example().catch(console.error);
 - **Content-Type**: `application/octet-stream`
 - **Accept**: `application/json`
 
-
 ### HTTP response details
+
 | Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Ok |  -  |
-| **404** |  |  -  |
+| ----------- | ----------- | ---------------- |
+| **200**     | Ok          | -                |
+| **404**     |             | -                |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

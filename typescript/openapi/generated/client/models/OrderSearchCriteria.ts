@@ -13,28 +13,28 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
-import type { DateRange } from './DateRange.ts';
+import { mapValues } from "../runtime.ts";
+import type { DateRange } from "./DateRange.ts";
 import {
-    DateRangeFromJSON,
-    DateRangeFromJSONTyped,
-    DateRangeToJSON,
-    DateRangeToJSONTyped,
-} from './DateRange.ts';
-import type { OrderStatus } from './OrderStatus.ts';
+  DateRangeFromJSON,
+  DateRangeFromJSONTyped,
+  DateRangeToJSON,
+  DateRangeToJSONTyped,
+} from "./DateRange.ts";
+import type { OrderStatus } from "./OrderStatus.ts";
 import {
-    OrderStatusFromJSON,
-    OrderStatusFromJSONTyped,
-    OrderStatusToJSON,
-    OrderStatusToJSONTyped,
-} from './OrderStatus.ts';
-import type { QuantityRange } from './QuantityRange.ts';
+  OrderStatusFromJSON,
+  OrderStatusFromJSONTyped,
+  OrderStatusToJSON,
+  OrderStatusToJSONTyped,
+} from "./OrderStatus.ts";
+import type { QuantityRange } from "./QuantityRange.ts";
 import {
-    QuantityRangeFromJSON,
-    QuantityRangeFromJSONTyped,
-    QuantityRangeToJSON,
-    QuantityRangeToJSONTyped,
-} from './QuantityRange.ts';
+  QuantityRangeFromJSON,
+  QuantityRangeFromJSONTyped,
+  QuantityRangeToJSON,
+  QuantityRangeToJSONTyped,
+} from "./QuantityRange.ts";
 
 /**
  *
@@ -42,107 +42,124 @@ import {
  * @interface OrderSearchCriteria
  */
 export interface OrderSearchCriteria {
-    /**
-     *
-     */
-    orderId?: number;
-    /**
-     *
-     */
-    petId?: number;
-    /**
-     *
-     */
-    status?: Array<OrderStatus>;
-    /**
-     *
-     */
-    complete?: boolean;
-    /**
-     *
-     */
-    dateRange?: DateRange;
-    /**
-     *
-     */
-    quantityRange?: QuantityRange;
-    /**
-     *
-     */
-    sortBy?: OrderSearchCriteriaSortByEnum;
-    /**
-     *
-     */
-    sortOrder?: OrderSearchCriteriaSortOrderEnum;
+  /**
+   *
+   */
+  orderId?: number;
+  /**
+   *
+   */
+  petId?: number;
+  /**
+   *
+   */
+  status?: Array<OrderStatus>;
+  /**
+   *
+   */
+  complete?: boolean;
+  /**
+   *
+   */
+  dateRange?: DateRange;
+  /**
+   *
+   */
+  quantityRange?: QuantityRange;
+  /**
+   *
+   */
+  sortBy?: OrderSearchCriteriaSortByEnum;
+  /**
+   *
+   */
+  sortOrder?: OrderSearchCriteriaSortOrderEnum;
 }
 
 /**
-* @export
-* @enum {string}
-*/
+ * @export
+ * @enum {string}
+ */
 export enum OrderSearchCriteriaSortByEnum {
-    ShipDate = 'shipDate',
-    PetId = 'petId',
-    Quantity = 'quantity',
-    Status = 'status',
-    Id = 'id'
+  ShipDate = "shipDate",
+  PetId = "petId",
+  Quantity = "quantity",
+  Status = "status",
+  Id = "id",
 }
 /**
-* @export
-* @enum {string}
-*/
+ * @export
+ * @enum {string}
+ */
 export enum OrderSearchCriteriaSortOrderEnum {
-    Asc = 'asc',
-    Desc = 'desc'
+  Asc = "asc",
+  Desc = "desc",
 }
-
 
 /**
  * Check if a given object implements the OrderSearchCriteria interface.
  */
-export function instanceOfOrderSearchCriteria(value: object): value is OrderSearchCriteria {
-    return true;
+export function instanceOfOrderSearchCriteria(
+  value: object,
+): value is OrderSearchCriteria {
+  return true;
 }
 
 export function OrderSearchCriteriaFromJSON(json: any): OrderSearchCriteria {
-    return OrderSearchCriteriaFromJSONTyped(json, false);
+  return OrderSearchCriteriaFromJSONTyped(json, false);
 }
 
-export function OrderSearchCriteriaFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderSearchCriteria {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'orderId': json['orderId'] == null ? undefined : json['orderId'],
-        'petId': json['petId'] == null ? undefined : json['petId'],
-        'status': json['status'] == null ? undefined : ((json['status'] as Array<any>).map(OrderStatusFromJSON)),
-        'complete': json['complete'] == null ? undefined : json['complete'],
-        'dateRange': json['dateRange'] == null ? undefined : DateRangeFromJSON(json['dateRange']),
-        'quantityRange': json['quantityRange'] == null ? undefined : QuantityRangeFromJSON(json['quantityRange']),
-        'sortBy': json['sortBy'] == null ? undefined : json['sortBy'],
-        'sortOrder': json['sortOrder'] == null ? undefined : json['sortOrder'],
-    };
+export function OrderSearchCriteriaFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): OrderSearchCriteria {
+  if (json == null) {
+    return json;
+  }
+  return {
+    orderId: json["orderId"] == null ? undefined : json["orderId"],
+    petId: json["petId"] == null ? undefined : json["petId"],
+    status:
+      json["status"] == null
+        ? undefined
+        : (json["status"] as Array<any>).map(OrderStatusFromJSON),
+    complete: json["complete"] == null ? undefined : json["complete"],
+    dateRange:
+      json["dateRange"] == null
+        ? undefined
+        : DateRangeFromJSON(json["dateRange"]),
+    quantityRange:
+      json["quantityRange"] == null
+        ? undefined
+        : QuantityRangeFromJSON(json["quantityRange"]),
+    sortBy: json["sortBy"] == null ? undefined : json["sortBy"],
+    sortOrder: json["sortOrder"] == null ? undefined : json["sortOrder"],
+  };
 }
 
 export function OrderSearchCriteriaToJSON(json: any): OrderSearchCriteria {
-    return OrderSearchCriteriaToJSONTyped(json, false);
+  return OrderSearchCriteriaToJSONTyped(json, false);
 }
 
-export function OrderSearchCriteriaToJSONTyped(value?: OrderSearchCriteria | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function OrderSearchCriteriaToJSONTyped(
+  value?: OrderSearchCriteria | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'orderId': value['orderId'],
-        'petId': value['petId'],
-        'status': value['status'] == null ? undefined : ((value['status'] as Array<any>).map(OrderStatusToJSON)),
-        'complete': value['complete'],
-        'dateRange': DateRangeToJSON(value['dateRange']),
-        'quantityRange': QuantityRangeToJSON(value['quantityRange']),
-        'sortBy': value['sortBy'],
-        'sortOrder': value['sortOrder'],
-    };
+  return {
+    orderId: value["orderId"],
+    petId: value["petId"],
+    status:
+      value["status"] == null
+        ? undefined
+        : (value["status"] as Array<any>).map(OrderStatusToJSON),
+    complete: value["complete"],
+    dateRange: DateRangeToJSON(value["dateRange"]),
+    quantityRange: QuantityRangeToJSON(value["quantityRange"]),
+    sortBy: value["sortBy"],
+    sortOrder: value["sortOrder"],
+  };
 }

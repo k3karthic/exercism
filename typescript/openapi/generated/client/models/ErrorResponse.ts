@@ -13,58 +13,62 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface ErrorResponse
  */
 export interface ErrorResponse {
-    /**
-     *
-     */
-    message: string;
-    /**
-     * Construct a type with a set of properties K of type T
-     */
-    details?: { [key: string]: any; };
+  /**
+   *
+   */
+  message: string;
+  /**
+   * Construct a type with a set of properties K of type T
+   */
+  details?: { [key: string]: any };
 }
 
 /**
  * Check if a given object implements the ErrorResponse interface.
  */
 export function instanceOfErrorResponse(value: object): value is ErrorResponse {
-    if (!('message' in value) || value['message'] === undefined) return false;
-    return true;
+  if (!("message" in value) || value["message"] === undefined) return false;
+  return true;
 }
 
 export function ErrorResponseFromJSON(json: any): ErrorResponse {
-    return ErrorResponseFromJSONTyped(json, false);
+  return ErrorResponseFromJSONTyped(json, false);
 }
 
-export function ErrorResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): ErrorResponse {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'message': json['message'],
-        'details': json['details'] == null ? undefined : json['details'],
-    };
+export function ErrorResponseFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): ErrorResponse {
+  if (json == null) {
+    return json;
+  }
+  return {
+    message: json["message"],
+    details: json["details"] == null ? undefined : json["details"],
+  };
 }
 
 export function ErrorResponseToJSON(json: any): ErrorResponse {
-    return ErrorResponseToJSONTyped(json, false);
+  return ErrorResponseToJSONTyped(json, false);
 }
 
-export function ErrorResponseToJSONTyped(value?: ErrorResponse | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function ErrorResponseToJSONTyped(
+  value?: ErrorResponse | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'message': value['message'],
-        'details': value['details'],
-    };
+  return {
+    message: value["message"],
+    details: value["details"],
+  };
 }

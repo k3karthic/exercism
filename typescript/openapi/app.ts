@@ -30,9 +30,8 @@ type GeneratedExpressServerConstructor = new (
 ) => GeneratedExpressServer;
 
 const require = createRequire(import.meta.url);
-const GeneratedExpressServer = require(
-  "./generated/server/expressServer.js",
-) as GeneratedExpressServerConstructor;
+const GeneratedExpressServer =
+  require("./generated/server/expressServer.js") as GeneratedExpressServerConstructor;
 
 function requiresApiKey(request: Request): boolean {
   return (
@@ -82,7 +81,11 @@ const errorHandler: ErrorRequestHandler = (
     return;
   }
 
-  const candidate = error as { status: unknown; message?: unknown; errors?: unknown };
+  const candidate = error as {
+    status: unknown;
+    message?: unknown;
+    errors?: unknown;
+  };
   if (typeof candidate.status !== "number") {
     next(error);
     return;

@@ -6,12 +6,12 @@ info:
   title: Petstore
   version: 1.0.13
 servers:
-- url: /
+  - url: /
 tags:
-- description: Operations about pets
-  name: Pet
-- description: Operations about store orders
-  name: Store
+  - description: Operations about pets
+    name: Pet
+  - description: Operations about store orders
+    name: Store
 paths:
   /store/inventory:
     get:
@@ -25,9 +25,9 @@ paths:
                 $ref: "#/components/schemas/Record_string.number_"
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Store
+        - Store
       x-eov-operation-handler: controllers/StoreController
   /store/order:
     post:
@@ -47,31 +47,31 @@ paths:
                 $ref: "#/components/schemas/Order"
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Store
+        - Store
       x-codegen-request-body-name: order
       x-eov-operation-handler: controllers/StoreController
   /store/order/search:
     post:
       operationId: SearchOrders
       parameters:
-      - explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          type: integer
-        style: form
-      - explode: true
-        in: query
-        name: pageSize
-        required: false
-        schema:
-          default: 20
-          type: integer
-        style: form
+        - explode: true
+          in: query
+          name: page
+          required: false
+          schema:
+            default: 1
+            type: integer
+          style: form
+        - explode: true
+          in: query
+          name: pageSize
+          required: false
+          schema:
+            default: 20
+            type: integer
+          style: form
       requestBody:
         content:
           application/json:
@@ -86,29 +86,29 @@ paths:
                 $ref: "#/components/schemas/OrderSearchResults"
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Store
+        - Store
       x-codegen-request-body-name: orderSearchCriteria
       x-eov-operation-handler: controllers/StoreController
   /store/order/{orderId}:
     delete:
       operationId: DeleteOrder
       parameters:
-      - explode: false
-        in: path
-        name: orderId
-        required: true
-        schema:
-          type: integer
-        style: simple
+        - explode: false
+          in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+          style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Record_string.never_"
+                  - $ref: "#/components/schemas/Record_string.never_"
                 nullable: true
           description: Ok
         "404":
@@ -118,27 +118,27 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Store
+        - Store
       x-eov-operation-handler: controllers/StoreController
     get:
       operationId: GetOrderById
       parameters:
-      - explode: false
-        in: path
-        name: orderId
-        required: true
-        schema:
-          type: integer
-        style: simple
+        - explode: false
+          in: path
+          name: orderId
+          required: true
+          schema:
+            type: integer
+          style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Order"
+                  - $ref: "#/components/schemas/Order"
                 nullable: true
           description: Ok
         "404":
@@ -148,9 +148,9 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Store
+        - Store
       x-eov-operation-handler: controllers/StoreController
   /pet:
     post:
@@ -170,9 +170,9 @@ paths:
                 $ref: "#/components/schemas/Pet"
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-codegen-request-body-name: pet
       x-eov-operation-handler: controllers/PetController
     put:
@@ -190,7 +190,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Pet"
+                  - $ref: "#/components/schemas/Pet"
                 nullable: true
           description: Ok
         "404":
@@ -200,22 +200,22 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-codegen-request-body-name: pet
       x-eov-operation-handler: controllers/PetController
   /pet/findByStatus:
     get:
       operationId: FindPetsByStatus
       parameters:
-      - explode: true
-        in: query
-        name: status
-        required: false
-        schema:
-          $ref: "#/components/schemas/PetStatus"
-        style: form
+        - explode: true
+          in: query
+          name: status
+          required: false
+          schema:
+            $ref: "#/components/schemas/PetStatus"
+          style: form
       responses:
         "200":
           content:
@@ -226,24 +226,24 @@ paths:
                 type: array
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
   /pet/findByTags:
     get:
       operationId: FindPetsByTags
       parameters:
-      - explode: true
-        in: query
-        name: tags
-        required: false
-        schema:
-          default: []
-          items:
-            type: string
-          type: array
-        style: form
+        - explode: true
+          in: query
+          name: tags
+          required: false
+          schema:
+            default: []
+            items:
+              type: string
+            type: array
+          style: form
       responses:
         "200":
           content:
@@ -254,30 +254,30 @@ paths:
                 type: array
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
   /pet/search:
     post:
       operationId: SearchPets
       parameters:
-      - explode: true
-        in: query
-        name: limit
-        required: false
-        schema:
-          default: 20
-          type: integer
-        style: form
-      - explode: true
-        in: query
-        name: offset
-        required: false
-        schema:
-          default: 0
-          type: integer
-        style: form
+        - explode: true
+          in: query
+          name: limit
+          required: false
+          schema:
+            default: 20
+            type: integer
+          style: form
+        - explode: true
+          in: query
+          name: offset
+          required: false
+          schema:
+            default: 0
+            type: integer
+          style: form
       requestBody:
         content:
           application/json:
@@ -292,29 +292,29 @@ paths:
                 $ref: "#/components/schemas/PetSearchResults"
           description: Ok
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-codegen-request-body-name: petSearchCriteria
       x-eov-operation-handler: controllers/PetController
   /pet/{petId}:
     delete:
       operationId: DeletePet
       parameters:
-      - explode: false
-        in: path
-        name: petId
-        required: true
-        schema:
-          type: integer
-        style: simple
+        - explode: false
+          in: path
+          name: petId
+          required: true
+          schema:
+            type: integer
+          style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Record_string.never_"
+                  - $ref: "#/components/schemas/Record_string.never_"
                 nullable: true
           description: Ok
         "404":
@@ -324,27 +324,27 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
     get:
       operationId: GetPetById
       parameters:
-      - explode: false
-        in: path
-        name: petId
-        required: true
-        schema:
-          type: integer
-        style: simple
+        - explode: false
+          in: path
+          name: petId
+          required: true
+          schema:
+            type: integer
+          style: simple
       responses:
         "200":
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Pet"
+                  - $ref: "#/components/schemas/Pet"
                 nullable: true
           description: Ok
         "404":
@@ -354,41 +354,41 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
     post:
       operationId: UpdatePetWithForm
       parameters:
-      - explode: false
-        in: path
-        name: petId
-        required: true
-        schema:
-          type: integer
-        style: simple
-      - explode: true
-        in: query
-        name: name
-        required: false
-        schema:
-          type: string
-        style: form
-      - explode: true
-        in: query
-        name: status
-        required: false
-        schema:
-          $ref: "#/components/schemas/PetStatus"
-        style: form
+        - explode: false
+          in: path
+          name: petId
+          required: true
+          schema:
+            type: integer
+          style: simple
+        - explode: true
+          in: query
+          name: name
+          required: false
+          schema:
+            type: string
+          style: form
+        - explode: true
+          in: query
+          name: status
+          required: false
+          schema:
+            $ref: "#/components/schemas/PetStatus"
+          style: form
       responses:
         "200":
           content:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/Record_string.never_"
+                  - $ref: "#/components/schemas/Record_string.never_"
                 nullable: true
           description: Ok
         "404":
@@ -398,28 +398,28 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
   /pet/{petId}/uploadImage:
     post:
       operationId: UploadPetImage
       parameters:
-      - explode: false
-        in: path
-        name: petId
-        required: true
-        schema:
-          type: integer
-        style: simple
-      - explode: true
-        in: query
-        name: additionalMetadata
-        required: false
-        schema:
-          type: string
-        style: form
+        - explode: false
+          in: path
+          name: petId
+          required: true
+          schema:
+            type: integer
+          style: simple
+        - explode: true
+          in: query
+          name: additionalMetadata
+          required: false
+          schema:
+            type: string
+          style: form
       requestBody:
         content:
           application/octet-stream:
@@ -433,7 +433,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                - $ref: "#/components/schemas/ApiResponse"
+                  - $ref: "#/components/schemas/ApiResponse"
                 nullable: true
           description: Ok
         "404":
@@ -443,9 +443,9 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: ""
       security:
-      - api_key: []
+        - api_key: []
       tags:
-      - Pet
+        - Pet
       x-eov-operation-handler: controllers/PetController
 components:
   examples: {}
@@ -462,9 +462,9 @@ components:
       type: object
     OrderStatus:
       enum:
-      - placed
-      - approved
-      - delivered
+        - placed
+        - approved
+        - delivered
       type: string
     Order:
       additionalProperties: false
@@ -493,18 +493,18 @@ components:
       additionalProperties: false
       example:
         orders:
-        - id: 0
-          petId: 6
-          quantity: 1
-          shipDate: shipDate
-          status: placed
-          complete: true
-        - id: 0
-          petId: 6
-          quantity: 1
-          shipDate: shipDate
-          status: placed
-          complete: true
+          - id: 0
+            petId: 6
+            quantity: 1
+            shipDate: shipDate
+            status: placed
+            complete: true
+          - id: 0
+            petId: 6
+            quantity: 1
+            shipDate: shipDate
+            status: placed
+            complete: true
         pagination:
           totalResults: 0
           totalPages: 6
@@ -518,8 +518,8 @@ components:
         pagination:
           $ref: "#/components/schemas/OrderSearchResults_pagination"
       required:
-      - orders
-      - pagination
+        - orders
+        - pagination
       type: object
     DateRange:
       additionalProperties: false
@@ -549,8 +549,8 @@ components:
         orderId: 0
         petId: 6
         status:
-        - placed
-        - placed
+          - placed
+          - placed
         complete: true
         dateRange:
           from: from
@@ -577,16 +577,16 @@ components:
           $ref: "#/components/schemas/QuantityRange"
         sortBy:
           enum:
-          - shipDate
-          - petId
-          - quantity
-          - status
-          - id
+            - shipDate
+            - petId
+            - quantity
+            - status
+            - id
           type: string
         sortOrder:
           enum:
-          - asc
-          - desc
+            - asc
+            - desc
           type: string
       type: object
     Record_string.unknown_:
@@ -609,7 +609,7 @@ components:
           properties: {}
           type: object
       required:
-      - message
+        - message
       type: object
     Record_string.never_:
       description: Construct a type with a set of properties K of type T
@@ -639,9 +639,9 @@ components:
       type: object
     PetStatus:
       enum:
-      - available
-      - pending
-      - sold
+        - available
+        - pending
+        - sold
       type: string
     Pet:
       additionalProperties: false
@@ -649,16 +649,16 @@ components:
         id: 0
         name: name
         photoUrls:
-        - photoUrls
-        - photoUrls
+          - photoUrls
+          - photoUrls
         category:
           id: 6
           name: name
         tags:
-        - id: 1
-          name: name
-        - id: 1
-          name: name
+          - id: 1
+            name: name
+          - id: 1
+            name: name
         status: available
       properties:
         id:
@@ -678,41 +678,41 @@ components:
         status:
           $ref: "#/components/schemas/PetStatus"
       required:
-      - name
-      - photoUrls
+        - name
+        - photoUrls
       type: object
     PetSearchResults:
       additionalProperties: false
       example:
         results:
-        - id: 0
-          name: name
-          photoUrls:
-          - photoUrls
-          - photoUrls
-          category:
-            id: 6
+          - id: 0
             name: name
-          tags:
-          - id: 1
+            photoUrls:
+              - photoUrls
+              - photoUrls
+            category:
+              id: 6
+              name: name
+            tags:
+              - id: 1
+                name: name
+              - id: 1
+                name: name
+            status: available
+          - id: 0
             name: name
-          - id: 1
-            name: name
-          status: available
-        - id: 0
-          name: name
-          photoUrls:
-          - photoUrls
-          - photoUrls
-          category:
-            id: 6
-            name: name
-          tags:
-          - id: 1
-            name: name
-          - id: 1
-            name: name
-          status: available
+            photoUrls:
+              - photoUrls
+              - photoUrls
+            category:
+              id: 6
+              name: name
+            tags:
+              - id: 1
+                name: name
+              - id: 1
+                name: name
+            status: available
         total: 0
         limit: 6
         offset: 1
@@ -731,22 +731,22 @@ components:
         hasMore:
           type: boolean
       required:
-      - hasMore
-      - limit
-      - offset
-      - results
-      - total
+        - hasMore
+        - limit
+        - offset
+        - results
+        - total
       type: object
     PetSearchCriteria:
       additionalProperties: false
       example:
         name: name
         status:
-        - available
-        - available
+          - available
+          - available
         tags:
-        - tags
-        - tags
+          - tags
+          - tags
         sortBy: name
         sortOrder: asc
       properties:
@@ -762,13 +762,13 @@ components:
           type: array
         sortBy:
           enum:
-          - name
-          - status
+            - name
+            - status
           type: string
         sortOrder:
           enum:
-          - asc
-          - desc
+            - asc
+            - desc
           type: string
       type: object
     ApiResponse:
@@ -797,10 +797,10 @@ components:
         page:
           type: integer
       required:
-      - page
-      - pageSize
-      - totalPages
-      - totalResults
+        - page
+        - pageSize
+        - totalPages
+        - totalResults
       type: object
   securitySchemes:
     api_key:

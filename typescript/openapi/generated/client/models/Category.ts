@@ -13,57 +13,61 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface Category
  */
 export interface Category {
-    /**
-     *
-     */
-    id?: number;
-    /**
-     *
-     */
-    name?: string;
+  /**
+   *
+   */
+  id?: number;
+  /**
+   *
+   */
+  name?: string;
 }
 
 /**
  * Check if a given object implements the Category interface.
  */
 export function instanceOfCategory(value: object): value is Category {
-    return true;
+  return true;
 }
 
 export function CategoryFromJSON(json: any): Category {
-    return CategoryFromJSONTyped(json, false);
+  return CategoryFromJSONTyped(json, false);
 }
 
-export function CategoryFromJSONTyped(json: any, ignoreDiscriminator: boolean): Category {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-    };
+export function CategoryFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): Category {
+  if (json == null) {
+    return json;
+  }
+  return {
+    id: json["id"] == null ? undefined : json["id"],
+    name: json["name"] == null ? undefined : json["name"],
+  };
 }
 
 export function CategoryToJSON(json: any): Category {
-    return CategoryToJSONTyped(json, false);
+  return CategoryToJSONTyped(json, false);
 }
 
-export function CategoryToJSONTyped(value?: Category | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function CategoryToJSONTyped(
+  value?: Category | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'id': value['id'],
-        'name': value['name'],
-    };
+  return {
+    id: value["id"],
+    name: value["name"],
+  };
 }

@@ -1,5 +1,5 @@
-const PetController = require('./PetController');
-const StoreController = require('./StoreController');
+const PetController = require("./PetController");
+const StoreController = require("./StoreController");
 
 module.exports = {
   PetController,

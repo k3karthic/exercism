@@ -13,57 +13,58 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
+import { mapValues } from "../runtime.ts";
 /**
  *
  * @export
  * @interface Tag
  */
 export interface Tag {
-    /**
-     *
-     */
-    id?: number;
-    /**
-     *
-     */
-    name?: string;
+  /**
+   *
+   */
+  id?: number;
+  /**
+   *
+   */
+  name?: string;
 }
 
 /**
  * Check if a given object implements the Tag interface.
  */
 export function instanceOfTag(value: object): value is Tag {
-    return true;
+  return true;
 }
 
 export function TagFromJSON(json: any): Tag {
-    return TagFromJSONTyped(json, false);
+  return TagFromJSONTyped(json, false);
 }
 
 export function TagFromJSONTyped(json: any, ignoreDiscriminator: boolean): Tag {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'id': json['id'] == null ? undefined : json['id'],
-        'name': json['name'] == null ? undefined : json['name'],
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    id: json["id"] == null ? undefined : json["id"],
+    name: json["name"] == null ? undefined : json["name"],
+  };
 }
 
 export function TagToJSON(json: any): Tag {
-    return TagToJSONTyped(json, false);
+  return TagToJSONTyped(json, false);
 }
 
-export function TagToJSONTyped(value?: Tag | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function TagToJSONTyped(
+  value?: Tag | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'id': value['id'],
-        'name': value['name'],
-    };
+  return {
+    id: value["id"],
+    name: value["name"],
+  };
 }

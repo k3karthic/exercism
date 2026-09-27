@@ -6,8 +6,8 @@
  * parameters are extracted and sent to the service, and where response is handled.
  */
 
-const Controller = require('./Controller');
-const service = require('../services/StoreService');
+const Controller = require("./Controller");
+const service = require("../services/StoreService");
 const deleteOrder = async (request, response) => {
   await Controller.handleRequest(request, response, service.deleteOrder);
 };
@@ -27,7 +27,6 @@ const placeOrder = async (request, response) => {
 const searchOrders = async (request, response) => {
   await Controller.handleRequest(request, response, service.searchOrders);
 };
-
 
 module.exports = {
   deleteOrder,

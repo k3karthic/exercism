@@ -6,8 +6,8 @@
  * parameters are extracted and sent to the service, and where response is handled.
  */
 
-const Controller = require('./Controller');
-const service = require('../services/PetService');
+const Controller = require("./Controller");
+const service = require("../services/PetService");
 const addPet = async (request, response) => {
   await Controller.handleRequest(request, response, service.addPet);
 };
@@ -45,7 +45,6 @@ const uploadPetImage = async (request, response) => {
     service.uploadPetImage({ ...params, body: request.body }),
   );
 };
-
 
 module.exports = {
   addPet,

@@ -13,14 +13,14 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from '../runtime.ts';
-import type { OrderStatus } from './OrderStatus.ts';
+import { mapValues } from "../runtime.ts";
+import type { OrderStatus } from "./OrderStatus.ts";
 import {
-    OrderStatusFromJSON,
-    OrderStatusFromJSONTyped,
-    OrderStatusToJSON,
-    OrderStatusToJSONTyped,
-} from './OrderStatus.ts';
+  OrderStatusFromJSON,
+  OrderStatusFromJSONTyped,
+  OrderStatusToJSON,
+  OrderStatusToJSONTyped,
+} from "./OrderStatus.ts";
 
 /**
  *
@@ -28,76 +28,79 @@ import {
  * @interface Order
  */
 export interface Order {
-    /**
-     *
-     */
-    id?: number;
-    /**
-     *
-     */
-    petId?: number;
-    /**
-     *
-     */
-    quantity?: number;
-    /**
-     *
-     */
-    shipDate?: string;
-    /**
-     *
-     */
-    status?: OrderStatus;
-    /**
-     *
-     */
-    complete?: boolean;
+  /**
+   *
+   */
+  id?: number;
+  /**
+   *
+   */
+  petId?: number;
+  /**
+   *
+   */
+  quantity?: number;
+  /**
+   *
+   */
+  shipDate?: string;
+  /**
+   *
+   */
+  status?: OrderStatus;
+  /**
+   *
+   */
+  complete?: boolean;
 }
-
-
 
 /**
  * Check if a given object implements the Order interface.
  */
 export function instanceOfOrder(value: object): value is Order {
-    return true;
+  return true;
 }
 
 export function OrderFromJSON(json: any): Order {
-    return OrderFromJSONTyped(json, false);
+  return OrderFromJSONTyped(json, false);
 }
 
-export function OrderFromJSONTyped(json: any, ignoreDiscriminator: boolean): Order {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'id': json['id'] == null ? undefined : json['id'],
-        'petId': json['petId'] == null ? undefined : json['petId'],
-        'quantity': json['quantity'] == null ? undefined : json['quantity'],
-        'shipDate': json['shipDate'] == null ? undefined : json['shipDate'],
-        'status': json['status'] == null ? undefined : OrderStatusFromJSON(json['status']),
-        'complete': json['complete'] == null ? undefined : json['complete'],
-    };
+export function OrderFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): Order {
+  if (json == null) {
+    return json;
+  }
+  return {
+    id: json["id"] == null ? undefined : json["id"],
+    petId: json["petId"] == null ? undefined : json["petId"],
+    quantity: json["quantity"] == null ? undefined : json["quantity"],
+    shipDate: json["shipDate"] == null ? undefined : json["shipDate"],
+    status:
+      json["status"] == null ? undefined : OrderStatusFromJSON(json["status"]),
+    complete: json["complete"] == null ? undefined : json["complete"],
+  };
 }
 
 export function OrderToJSON(json: any): Order {
-    return OrderToJSONTyped(json, false);
+  return OrderToJSONTyped(json, false);
 }
 
-export function OrderToJSONTyped(value?: Order | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function OrderToJSONTyped(
+  value?: Order | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'id': value['id'],
-        'petId': value['petId'],
-        'quantity': value['quantity'],
-        'shipDate': value['shipDate'],
-        'status': OrderStatusToJSON(value['status']),
-        'complete': value['complete'],
-    };
+  return {
+    id: value["id"],
+    petId: value["petId"],
+    quantity: value["quantity"],
+    shipDate: value["shipDate"],
+    status: OrderStatusToJSON(value["status"]),
+    complete: value["complete"],
+  };
 }
