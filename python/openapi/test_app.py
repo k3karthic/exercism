@@ -7,7 +7,8 @@ from httpx2 import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from openapi.server import Base, app, get_session
+from openapi.database import Base, get_session
+from openapi.server import app
 
 API_KEY = "some-api-key"
 HEADERS = {"api_key": API_KEY}
@@ -257,7 +258,7 @@ async def test_inventory_requires_api_key(client: AsyncClient):
     assert resp.status_code == 403
 
 
-async def test_order_search_query_method(client: AsyncClient):
+async def test_order_search(client: AsyncClient):
     resp = await client.post(
         "/store/order",
         json={"petId": 3, "quantity": 4, "status": "delivered", "complete": True},
@@ -265,8 +266,7 @@ async def test_order_search_query_method(client: AsyncClient):
     )
     assert resp.status_code == 200
 
-    resp = await client.request(
-        "QUERY",
+    resp = await client.post(
         "/store/order/search",
         params={"page": 1, "pageSize": 10},
         json={
@@ -280,21 +280,11 @@ async def test_order_search_query_method(client: AsyncClient):
     assert resp.status_code == 200
     assert resp.json()["orders"]
 
-    post_resp = await client.post(
-        "/store/order/search",
-        params={"page": 1, "pageSize": 10},
-        json={"status": ["delivered"], "complete": True, "sortOrder": "desc"},
-        headers=HEADERS,
-    )
-    assert post_resp.status_code == 200, post_resp.text
-    assert post_resp.json()["orders"]
 
-
-async def test_pet_search_query_method(client: AsyncClient):
+async def test_pet_search(client: AsyncClient):
     await create_pet(client, "Searchable", status="available")
 
-    resp = await client.request(
-        "QUERY",
+    resp = await client.post(
         "/pet/search",
         params={"limit": 10, "offset": 0},
         json={
@@ -307,12 +297,3 @@ async def test_pet_search_query_method(client: AsyncClient):
     )
     assert resp.status_code == 200
     assert resp.json()["results"]
-
-    post_resp = await client.post(
-        "/pet/search",
-        params={"limit": 10, "offset": 0},
-        json={"name": "Search*", "status": ["available"], "sortOrder": "asc"},
-        headers=HEADERS,
-    )
-    assert post_resp.status_code == 200, post_resp.text
-    assert post_resp.json()["results"]

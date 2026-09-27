@@ -1,32 +1,39 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
+from openapi import client_driver
 
-from openapi.client import AuthenticatedClient, DefaultApi
 
-
-def test_client_facade_calls_generated_inventory_operation(
+def test_fetch_inventory_configures_and_calls_generated_client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        DefaultApi,
-        "get_inventory_store_inventory_get",
-        lambda self: {"available": 3},
-    )
+    captured: dict[str, Any] = {}
 
-    with AuthenticatedClient(
-        base_url="http://localhost",
-        token="some-api-key",
-        auth_header_name="api_key",
-    ) as client:
-        assert client.get_inventory() == {"available": 3}
-        assert isinstance(client.api, DefaultApi)
+    class FakeApiClient:
+        def __init__(self, configuration: Any) -> None:
+            captured["configuration"] = configuration
 
+        def __enter__(self) -> FakeApiClient:
+            return self
 
-def test_client_facade_rejects_unsupported_auth_header() -> None:
-    with pytest.raises(ValueError, match="api_key"):
-        AuthenticatedClient(
-            base_url="http://localhost",
-            token="some-api-key",
-            auth_header_name="X-API-Key",
-        )
+        def __exit__(self, *args: Any) -> None:
+            return None
+
+    class FakeDefaultApi:
+        def __init__(self, api_client: FakeApiClient) -> None:
+            captured["client"] = api_client
+
+        def get_inventory_store_inventory_get(self) -> dict[str, int]:
+            return {"available": 3}
+
+    monkeypatch.setattr(client_driver, "ApiClient", FakeApiClient)
+    monkeypatch.setattr(client_driver, "DefaultApi", FakeDefaultApi)
+
+    assert client_driver.fetch_inventory("http://localhost:8000", "some-api-key") == {
+        "available": 3
+    }
+    configuration = captured["configuration"]
+    assert configuration.host == "http://localhost:8000"
+    assert configuration.api_key == {"APIKeyHeader": "some-api-key"}

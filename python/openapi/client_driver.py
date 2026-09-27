@@ -4,17 +4,21 @@ import argparse
 import json
 from typing import Sequence
 
-from openapi.client import AuthenticatedClient
+from openapi.generated.client.api.default_api import DefaultApi
+from openapi.generated.client.api_client import ApiClient
+from openapi.generated.client.configuration import Configuration
 
 
 def fetch_inventory(base_url: str, api_key: str) -> dict[str, int]:
-    with AuthenticatedClient(
-        base_url=base_url,
-        token=api_key,
-        prefix="",
-        auth_header_name="api_key",
-    ) as client:
-        return client.get_inventory()
+    configuration = Configuration(
+        host=base_url,
+        api_key={"APIKeyHeader": api_key},
+    )
+    with ApiClient(configuration=configuration) as client:
+        inventory = DefaultApi(api_client=client).get_inventory_store_inventory_get()
+    if inventory is None:
+        raise RuntimeError("Inventory request returned no data")
+    return inventory
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:

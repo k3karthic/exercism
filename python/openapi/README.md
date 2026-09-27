@@ -1,8 +1,9 @@
 # Petstore service
 
 The canonical OpenAPI document is `../openapi/petstore.json`. Generated server
-and client packages live under `openapi/generated/`; `server.py`, `client.py`,
-and `client_driver.py` are handwritten wrappers and are not generator targets.
+and client packages live under `openapi/generated/`. The generated server
+handles routes and API schemas; `server.py` adapts those interfaces to the
+handwritten SQLAlchemy persistence and service layers.
 
 ## Run the server
 
@@ -44,9 +45,8 @@ directories, and replaces only `openapi/generated/server/` and
 `openapi/generated/client/`. It never writes into the handwritten wrappers.
 Edit `../openapi/petstore.json` as the source of truth, then regenerate.
 
-The canonical spec uses `POST` for the two search operations because OpenAPI
-does not define the existing `QUERY` HTTP method. The server wrapper continues
-to accept `QUERY` for backwards compatibility.
+The search operations use `POST` with JSON request bodies, as defined in the
+OpenAPI spec.
 
 ## Call the server through the generated client
 
