@@ -76,19 +76,6 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/petstore \
 
 Revisions live under `openapi/alembic/versions/`.
 
-The shared `Pet.tags` schema uses Tag objects (`{"id": 1, "name": "friendly"}`).
-Databases created before Alembic was adopted, with the older string-array
-schema, need a one-time manual migration:
-
-```bash
-psql -h localhost -U postgres -d petstore \
-  -f openapi/migrations/001_pet_tags_to_jsonb.sql
-```
-
-The migration preserves each existing tag name as a Tag object without an ID.
-New installations created via `alembic upgrade head` use the JSONB schema
-directly and do not need this script.
-
 ## Call the server through the generated client
 
 ```bash
