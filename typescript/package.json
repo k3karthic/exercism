@@ -13,6 +13,8 @@
     "test": "vitest",
     "test:openapi": "vitest run openapi/openapi.test.ts",
     "openapi:generate": "tsx openapi/generate.ts",
+    "db:openapi:generate": "drizzle-kit generate --config openapi/drizzle.config.ts",
+    "db:openapi:migrate": "drizzle-kit migrate --config openapi/drizzle.config.ts",
     "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"node_modules/**/*.json,node_modules/**/Dockerfile\" ."
   },
   "devDependencies": {
@@ -21,9 +23,11 @@
     "@testcontainers/redis": "^12.0.0",
     "@types/express": "^5.0.3",
     "@types/node": "^25.9.1",
+    "@types/pg": "^8.23.1",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
     "amqplib": "^2.0.1",
+    "drizzle-kit": "^0.31.11",
     "prettier": "^3.8.3",
     "supertest": "^7.1.4",
     "tsx": "^4.22.3",
@@ -53,14 +57,16 @@
     "camelcase": "^5.3.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "express-openapi-validator": "^5.5.8",
+    "drizzle-orm": "^0.45.3",
     "express": "^4.22.2",
+    "express-openapi-validator": "^5.5.8",
     "js-yaml": "4.3.2",
     "jsonwebtoken": "^9.0.2",
-    "winston": "^3.17.0",
+    "pg": "^8.23.0",
     "redis": "^5.12.1",
     "swagger-ui-express": "^5.0.1",
-    "testcontainers": "^12.0.1"
+    "testcontainers": "^12.0.1",
+    "winston": "^3.17.0"
   },
   "overrides": {
     "js-yaml": "4.3.2",

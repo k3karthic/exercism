@@ -3,6 +3,7 @@ import type {
   ModelApiResponse,
   Pet,
   PetSearchCriteria,
+  PetSearchResults,
   PetStatus,
 } from "../generated/client/models/index.ts";
 import { petStore } from "../store.ts";
@@ -42,66 +43,78 @@ function tagNames(tags: string | string[] | undefined): string[] {
   return Array.isArray(tags) ? tags : [tags];
 }
 
-export function addPet({ pet }: { pet: Pet }): Pet {
+export async function addPet({ pet }: { pet: Pet }): Promise<Pet> {
   return petStore.createPet(pet);
 }
 
-export function updatePet({ pet }: { pet: Pet }): Pet {
-  const updated = petStore.updatePet(pet);
+export async function updatePet({ pet }: { pet: Pet }): Promise<Pet> {
+  const updated = await petStore.updatePet(pet);
   if (updated === undefined) {
     throw new PetNotFoundError();
   }
   return updated;
 }
 
-export function findPetsByStatus({ status }: { status?: PetStatus }): Pet[] {
+export async function findPetsByStatus({
+  status,
+}: {
+  status?: PetStatus;
+}): Promise<Pet[]> {
   return petStore.findPetsByStatus(status ?? ("available" as PetStatus));
 }
 
-export function findPetsByTags({ tags }: { tags?: string | string[] }): Pet[] {
+export async function findPetsByTags({
+  tags,
+}: {
+  tags?: string | string[];
+}): Promise<Pet[]> {
   return petStore.findPetsByTags(tagNames(tags));
 }
 
-export function searchPets({
+export async function searchPets({
   petSearchCriteria,
   limit,
   offset,
-}: PetSearchRequest) {
+}: PetSearchRequest): Promise<PetSearchResults> {
   return petStore.searchPets(petSearchCriteria, limit ?? 20, offset ?? 0);
 }
 
-export function getPetById({ petId }: { petId: number }): Pet {
-  const pet = petStore.getPet(petId);
+export async function getPetById({ petId }: { petId: number }): Promise<Pet> {
+  const pet = await petStore.getPet(petId);
   if (pet === undefined) {
     throw new PetNotFoundError();
   }
   return pet;
 }
 
-export function updatePetWithForm({
+export async function updatePetWithForm({
   petId,
   name,
   status,
-}: UpdatePetFormRequest): Record<string, never> {
-  if (!petStore.updatePetFromForm(petId, name, status)) {
+}: UpdatePetFormRequest): Promise<Record<string, never>> {
+  if (!(await petStore.updatePetFromForm(petId, name, status))) {
     throw new PetNotFoundError();
   }
   return {};
 }
 
-export function deletePet({ petId }: { petId: number }): Record<string, never> {
-  if (!petStore.deletePet(petId)) {
+export async function deletePet({
+  petId,
+}: {
+  petId: number;
+}): Promise<Record<string, never>> {
+  if (!(await petStore.deletePet(petId))) {
     throw new PetNotFoundError();
   }
   return {};
 }
 
-export function uploadPetImage({
+export async function uploadPetImage({
   petId,
   additionalMetadata,
   body,
-}: UploadPetImageRequest): ModelApiResponse {
-  if (petStore.getPet(petId) === undefined) {
+}: UploadPetImageRequest): Promise<ModelApiResponse> {
+  if ((await petStore.getPet(petId)) === undefined) {
     throw new PetNotFoundError();
   }
   const length = Buffer.isBuffer(body) ? body.length : (body?.length ?? 0);

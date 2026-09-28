@@ -1,40 +1,36 @@
-import {
-  OrderStatus,
-  type Order,
-  type OrderSearchCriteria,
-  type OrderSearchResults,
+import { and, count, eq, inArray, sql, type SQL } from "drizzle-orm";
+import type {
+  Order,
+  OrderSearchCriteria,
+  OrderSearchResults,
+  Pet,
+  PetSearchCriteria,
+  PetSearchResults,
   PetStatus,
-  type Pet,
-  type PetSearchCriteria,
-  type PetSearchResults,
-  type Tag,
 } from "./generated/client/models/index.ts";
+import { getDatabase } from "./database.ts";
+import { orders, pets } from "./schema.ts";
 
-function clonePet(pet: Pet): Pet {
-  const cloned: Pet = {
-    ...pet,
-    photoUrls: [...pet.photoUrls],
+function petFromRow(row: typeof pets.$inferSelect): Pet {
+  return {
+    id: row.id,
+    name: row.name,
+    photoUrls: [...row.photoUrls],
+    ...(row.category === null ? {} : { category: { ...row.category } }),
+    tags: row.tags.map((tag) => ({ ...tag })),
+    ...(row.status === null ? {} : { status: row.status }),
   };
-
-  if (pet.tags !== undefined) {
-    cloned.tags = pet.tags.map((tag) => ({ ...tag }));
-  }
-
-  if (pet.category !== undefined) {
-    cloned.category = { ...pet.category };
-  }
-
-  return cloned;
 }
 
-function cloneOrder(order: Order): Order {
-  return { ...order };
-}
-
-function tagNames(tags: Tag[] | undefined): string[] {
-  return (tags ?? [])
-    .map((tag) => tag.name ?? "")
-    .filter((name) => name.length > 0);
+function orderFromRow(row: typeof orders.$inferSelect): Order {
+  return {
+    id: row.id,
+    ...(row.petId === null ? {} : { petId: row.petId }),
+    ...(row.quantity === null ? {} : { quantity: row.quantity }),
+    ...(row.shipDate === null ? {} : { shipDate: row.shipDate.toISOString() }),
+    ...(row.status === null ? {} : { status: row.status }),
+    complete: row.complete,
+  };
 }
 
 function sortValues<T>(values: T[], key: keyof T, order: "asc" | "desc"): T[] {
@@ -63,139 +59,180 @@ function sortValues<T>(values: T[], key: keyof T, order: "asc" | "desc"): T[] {
   });
 }
 
+async function advancePetSequence(): Promise<void> {
+  await getDatabase().execute(sql`
+    SELECT setval(
+      pg_get_serial_sequence('pet', 'id'),
+      GREATEST(
+        1,
+        COALESCE(pg_sequence_last_value(pg_get_serial_sequence('pet', 'id')::regclass), 0),
+        (SELECT COALESCE(MAX(id), 0) FROM pet)
+      ),
+      true
+    )
+  `);
+}
+
+async function advanceOrderSequence(): Promise<void> {
+  await getDatabase().execute(sql`
+    SELECT setval(
+      pg_get_serial_sequence('order', 'id'),
+      GREATEST(
+        1,
+        COALESCE(pg_sequence_last_value(pg_get_serial_sequence('order', 'id')::regclass), 0),
+        (SELECT COALESCE(MAX(id), 0) FROM "order")
+      ),
+      true
+    )
+  `);
+}
+
 export class PetStore {
-  private nextPetId = 1;
-  private nextOrderId = 1;
-
-  private readonly pets = new Map<number, Pet>();
-  private readonly orders = new Map<number, Order>();
-
-  public reset(): void {
-    this.nextPetId = 1;
-    this.nextOrderId = 1;
-    this.pets.clear();
-    this.orders.clear();
-  }
-
-  public createPet(pet: Pet): Pet {
-    const id = pet.id ?? this.nextPetId++;
-    this.nextPetId = Math.max(this.nextPetId, id + 1);
-
-    const stored: Pet = {
-      ...clonePet(pet),
-      id,
-      tags: pet.tags?.map((tag) => ({ ...tag })) ?? [],
+  public async createPet(pet: Pet): Promise<Pet> {
+    const values = {
+      name: pet.name,
+      photoUrls: pet.photoUrls,
+      category: pet.category ?? null,
+      tags: pet.tags ?? [],
+      status: pet.status ?? null,
     };
+    const insert = getDatabase()
+      .insert(pets)
+      .values(pet.id === undefined ? values : { ...values, id: pet.id });
+    const [row] =
+      pet.id === undefined
+        ? await insert.returning()
+        : await insert
+            .onConflictDoUpdate({ target: pets.id, set: values })
+            .returning();
 
-    this.pets.set(id, stored);
-    return clonePet(stored);
+    if (row === undefined) {
+      throw new Error("Creating a pet did not return the inserted row");
+    }
+    if (pet.id !== undefined) {
+      await advancePetSequence();
+    }
+    return petFromRow(row);
   }
 
-  public updatePet(pet: Pet): Pet | undefined {
+  public async updatePet(pet: Pet): Promise<Pet | undefined> {
     if (pet.id === undefined) {
       return undefined;
     }
 
-    const current = this.pets.get(pet.id);
-    if (current === undefined) {
-      return undefined;
-    }
+    const [row] = await getDatabase()
+      .update(pets)
+      .set({
+        name: pet.name,
+        photoUrls: pet.photoUrls,
+        category: pet.category ?? null,
+        tags: pet.tags ?? [],
+        status: pet.status ?? null,
+      })
+      .where(eq(pets.id, pet.id))
+      .returning();
 
-    const stored: Pet = {
-      ...clonePet(pet),
-      id: pet.id,
-      tags: pet.tags?.map((tag) => ({ ...tag })) ?? [],
-    };
-    this.pets.set(pet.id, stored);
-    return clonePet(stored);
+    return row === undefined ? undefined : petFromRow(row);
   }
 
-  public getPet(petId: number): Pet | undefined {
-    const pet = this.pets.get(petId);
-    return pet === undefined ? undefined : clonePet(pet);
+  public async getPet(petId: number): Promise<Pet | undefined> {
+    const [row] = await getDatabase()
+      .select()
+      .from(pets)
+      .where(eq(pets.id, petId))
+      .limit(1);
+
+    return row === undefined ? undefined : petFromRow(row);
   }
 
-  public deletePet(petId: number): boolean {
-    return this.pets.delete(petId);
+  public async deletePet(petId: number): Promise<boolean> {
+    const deleted = await getDatabase()
+      .delete(pets)
+      .where(eq(pets.id, petId))
+      .returning({ id: pets.id });
+    return deleted.length > 0;
   }
 
-  public updatePetFromForm(
+  public async updatePetFromForm(
     petId: number,
     name: string | undefined,
     status: PetStatus | undefined,
-  ): boolean {
-    const pet = this.pets.get(petId);
-    if (pet === undefined) {
-      return false;
-    }
-
+  ): Promise<boolean> {
+    const values: { name?: string; status?: PetStatus | null } = {};
     if (name !== undefined) {
-      pet.name = name;
+      values.name = name;
     }
     if (status !== undefined) {
-      pet.status = status;
+      values.status = status;
     }
 
-    this.pets.set(petId, pet);
-    return true;
+    if (Object.keys(values).length === 0) {
+      return (await this.getPet(petId)) !== undefined;
+    }
+
+    const updated = await getDatabase()
+      .update(pets)
+      .set(values)
+      .where(eq(pets.id, petId))
+      .returning({ id: pets.id });
+    return updated.length > 0;
   }
 
-  public findPetsByStatus(status: PetStatus): Pet[] {
-    return [...this.pets.values()]
-      .filter((pet) => pet.status === status)
-      .map((pet) => clonePet(pet));
+  public async findPetsByStatus(status: PetStatus): Promise<Pet[]> {
+    const rows = await getDatabase()
+      .select()
+      .from(pets)
+      .where(eq(pets.status, status));
+    return rows.map(petFromRow);
   }
 
-  public findPetsByTags(tags: string[]): Pet[] {
-    return [...this.pets.values()]
-      .filter((pet) => {
-        const currentTags = tagNames(pet.tags);
-        return tags.every((tag) => currentTags.includes(tag));
-      })
-      .map((pet) => clonePet(pet));
+  public async findPetsByTags(tags: string[]): Promise<Pet[]> {
+    const filters = tags.map(
+      (tag) => sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
+    );
+    const rows = await getDatabase()
+      .select()
+      .from(pets)
+      .where(filters.length === 0 ? undefined : and(...filters));
+    return rows.map(petFromRow);
   }
 
-  public searchPets(
+  public async searchPets(
     criteria: PetSearchCriteria,
     limit: number,
     offset: number,
-  ): PetSearchResults {
+  ): Promise<PetSearchResults> {
+    const filters: SQL[] = [];
+    if (criteria.status !== undefined && criteria.status.length > 0) {
+      filters.push(inArray(pets.status, criteria.status));
+    }
+    for (const tag of criteria.tags ?? []) {
+      filters.push(
+        sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
+      );
+    }
+
+    let matched = (
+      await getDatabase()
+        .select()
+        .from(pets)
+        .where(filters.length === 0 ? undefined : and(...filters))
+    ).map(petFromRow);
+
     const nameFilter = criteria.name?.replaceAll("*", "").toLowerCase();
-    const matched = [...this.pets.values()].filter((pet) => {
-      if (nameFilter !== undefined && nameFilter.length > 0) {
-        if (!pet.name.toLowerCase().includes(nameFilter)) {
-          return false;
-        }
-      }
-
-      if (
-        criteria.status !== undefined &&
-        criteria.status.length > 0 &&
-        (pet.status === undefined || !criteria.status.includes(pet.status))
-      ) {
-        return false;
-      }
-
-      if (criteria.tags !== undefined && criteria.tags.length > 0) {
-        const currentTags = tagNames(pet.tags);
-        if (!criteria.tags.every((tag) => currentTags.includes(tag))) {
-          return false;
-        }
-      }
-
-      return true;
-    });
+    if (nameFilter !== undefined && nameFilter.length > 0) {
+      matched = matched.filter((pet) =>
+        pet.name.toLowerCase().includes(nameFilter),
+      );
+    }
 
     const sortBy = criteria.sortBy ?? "name";
     const sortField = sortBy === "status" ? "status" : "name";
     const sorted = sortValues(matched, sortField, criteria.sortOrder ?? "asc");
     const total = sorted.length;
-    const paged = sorted
-      .slice(offset, offset + limit)
-      .map((pet) => clonePet(pet));
 
     return {
-      results: paged,
+      results: sorted.slice(offset, offset + limit),
       total,
       limit,
       offset,
@@ -203,112 +240,119 @@ export class PetStore {
     };
   }
 
-  public inventory(): Record<string, number> {
-    const counts: Record<string, number> = {};
-    for (const pet of this.pets.values()) {
-      if (pet.status === undefined) {
-        continue;
+  public async inventory(): Promise<Record<string, number>> {
+    const rows = await getDatabase()
+      .select({ status: pets.status, count: count() })
+      .from(pets)
+      .groupBy(pets.status);
+    const inventory: Record<string, number> = {};
+    for (const row of rows) {
+      if (row.status !== null) {
+        inventory[row.status] = row.count;
       }
-
-      counts[pet.status] = (counts[pet.status] ?? 0) + 1;
     }
-
-    return counts;
+    return inventory;
   }
 
-  public createOrder(order: Order): Order {
-    const id = order.id ?? this.nextOrderId++;
-    this.nextOrderId = Math.max(this.nextOrderId, id + 1);
-
-    const stored: Order = {
-      ...cloneOrder(order),
-      id,
+  public async createOrder(order: Order): Promise<Order> {
+    const values = {
+      petId: order.petId ?? null,
+      quantity: order.quantity ?? null,
+      shipDate:
+        order.shipDate === undefined ? new Date() : new Date(order.shipDate),
+      status: order.status ?? null,
       complete: order.complete ?? false,
-      shipDate: order.shipDate ?? new Date().toISOString(),
     };
+    const insert = getDatabase()
+      .insert(orders)
+      .values(order.id === undefined ? values : { ...values, id: order.id });
+    const [row] =
+      order.id === undefined
+        ? await insert.returning()
+        : await insert
+            .onConflictDoUpdate({ target: orders.id, set: values })
+            .returning();
 
-    this.orders.set(id, stored);
-    return cloneOrder(stored);
+    if (row === undefined) {
+      throw new Error("Creating an order did not return the inserted row");
+    }
+    if (order.id !== undefined) {
+      await advanceOrderSequence();
+    }
+    return orderFromRow(row);
   }
 
-  public getOrder(orderId: number): Order | undefined {
-    const order = this.orders.get(orderId);
-    return order === undefined ? undefined : cloneOrder(order);
+  public async getOrder(orderId: number): Promise<Order | undefined> {
+    const [row] = await getDatabase()
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
+    return row === undefined ? undefined : orderFromRow(row);
   }
 
-  public deleteOrder(orderId: number): boolean {
-    return this.orders.delete(orderId);
+  public async deleteOrder(orderId: number): Promise<boolean> {
+    const deleted = await getDatabase()
+      .delete(orders)
+      .where(eq(orders.id, orderId))
+      .returning({ id: orders.id });
+    return deleted.length > 0;
   }
 
-  public searchOrders(
+  public async searchOrders(
     criteria: OrderSearchCriteria,
     page: number,
     pageSize: number,
-  ): OrderSearchResults {
-    const matched = [...this.orders.values()].filter((order) => {
-      if (criteria.orderId !== undefined && order.id !== criteria.orderId) {
-        return false;
-      }
+  ): Promise<OrderSearchResults> {
+    const filters: SQL[] = [];
+    if (criteria.orderId !== undefined) {
+      filters.push(eq(orders.id, criteria.orderId));
+    }
+    if (criteria.petId !== undefined) {
+      filters.push(eq(orders.petId, criteria.petId));
+    }
+    if (criteria.status !== undefined && criteria.status.length > 0) {
+      filters.push(inArray(orders.status, criteria.status));
+    }
+    if (criteria.complete !== undefined) {
+      filters.push(eq(orders.complete, criteria.complete));
+    }
 
-      if (criteria.petId !== undefined && order.petId !== criteria.petId) {
-        return false;
-      }
+    let matched = (
+      await getDatabase()
+        .select()
+        .from(orders)
+        .where(filters.length === 0 ? undefined : and(...filters))
+    ).map(orderFromRow);
 
-      if (
-        criteria.status !== undefined &&
-        criteria.status.length > 0 &&
-        (order.status === undefined || !criteria.status.includes(order.status))
-      ) {
-        return false;
-      }
-
-      if (
-        criteria.complete !== undefined &&
-        order.complete !== criteria.complete
-      ) {
-        return false;
-      }
-
-      if (
-        criteria.dateRange?.from !== undefined &&
-        order.shipDate !== undefined
-      ) {
-        if (
-          new Date(order.shipDate).getTime() <
-          new Date(criteria.dateRange.from).getTime()
-        ) {
-          return false;
-        }
-      }
-
-      if (
-        criteria.dateRange?.to !== undefined &&
-        order.shipDate !== undefined
-      ) {
-        if (
-          new Date(order.shipDate).getTime() >
-          new Date(criteria.dateRange.to).getTime()
-        ) {
-          return false;
-        }
-      }
-
-      if (
-        criteria.quantityRange?.min !== undefined &&
-        (order.quantity ?? 0) < criteria.quantityRange.min
-      ) {
-        return false;
-      }
-
-      if (
-        criteria.quantityRange?.max !== undefined &&
-        (order.quantity ?? 0) > criteria.quantityRange.max
-      ) {
-        return false;
-      }
-
-      return true;
-    });
+    if (criteria.dateRange?.from !== undefined) {
+      const from = new Date(criteria.dateRange.from).getTime();
+      matched = matched.filter(
+        (order) =>
+          order.shipDate === undefined ||
+          new Date(order.shipDate).getTime() >= from,
+      );
+    }
+    if (criteria.dateRange?.to !== undefined) {
+      const to = new Date(criteria.dateRange.to).getTime();
+      matched = matched.filter(
+        (order) =>
+          order.shipDate === undefined ||
+          new Date(order.shipDate).getTime() <= to,
+      );
+    }
+    const minimumQuantity = criteria.quantityRange?.min;
+    if (minimumQuantity !== undefined) {
+      matched = matched.filter(
+        (order) => (order.quantity ?? 0) >= minimumQuantity,
+      );
+    }
+    const maximumQuantity = criteria.quantityRange?.max;
+    if (maximumQuantity !== undefined) {
+      matched = matched.filter(
+        (order) => (order.quantity ?? 0) <= maximumQuantity,
+      );
+    }
 
     const sortBy = criteria.sortBy ?? "shipDate";
     const sortField =
@@ -324,12 +368,9 @@ export class PetStore {
     const sorted = sortValues(matched, sortField, criteria.sortOrder ?? "desc");
     const totalResults = sorted.length;
     const start = (page - 1) * pageSize;
-    const orders = sorted
-      .slice(start, start + pageSize)
-      .map((order) => cloneOrder(order));
 
     return {
-      orders,
+      orders: sorted.slice(start, start + pageSize),
       pagination: {
         page,
         pageSize,

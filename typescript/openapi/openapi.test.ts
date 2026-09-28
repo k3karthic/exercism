@@ -1,15 +1,60 @@
+import { fileURLToPath } from "node:url";
+import { sql } from "drizzle-orm";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { GenericContainer, Wait } from "testcontainers";
 import request from "supertest";
 import type { Response as SupertestResponse } from "supertest";
-import { beforeEach, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
 
 import { app } from "./app.js";
+import { closeDatabase, getDatabase } from "./database.ts";
 import { OrderStatus, PetStatus } from "./generated/client/models/index.ts";
-import { petStore } from "./store.js";
 
 const API_KEY = "some-api-key";
+const POSTGRES_USER = "petstore";
+const POSTGRES_PASSWORD = "petstore";
+const POSTGRES_DATABASE = "petstore";
 
-beforeEach(() => {
-  petStore.reset();
+let databaseContainer:
+  | Awaited<ReturnType<GenericContainer["start"]>>
+  | undefined;
+let originalDatabaseUrl: string | undefined;
+
+beforeAll(async () => {
+  databaseContainer = await new GenericContainer("postgres:16-alpine")
+    .withEnvironment({
+      POSTGRES_USER,
+      POSTGRES_PASSWORD,
+      POSTGRES_DB: POSTGRES_DATABASE,
+    })
+    .withExposedPorts(5432)
+    .withWaitStrategy(
+      Wait.forLogMessage(/database system is ready to accept connections/, 2),
+    )
+    .start();
+
+  const databaseUrl = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${databaseContainer.getHost()}:${databaseContainer.getMappedPort(5432)}/${POSTGRES_DATABASE}`;
+  originalDatabaseUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = databaseUrl;
+  await migrate(getDatabase(), {
+    migrationsFolder: fileURLToPath(new URL("./migrations", import.meta.url)),
+  });
+}, 120_000);
+
+afterAll(async () => {
+  await closeDatabase();
+  if (originalDatabaseUrl === undefined) {
+    delete process.env.DATABASE_URL;
+  } else {
+    process.env.DATABASE_URL = originalDatabaseUrl;
+  }
+  await databaseContainer?.stop();
+});
+
+beforeEach(async () => {
+  await getDatabase().execute(
+    sql`TRUNCATE TABLE "order", pet RESTART IDENTITY`,
+  );
 });
 
 async function createPet(
@@ -27,7 +72,12 @@ async function createPet(
     payload.id = petId;
   }
 
-  return request(app).post("/pet").set("api_key", API_KEY).send(payload);
+  const response = await request(app)
+    .post("/pet")
+    .set("api_key", API_KEY)
+    .send(payload);
+  expect(response.status, response.text).toBe(200);
+  return response;
 }
 
 async function createOrder(
@@ -69,6 +119,12 @@ test("add pet keeps supplied id", async () => {
   const created = await createPet("Spot", PetStatus.Pending, 7);
   expect(created.status).toBe(200);
   expect(created.body.id).toBe(7);
+
+  const replaced = await createPet("Spot Updated", PetStatus.Sold, 7);
+  expect(replaced.body.name).toBe("Spot Updated");
+
+  const nextPet = await createPet("Next");
+  expect(nextPet.body.id).toBe(8);
 });
 
 test("update pet", async () => {
@@ -128,7 +184,7 @@ test("find pets by status", async () => {
     .set("api_key", API_KEY)
     .query({ status: PetStatus.Available });
 
-  expect(response.status).toBe(200);
+  expect(response.status, JSON.stringify(response.body)).toBe(200);
   expect(response.body.map((pet: { name: string }) => pet.name)).toContain(
     "AvailPet",
   );
@@ -204,6 +260,12 @@ test("place order keeps supplied id", async () => {
   const created = await createOrder(OrderStatus.Placed, 7);
   expect(created.status).toBe(200);
   expect(created.body.id).toBe(7);
+
+  const replaced = await createOrder(OrderStatus.Delivered, 7);
+  expect(replaced.body.status).toBe(OrderStatus.Delivered);
+
+  const nextOrder = await createOrder();
+  expect(nextOrder.body.id).toBe(8);
 });
 
 test("delete order", async () => {

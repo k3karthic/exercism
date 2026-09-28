@@ -22,11 +22,11 @@ interface OrderSearchRequest {
   pageSize?: number;
 }
 
-export function getInventory(): Record<string, number> {
+export async function getInventory(): Promise<Record<string, number>> {
   return petStore.inventory();
 }
 
-export function placeOrder({ order }: { order: Order }): Order {
+export async function placeOrder({ order }: { order: Order }): Promise<Order> {
   return petStore.createOrder(order);
 }
 
@@ -34,24 +34,28 @@ export function searchOrders({
   orderSearchCriteria,
   page,
   pageSize,
-}: OrderSearchRequest): OrderSearchResults {
+}: OrderSearchRequest): Promise<OrderSearchResults> {
   return petStore.searchOrders(orderSearchCriteria, page ?? 1, pageSize ?? 20);
 }
 
-export function getOrderById({ orderId }: { orderId: number }): Order {
-  const order = petStore.getOrder(orderId);
+export async function getOrderById({
+  orderId,
+}: {
+  orderId: number;
+}): Promise<Order> {
+  const order = await petStore.getOrder(orderId);
   if (order === undefined) {
     throw new OrderNotFoundError();
   }
   return order;
 }
 
-export function deleteOrder({
+export async function deleteOrder({
   orderId,
 }: {
   orderId: number;
-}): Record<string, never> {
-  if (!petStore.deleteOrder(orderId)) {
+}): Promise<Record<string, never>> {
+  if (!(await petStore.deleteOrder(orderId))) {
     throw new OrderNotFoundError();
   }
   return {};
