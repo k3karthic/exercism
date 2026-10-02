@@ -33,7 +33,11 @@ npm run fallow
 For exact complexity (CRAP) scores, run `npm run coverage` first and pass the
 report: `npm run fallow -- --coverage coverage/coverage-final.json`.
 
-Fallow reports dead code, duplication, and complexity findings. It exits non-zero
+Fallow reports dead code, duplication, and complexity findings. Complexity
+thresholds are explicit in `.fallowrc.json` and mirror the Python workspace's
+pylint settings (`python/pyproject.toml`): cyclomatic complexity 10, and a
+50-line unit size matching pylint's `max-statements`. Cognitive complexity (15)
+and CRAP (30) have no pylint equivalent and keep Fallow's defaults. It exits non-zero
 when findings exceed its thresholds. Generated files under `generated/`
 directories are excluded, matching Knip's configuration. Its entry points mirror
 Knip's; OpenAPI adapter exports and dependencies are accounted for explicitly

@@ -39,16 +39,17 @@ async function pathExists(path: string): Promise<boolean> {
     await access(path);
     return true;
   } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
+    if (isNotFoundError(error)) {
       return false;
     }
     throw error;
   }
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return (
+    error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
 }
 
 async function replaceText(
@@ -64,6 +65,11 @@ async function replaceText(
 }
 
 async function adaptGeneratedServer(serverPath: string): Promise<void> {
+  await linkServiceAdapters(serverPath);
+  await patchGeneratedServer(serverPath);
+}
+
+async function linkServiceAdapters(serverPath: string): Promise<void> {
   const services = [
     ["PetService.js", "PetService.cjs"],
     ["StoreService.js", "StoreService.cjs"],
@@ -75,7 +81,9 @@ async function adaptGeneratedServer(serverPath: string): Promise<void> {
       "utf8",
     );
   }
+}
 
+async function patchGeneratedServer(serverPath: string): Promise<void> {
   // The generated controller never forwards the raw request body for this
   // operation, so uploadPetImage's service call is always missing image
   // bytes. Patch the handler to pass `request.body` through explicitly.
@@ -108,50 +116,71 @@ async function adaptGeneratedServer(serverPath: string): Promise<void> {
     "",
   );
 
-  const spec = JSON.parse(await readFile(SPEC_PATH, "utf8")) as {
-    paths: Record<
-      string,
-      Record<string, { operationId?: string; tags?: string[] }>
-    >;
+  await appendControllerAliases(serverPath);
+}
+
+type OpenApiSpec = {
+  paths: Record<
+    string,
+    Record<string, { operationId?: string; tags?: string[] }>
+  >;
+};
+
+const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
+
+function controllerAlias(
+  method: string,
+  operation: { operationId?: string; tags?: string[] },
+): { controllerName: string; alias: string } {
+  const [tag] = operation.tags ?? [];
+  if (operation.operationId === undefined || tag === undefined) {
+    throw new Error(
+      `OpenAPI operation is missing an operationId or tag: ${method}`,
+    );
+  }
+  const methodName =
+    operation.operationId.charAt(0).toLowerCase() +
+    operation.operationId.slice(1);
+  return {
+    controllerName: `${tag}Controller`,
+    alias: `module.exports.${operation.operationId} = ${methodName};`,
   };
+}
+
+async function appendControllerAliases(serverPath: string): Promise<void> {
+  const spec = JSON.parse(await readFile(SPEC_PATH, "utf8")) as OpenApiSpec;
   const aliases = new Map<string, Set<string>>();
   for (const pathItem of Object.values(spec.paths)) {
     for (const [method, operation] of Object.entries(pathItem)) {
-      if (!["get", "post", "put", "patch", "delete"].includes(method)) {
+      if (!HTTP_METHODS.has(method)) {
         continue;
       }
-      if (
-        operation.operationId === undefined ||
-        operation.tags?.[0] === undefined
-      ) {
-        throw new Error(
-          `OpenAPI operation is missing an operationId or tag: ${method}`,
-        );
-      }
-      const controllerName = `${operation.tags[0]}Controller`;
-      const methodName =
-        operation.operationId.charAt(0).toLowerCase() +
-        operation.operationId.slice(1);
-      const controllerAliases =
-        aliases.get(controllerName) ?? new Set<string>();
-      controllerAliases.add(
-        `module.exports.${operation.operationId} = ${methodName};`,
-      );
+      const { controllerName, alias } = controllerAlias(method, operation);
+      const controllerAliases = aliases.get(controllerName) ?? new Set();
+      controllerAliases.add(alias);
       aliases.set(controllerName, controllerAliases);
     }
   }
   for (const [controllerName, controllerAliases] of aliases) {
-    const controllerPath = join(
-      serverPath,
-      "controllers",
-      `${controllerName}.js`,
-    );
     await appendFile(
-      controllerPath,
+      join(serverPath, "controllers", `${controllerName}.js`),
       `\n${[...controllerAliases].join("\n")}\n`,
       "utf8",
     );
   }
+}
+
+function normalizeGeneratedFile(path: string, source: string): string {
+  let normalized = source
+    .replace(/\.js(?=['"])/g, ".ts")
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .trimEnd();
+  if (path.endsWith(".ts") && !normalized.startsWith("// @ts-nocheck")) {
+    normalized = `// @ts-nocheck\n${normalized}`;
+  }
+  return `${normalized}\n`;
 }
 
 async function disableGeneratedClientTypeChecking(
@@ -166,16 +195,18 @@ async function disableGeneratedClientTypeChecking(
       (path.endsWith(".ts") || path.endsWith(".md"))
     ) {
       const source = await readFile(path, "utf8");
-      let normalized = source
-        .replace(/\.js(?=['"])/g, ".ts")
-        .split(/\r?\n/)
-        .map((line) => line.trimEnd())
-        .join("\n")
-        .trimEnd();
-      if (path.endsWith(".ts") && !normalized.startsWith("// @ts-nocheck")) {
-        normalized = `// @ts-nocheck\n${normalized}`;
-      }
-      await writeFile(path, `${normalized}\n`, "utf8");
+      await writeFile(path, normalizeGeneratedFile(path, source), "utf8");
+    }
+  }
+}
+
+type InstalledTarget = { targetPath: string; backupPath?: string };
+
+async function rollbackTargets(installed: InstalledTarget[]): Promise<void> {
+  for (const previous of installed.reverse()) {
+    await rm(previous.targetPath, { recursive: true, force: true });
+    if (previous.backupPath !== undefined) {
+      await rename(previous.backupPath, previous.targetPath);
     }
   }
 }
@@ -184,7 +215,7 @@ async function installTargets(
   stagingRoot: string,
   targets: GeneratedTarget[],
 ): Promise<void> {
-  const installed: Array<{ targetPath: string; backupPath?: string }> = [];
+  const installed: InstalledTarget[] = [];
   try {
     for (const target of targets) {
       const backupPath = join(stagingRoot, `.previous-${target.name}`);
@@ -199,14 +230,7 @@ async function installTargets(
       await rename(target.stagedPath, target.targetPath);
     }
   } catch (error) {
-    for (const previous of installed.reverse()) {
-      if (await pathExists(previous.targetPath)) {
-        await rm(previous.targetPath, { recursive: true, force: true });
-      }
-      if (previous.backupPath !== undefined) {
-        await rename(previous.backupPath, previous.targetPath);
-      }
-    }
+    await rollbackTargets(installed);
     throw error;
   }
 }

@@ -37,5 +37,12 @@
     "winston"
   ],
   "ignoreFindings": ["openapi/server-adapters/**"],
-  "ignorePatterns": ["**/generated/**"]
+  "ignorePatterns": ["**/generated/**"],
+  "health": {
+    "maxCyclomatic": 10,
+    "maxCognitive": 15,
+    "maxCrap": 30,
+    "crapRefactorBand": 5,
+    "maxUnitSize": 50
+  }
 }

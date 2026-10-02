@@ -50,6 +50,17 @@ load-plugins = ["pylint.extensions.mccabe"]
 
 [tool.pylint.design]
 max-complexity = 10
+max-args = 5
+max-positional-arguments = 5
+max-attributes = 7
+max-bool-expr = 5
+max-branches = 12
+max-locals = 15
+max-parents = 7
+max-public-methods = 20
+max-returns = 6
+max-statements = 50
+min-public-methods = 2
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
