@@ -108,6 +108,10 @@ function isoNow(): string {
   return now().toISOString();
 }
 
+function sessionExpiry(ttlSeconds: number): string {
+  return new Date(now().getTime() + ttlSeconds * 1000).toISOString();
+}
+
 function envAsNumber(value: string | undefined, fallback: number): number {
   if (value === undefined) {
     return fallback;
@@ -294,9 +298,7 @@ class RedisSessionStore {
       idToken: options.idToken,
       createdAt: isoNow(),
       updatedAt: isoNow(),
-      expiresAt: new Date(
-        now().getTime() + this.settings.sessionTtlSeconds * 1000,
-      ).toISOString(),
+      expiresAt: sessionExpiry(this.settings.sessionTtlSeconds),
     };
 
     const client = this.client();
@@ -340,9 +342,7 @@ class RedisSessionStore {
     const updated: SessionRecord = {
       ...session,
       updatedAt: isoNow(),
-      expiresAt: new Date(
-        now().getTime() + this.settings.sessionTtlSeconds * 1000,
-      ).toISOString(),
+      expiresAt: sessionExpiry(this.settings.sessionTtlSeconds),
     };
 
     const client = this.client();

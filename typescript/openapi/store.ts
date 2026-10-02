@@ -87,7 +87,7 @@ async function advanceOrderSequence(): Promise<void> {
   `);
 }
 
-export class PetStore {
+class PetStore {
   public async createPet(pet: Pet): Promise<Pet> {
     const values = {
       name: pet.name,
