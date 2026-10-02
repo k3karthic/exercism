@@ -492,3 +492,25 @@ test("store searches orders with ranges, sorting, and paging", async () => {
   const none = await petStore.searchOrders({ petId: 99 }, 1, 10);
   expect(none.pagination.totalPages).toBe(0);
 });
+
+test("validation failures return 422 with details", async () => {
+  const response = await request(app)
+    .post("/pet")
+    .set("api_key", API_KEY)
+    .send({ photoUrls: [] });
+
+  expect(response.status).toBe(422);
+  expect(response.body.message).toBe("Validation Failed");
+  expect(response.body.details).toBeDefined();
+});
+
+test("malformed JSON bodies keep their error status", async () => {
+  const response = await request(app)
+    .post("/pet")
+    .set("api_key", API_KEY)
+    .set("content-type", "application/json")
+    .send("{not json");
+
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBeTypeOf("string");
+});

@@ -82,7 +82,7 @@ async function main() {
   process.exit(results.some((result) => result.stale) ? 1 : 0);
 }
 
-function parseArgs(args: string[]) {
+export function parseArgs(args: string[]) {
   const dependencyNames: string[] = [];
   let thresholdDays = DEFAULT_THRESHOLD_DAYS;
   let jsonOutput = false;
@@ -148,7 +148,7 @@ async function readJson<T>(filePath: string): Promise<T> {
   return JSON.parse(content) as T;
 }
 
-function collectDependencyNames(packageJson: PackageJson) {
+export function collectDependencyNames(packageJson: PackageJson) {
   return Array.from(
     new Set([
       ...Object.keys(packageJson.dependencies ?? {}),
@@ -165,7 +165,7 @@ function findDependencySpec(packageJson: PackageJson, name: string) {
   );
 }
 
-async function inspectDependency(
+export async function inspectDependency(
   name: string,
   spec: string,
   packageLock: PackageLock | null,
@@ -203,7 +203,10 @@ async function inspectDependency(
   return result;
 }
 
-function getPackageLockVersion(packageLock: PackageLock | null, name: string) {
+export function getPackageLockVersion(
+  packageLock: PackageLock | null,
+  name: string,
+) {
   if (!packageLock) {
     return null;
   }
@@ -216,7 +219,7 @@ function getPackageLockVersion(packageLock: PackageLock | null, name: string) {
   );
 }
 
-function parseExactVersion(spec: string) {
+export function parseExactVersion(spec: string) {
   const npmAliasMatch = spec.match(/^npm:(.+)$/);
   const normalizedSpec = npmAliasMatch ? npmAliasMatch[1] : spec;
   if (!normalizedSpec) {
@@ -276,7 +279,7 @@ async function fetchRegistryMetadata(name: string) {
   return pending;
 }
 
-function encodePackageName(name: string) {
+export function encodePackageName(name: string) {
   return name.startsWith("@")
     ? `@${encodeURIComponent(name.slice(1)).replace(/%2F/g, "%2f")}`
     : encodeURIComponent(name);
@@ -348,4 +351,9 @@ function printResults(results: DependencyResult[], thresholdDays: number) {
   );
 }
 
-await main();
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  await main();
+}
