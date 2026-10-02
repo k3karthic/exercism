@@ -98,6 +98,19 @@ function orderSortField(
   return ORDER_SORT_FIELDS.find((field) => field === sortBy) ?? "id";
 }
 
+function petFilters(criteria: PetSearchCriteria): SQL | undefined {
+  const filters: SQL[] = [];
+  if (criteria.status !== undefined && criteria.status.length > 0) {
+    filters.push(inArray(pets.status, criteria.status));
+  }
+  for (const tag of criteria.tags ?? []) {
+    filters.push(
+      sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
+    );
+  }
+  return filters.length === 0 ? undefined : and(...filters);
+}
+
 async function advancePetSequence(): Promise<void> {
   await getDatabase().execute(sql`
     SELECT setval(
@@ -241,29 +254,14 @@ class PetStore {
     limit: number,
     offset: number,
   ): Promise<PetSearchResults> {
-    const filters: SQL[] = [];
-    if (criteria.status !== undefined && criteria.status.length > 0) {
-      filters.push(inArray(pets.status, criteria.status));
-    }
-    for (const tag of criteria.tags ?? []) {
-      filters.push(
-        sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
-      );
-    }
-
-    let matched = (
-      await getDatabase()
-        .select()
-        .from(pets)
-        .where(filters.length === 0 ? undefined : and(...filters))
-    ).map(petFromRow);
-
     const nameFilter = criteria.name?.replaceAll("*", "").toLowerCase();
-    if (nameFilter !== undefined && nameFilter.length > 0) {
-      matched = matched.filter((pet) =>
-        pet.name.toLowerCase().includes(nameFilter),
+    const matched = (
+      await getDatabase().select().from(pets).where(petFilters(criteria))
+    )
+      .map(petFromRow)
+      .filter(
+        (pet) => !nameFilter || pet.name.toLowerCase().includes(nameFilter),
       );
-    }
 
     const sortBy = criteria.sortBy ?? "name";
     const sortField = sortBy === "status" ? "status" : "name";

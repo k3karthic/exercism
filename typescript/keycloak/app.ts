@@ -71,30 +71,37 @@ type JsonWebKeyWithKid = JsonWebKey & {
   kid?: string;
 };
 
+function env(name: string, fallback: string | number): string {
+  return process.env[name] ?? String(fallback);
+}
+
 export function createSettingsFromEnv(): Settings {
   return {
-    keycloakBaseUrl: process.env.KEYCLOAK_BASE_URL ?? DEFAULT_KEYCLOAK_BASE_URL,
-    keycloakRealm: process.env.KEYCLOAK_REALM ?? DEFAULT_KEYCLOAK_REALM,
-    keycloakClientId:
-      process.env.KEYCLOAK_CLIENT_ID ?? DEFAULT_KEYCLOAK_CLIENT_ID,
-    keycloakClientSecret: process.env.KEYCLOAK_CLIENT_SECRET ?? "",
-    keycloakAudienceScope:
-      process.env.KEYCLOAK_AUDIENCE_SCOPE ?? DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
-    keycloakApiAudience:
-      process.env.KEYCLOAK_API_AUDIENCE ?? DEFAULT_KEYCLOAK_API_AUDIENCE,
-    redirectUri: process.env.KEYCLOAK_REDIRECT_URI ?? DEFAULT_REDIRECT_URI,
-    postLogoutRedirectUri:
-      process.env.POST_LOGOUT_REDIRECT_URI ?? DEFAULT_POST_LOGOUT_REDIRECT_URI,
-    redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379/0",
-    sessionCookieName:
-      process.env.SESSION_COOKIE_NAME ?? DEFAULT_SESSION_COOKIE_NAME,
-    sessionPrefix: process.env.SESSION_PREFIX ?? DEFAULT_SESSION_PREFIX,
+    keycloakBaseUrl: env("KEYCLOAK_BASE_URL", DEFAULT_KEYCLOAK_BASE_URL),
+    keycloakRealm: env("KEYCLOAK_REALM", DEFAULT_KEYCLOAK_REALM),
+    keycloakClientId: env("KEYCLOAK_CLIENT_ID", DEFAULT_KEYCLOAK_CLIENT_ID),
+    keycloakClientSecret: env("KEYCLOAK_CLIENT_SECRET", ""),
+    keycloakAudienceScope: env(
+      "KEYCLOAK_AUDIENCE_SCOPE",
+      DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
+    ),
+    keycloakApiAudience: env(
+      "KEYCLOAK_API_AUDIENCE",
+      DEFAULT_KEYCLOAK_API_AUDIENCE,
+    ),
+    redirectUri: env("KEYCLOAK_REDIRECT_URI", DEFAULT_REDIRECT_URI),
+    postLogoutRedirectUri: env(
+      "POST_LOGOUT_REDIRECT_URI",
+      DEFAULT_POST_LOGOUT_REDIRECT_URI,
+    ),
+    redisUrl: env("REDIS_URL", "redis://localhost:6379/0"),
+    sessionCookieName: env("SESSION_COOKIE_NAME", DEFAULT_SESSION_COOKIE_NAME),
+    sessionPrefix: env("SESSION_PREFIX", DEFAULT_SESSION_PREFIX),
     sessionTtlSeconds: Number(
-      process.env.SESSION_TTL_SECONDS ?? DEFAULT_SESSION_TTL_SECONDS,
+      env("SESSION_TTL_SECONDS", DEFAULT_SESSION_TTL_SECONDS),
     ),
     pendingLoginTtlSeconds: Number(
-      process.env.PENDING_LOGIN_TTL_SECONDS ??
-        DEFAULT_PENDING_LOGIN_TTL_SECONDS,
+      env("PENDING_LOGIN_TTL_SECONDS", DEFAULT_PENDING_LOGIN_TTL_SECONDS),
     ),
     httpTimeoutMs: 10_000,
   };
