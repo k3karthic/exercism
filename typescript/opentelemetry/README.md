@@ -1,14 +1,28 @@
 # OpenTelemetry sample
 
-This sample shows manual OpenTelemetry traces, metrics, and logs in TypeScript,
-plus context propagation between two service classes.
+This sample shows manual OpenTelemetry traces, metrics, and logs in
+TypeScript, plus manual trace context propagation across a subprocess
+boundary.
 
 ## What it does
 
-- `Service1` sends five messages directly to `Service2`
-- `service_2` doubles numeric values and rejects one invalid message
-- both services emit traces, metrics, and logs
-- trace context is propagated through the active OpenTelemetry context
+- `Service1` spawns `service-2-process.ts` as a **subprocess** (via `tsx`)
+  for each message and hands it trace context through
+  `TRACEPARENT`/`TRACESTATE` environment variables
+- `service-2-process.ts` simulates an external integration with no OTel SDK
+  of its own (e.g. a legacy script, another team's CLI, a queue worker
+  written in a different stack) — it doubles numeric values and rejects one
+  invalid message
+- both processes emit traces, metrics, and logs, and the subprocess's span
+  nests under the same trace as the caller's, even though nothing but an
+  env var crossed the process boundary
+- context is propagated with `propagation.inject`/`extract` from
+  `@opentelemetry/api` (the same API a real HTTP/gRPC client and server
+  instrumentation library would call for you automatically); it's called by
+  hand here only because there's no such library for "subprocess + env var"
+  as a transport. In production, prefer an existing instrumentation (e.g.
+  `@opentelemetry/instrumentation-http`, a gRPC client/server interceptor)
+  over wiring this up yourself.
 
 ## Run OpenObserve locally
 
@@ -78,15 +92,32 @@ podman run --rm \
 
 ## Run the sample
 
-The CLI creates both service classes in one process:
-
 ```bash
 OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 npx tsx opentelemetry/app.ts
 ```
 
-`Service1` sends `1`, `2`, `oops`, `3`, and `4` directly to `Service2`, then
-exits. Each class exports telemetry with its own service name, so the trace
-graph shows both `service_1` and `service_2`.
+`Service1` sends `1`, `2`, `oops`, `3`, and `4` to `Service2` by spawning
+`service-2-process.ts` as a subprocess once per message (`tsx
+service-2-process.ts <value>`). Each process exports telemetry with its own
+service name, so the trace graph shows both `service_1` and `service_2`,
+nested under the same trace despite running in separate OS processes.
+
+## Manual context propagation across the subprocess boundary
+
+`Service1.callService2` builds a carrier object with
+`propagation.inject(context.active(), carrier)`, then copies its
+`traceparent`/`tracestate` values into the subprocess's environment as
+`TRACEPARENT`/`TRACESTATE`. `service-2-process.ts` reads those env vars back
+into a carrier and calls `propagation.extract(context.active(), carrier)` to
+recover a context holding the remote parent span, then runs its own span
+inside that context (via `context.with(...)`) — so it nests under
+`Service1`'s trace.
+
+This is exactly what OTel's HTTP/gRPC client and server instrumentation
+libraries do for you automatically over the wire. Reach for those first;
+only hand-roll `propagation.inject`/`extract` like this when propagating
+across a transport with no existing instrumentation (here, "subprocess
+argv/env").
 
 ## Auto instrumentation
 

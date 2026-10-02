@@ -5,12 +5,16 @@ import asyncio
 import json
 import logging
 import os
+import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from functools import cached_property
+from pathlib import Path
 from typing import Any, Sequence
 
 from opentelemetry import metrics, trace
+from opentelemetry.propagate import inject
 from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
@@ -64,22 +68,30 @@ def _build_resource(service_name: str) -> Resource:
 
 
 def configure_telemetry(service_name: str) -> TelemetryBundle:
-    endpoint = _normalize_endpoint(
-        os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "127.0.0.1:4317")
-    )
+    raw_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
     resource = _build_resource(service_name)
 
     tracer_provider = TracerProvider(resource=resource)
-    tracer_provider.add_span_processor(
-        BatchSpanProcessor(trace_exporter_class(endpoint))
-    )
-    metric_reader = PeriodicExportingMetricReader(metric_exporter_class(endpoint))
-    meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
-
+    meter_readers: list[PeriodicExportingMetricReader] = []
     logger_provider = LoggerProvider(resource=resource)
-    logger_provider.add_log_record_processor(
-        BatchLogRecordProcessor(log_exporter_class(endpoint))
-    )
+
+    # Only wire up real OTLP exporters when a collector endpoint is
+    # configured, so running the sample/tests without a collector doesn't
+    # try to dial 127.0.0.1:4317 by default.
+    if raw_endpoint:
+        endpoint = _normalize_endpoint(raw_endpoint)
+        tracer_provider.add_span_processor(
+            BatchSpanProcessor(trace_exporter_class(endpoint))
+        )
+        meter_readers.append(
+            PeriodicExportingMetricReader(metric_exporter_class(endpoint))
+        )
+        logger_provider.add_log_record_processor(
+            BatchLogRecordProcessor(log_exporter_class(endpoint))
+        )
+
+    meter_provider = MeterProvider(resource=resource, metric_readers=meter_readers)
+
     service_logger = logging.getLogger(service_name)
     service_logger.setLevel(logging.INFO)
     if not any(
@@ -197,9 +209,11 @@ class Service2:
             }
 
 
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
 class Service1:
-    def __init__(self, service_2: Service2) -> None:
-        self.service_2 = service_2
+    def __init__(self) -> None:
         self.logger = _service_logger("service_1")
         self.telemetry = TelemetryBundle()
 
@@ -223,6 +237,40 @@ class Service1:
     def latency_histogram(self):
         return self.meter.create_histogram("otel_message_round_trip_ms")
 
+    def _call_service_2(self, value: str) -> DoubleResult:
+        """Call service_2 across a subprocess boundary, propagating trace
+        context by hand through environment variables.
+
+        `service_2_process.py` simulates an external integration with no
+        OTel SDK of its own (e.g. a legacy script or another team's CLI), so
+        there's no propagator library sitting in an HTTP/gRPC layer to do
+        this automatically. In production, prefer an existing
+        instrumentation (e.g. `opentelemetry-instrumentation-requests`, or a
+        gRPC client interceptor) that calls `inject` for you on every
+        outbound call.
+        """
+        carrier: dict[str, str] = {}
+        inject(carrier)
+
+        env = dict(os.environ)
+        if "traceparent" in carrier:
+            env["TRACEPARENT"] = carrier["traceparent"]
+        if "tracestate" in carrier:
+            env["TRACESTATE"] = carrier["tracestate"]
+
+        completed = subprocess.run(
+            [sys.executable, "-m", "opentelemetry_exercise.service_2_process", value],
+            env=env,
+            cwd=_PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        result: dict[str, Any] = json.loads(completed.stdout)
+        if "error" in result:
+            raise ValueError(result["error"])
+        return result
+
     async def send_numbers_to_service_2(
         self,
         messages: Sequence[str] = DEFAULT_MESSAGES,
@@ -237,7 +285,7 @@ class Service1:
                 span.set_attribute("message.value", raw_value)
 
                 try:
-                    payload = await self.service_2.double_number(raw_value)
+                    payload = self._call_service_2(raw_value)
                     span.set_attribute("service_2.trace_id", payload["trace_id"])
                     self.sent_counter.add(1)
                     results.append(payload)
@@ -268,18 +316,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    service_2 = Service2()
-    service_1 = Service1(service_2)
+    service_1 = Service1()
     service_1.telemetry = configure_telemetry("service_1")
-    service_2.telemetry = configure_telemetry("service_2")
     try:
         result = asyncio.run(service_1.send_numbers_to_service_2(args.messages))
         print(json.dumps(result, indent=2))
     finally:
         service_1.telemetry.force_flush()
-        service_2.telemetry.force_flush()
         service_1.telemetry.shutdown()
-        service_2.telemetry.shutdown()
 
 
 if __name__ == "__main__":

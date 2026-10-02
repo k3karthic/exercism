@@ -1,6 +1,13 @@
-import { pathToFileURL } from "node:url";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { SpanStatusCode, trace, type Span } from "@opentelemetry/api";
+import {
+  context,
+  propagation,
+  SpanStatusCode,
+  trace,
+  type Span,
+} from "@opentelemetry/api";
 import { SeverityNumber, type Logger } from "@opentelemetry/api-logs";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
@@ -17,6 +24,7 @@ import {
 import {
   BatchSpanProcessor,
   NodeTracerProvider,
+  type SpanProcessor,
 } from "@opentelemetry/sdk-trace-node";
 
 export const DEFAULT_MESSAGES = ["1", "2", "oops", "3", "4"];
@@ -61,7 +69,10 @@ class ServiceLogger {
   }
 
   info(message: string): void {
-    console.log(`${this.serviceName}: ${message}`);
+    // Use stderr (not stdout) for human-readable logs so a subprocess's
+    // stdout can carry only the JSON result payload; mirrors Python's
+    // logging.StreamHandler, which defaults to stderr.
+    console.error(`${this.serviceName}: ${message}`);
     this.logger.emit({
       severityNumber: SeverityNumber.INFO,
       severityText: "INFO",
@@ -81,12 +92,15 @@ class ServiceLogger {
   }
 }
 
-class TelemetryBundle {
+export class TelemetryBundle {
   readonly tracerProvider: NodeTracerProvider;
   readonly meterProvider: MeterProvider;
   readonly loggerProvider: LoggerProvider;
 
-  constructor(serviceName: string) {
+  constructor(
+    serviceName: string,
+    extraSpanProcessors: readonly SpanProcessor[] = [],
+  ) {
     const resource = resourceFromAttributes({
       "service.name": serviceName,
       "service.namespace": SERVICE_NAMESPACE,
@@ -99,12 +113,22 @@ class TelemetryBundle {
       resource,
       spanProcessors: hasEndpoint
         ? [
+            ...extraSpanProcessors,
             new BatchSpanProcessor(
               new OTLPTraceExporter({ url: normalizedEndpoint }),
             ),
           ]
-        : [],
+        : [...extraSpanProcessors],
     });
+    // Registers this provider as the global tracer provider, plus an
+    // AsyncLocalStorage-based context manager and the default W3C Trace
+    // Context propagator. A full `NodeSDK()` setup (or
+    // `@opentelemetry/auto-instrumentations-node`) would normally do this
+    // for you; it's explicit here since this sample builds its providers by
+    // hand. Without it, `context.active()` never carries the active span,
+    // and `propagation.inject`/`extract` (used in `Service1.callService2`
+    // and `service-2-process.ts`) have nothing to work with.
+    this.tracerProvider.register();
     this.meterProvider = new MeterProvider({
       resource,
       readers: hasEndpoint
@@ -225,8 +249,8 @@ export class Service1 {
     ReturnType<MeterProvider["getMeter"]>["createHistogram"]
   >;
 
-  constructor(private readonly service2: Service2) {
-    this.telemetry = new TelemetryBundle("service_1");
+  constructor(telemetry: TelemetryBundle = new TelemetryBundle("service_1")) {
+    this.telemetry = telemetry;
     this.logger = new ServiceLogger("service_1", this.telemetry.loggerProvider);
     this.tracer = this.telemetry.tracerProvider.getTracer("otel.service_1");
     this.meter = this.telemetry.meterProvider.getMeter("otel.service_1");
@@ -237,6 +261,47 @@ export class Service1 {
     this.latencyHistogram = this.meter.createHistogram(
       "otel_message_round_trip_ms",
     );
+  }
+
+  /**
+   * Call service_2 across a subprocess boundary, propagating trace context
+   * by hand through environment variables.
+   *
+   * `service-2-process.ts` simulates an external integration with no OTel
+   * SDK of its own (e.g. a legacy script or another team's CLI), so there's
+   * no propagator library sitting in an HTTP/gRPC layer to do this
+   * automatically. In production, prefer an existing instrumentation (e.g.
+   * `@opentelemetry/instrumentation-http`, or a gRPC client interceptor)
+   * that calls `propagation.inject` for you on every outbound call.
+   */
+  private callService2(value: string): DoubleResponse {
+    const carrier: Record<string, string> = {};
+    propagation.inject(context.active(), carrier);
+
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    if (carrier.traceparent !== undefined) {
+      env.TRACEPARENT = carrier.traceparent;
+    }
+    if (carrier.tracestate !== undefined) {
+      env.TRACESTATE = carrier.tracestate;
+    }
+
+    const tsxCliPath = fileURLToPath(import.meta.resolve("tsx/cli"));
+    const scriptPath = fileURLToPath(
+      new URL("./service-2-process.ts", import.meta.url),
+    );
+    const stdout = execFileSync(
+      process.execPath,
+      [tsxCliPath, scriptPath, value],
+      { env, encoding: "utf-8" },
+    );
+    const result = JSON.parse(stdout) as
+      | DoubleResponse
+      | { value: string; error: string };
+    if ("error" in result) {
+      throw new Error(result.error);
+    }
+    return result;
   }
 
   async sendNumbersToService2(
@@ -253,7 +318,7 @@ export class Service1 {
           span.setAttribute("message.index", index + 1);
           span.setAttribute("message.value", rawValue);
           try {
-            const payload = await this.service2.doubleNumber(rawValue);
+            const payload = this.callService2(rawValue);
             span.setAttribute("service_2.trace_id", payload.traceId);
             this.sentCounter.add(1);
             results.push(payload);
@@ -283,20 +348,13 @@ export class Service1 {
 }
 
 async function main(): Promise<void> {
-  const service2 = new Service2();
-  const service1 = new Service1(service2);
+  const service1 = new Service1();
   try {
     const result = await service1.sendNumbersToService2();
     console.log(JSON.stringify(result, null, 2));
-    await Promise.all([
-      service1.telemetry.forceFlush(),
-      service2.telemetry.forceFlush(),
-    ]);
+    await service1.telemetry.forceFlush();
   } finally {
-    await Promise.all([
-      service1.telemetry.shutdown(),
-      service2.telemetry.shutdown(),
-    ]);
+    await service1.telemetry.shutdown();
   }
 }
 
