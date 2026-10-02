@@ -47,6 +47,7 @@ exclude = [
 
 [tool.pylint.main]
 load-plugins = ["pylint.extensions.mccabe"]
+ignore-paths = [".*cpu_memory_visualization/.*"]
 
 [tool.pylint.design]
 max-complexity = 10
