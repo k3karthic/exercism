@@ -59,6 +59,45 @@ function sortValues<T>(values: T[], key: keyof T, order: "asc" | "desc"): T[] {
   });
 }
 
+function orderMatchesRanges(criteria: OrderSearchCriteria) {
+  const from =
+    criteria.dateRange?.from === undefined
+      ? undefined
+      : new Date(criteria.dateRange.from).getTime();
+  const to =
+    criteria.dateRange?.to === undefined
+      ? undefined
+      : new Date(criteria.dateRange.to).getTime();
+  const minimumQuantity = criteria.quantityRange?.min;
+  const maximumQuantity = criteria.quantityRange?.max;
+
+  return (order: Order): boolean => {
+    if (order.shipDate !== undefined) {
+      const shipTime = new Date(order.shipDate).getTime();
+      if (from !== undefined && shipTime < from) {
+        return false;
+      }
+      if (to !== undefined && shipTime > to) {
+        return false;
+      }
+    }
+
+    const quantity = order.quantity ?? 0;
+    return (
+      (minimumQuantity === undefined || quantity >= minimumQuantity) &&
+      (maximumQuantity === undefined || quantity <= maximumQuantity)
+    );
+  };
+}
+
+const ORDER_SORT_FIELDS = ["shipDate", "petId", "quantity", "status"] as const;
+
+function orderSortField(
+  sortBy: string,
+): (typeof ORDER_SORT_FIELDS)[number] | "id" {
+  return ORDER_SORT_FIELDS.find((field) => field === sortBy) ?? "id";
+}
+
 async function advancePetSequence(): Promise<void> {
   await getDatabase().execute(sql`
     SELECT setval(
@@ -325,46 +364,9 @@ class PetStore {
         .where(filters.length === 0 ? undefined : and(...filters))
     ).map(orderFromRow);
 
-    if (criteria.dateRange?.from !== undefined) {
-      const from = new Date(criteria.dateRange.from).getTime();
-      matched = matched.filter(
-        (order) =>
-          order.shipDate === undefined ||
-          new Date(order.shipDate).getTime() >= from,
-      );
-    }
-    if (criteria.dateRange?.to !== undefined) {
-      const to = new Date(criteria.dateRange.to).getTime();
-      matched = matched.filter(
-        (order) =>
-          order.shipDate === undefined ||
-          new Date(order.shipDate).getTime() <= to,
-      );
-    }
-    const minimumQuantity = criteria.quantityRange?.min;
-    if (minimumQuantity !== undefined) {
-      matched = matched.filter(
-        (order) => (order.quantity ?? 0) >= minimumQuantity,
-      );
-    }
-    const maximumQuantity = criteria.quantityRange?.max;
-    if (maximumQuantity !== undefined) {
-      matched = matched.filter(
-        (order) => (order.quantity ?? 0) <= maximumQuantity,
-      );
-    }
+    matched = matched.filter(orderMatchesRanges(criteria));
 
-    const sortBy = criteria.sortBy ?? "shipDate";
-    const sortField =
-      sortBy === "shipDate"
-        ? "shipDate"
-        : sortBy === "petId"
-          ? "petId"
-          : sortBy === "quantity"
-            ? "quantity"
-            : sortBy === "status"
-              ? "status"
-              : "id";
+    const sortField = orderSortField(criteria.sortBy ?? "shipDate");
     const sorted = sortValues(matched, sortField, criteria.sortOrder ?? "desc");
     const totalResults = sorted.length;
     const start = (page - 1) * pageSize;

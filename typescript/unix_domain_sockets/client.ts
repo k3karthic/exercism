@@ -5,6 +5,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { once } from "node:events";
 
+import { parseSocketPath } from "./cli.ts";
+
 export class PermissionError extends Error {}
 
 export class IntegrityError extends Error {}
@@ -156,22 +158,6 @@ export async function sendRequestWithRetry(
   }
 
   throw new Error("Unreachable retry loop exit.");
-}
-
-function parseSocketPath(argv: string[]): string {
-  for (let index = 0; index < argv.length; index += 1) {
-    const value = argv[index];
-    if (value === "-s" || value === "--socket") {
-      const socketPath = argv[index + 1];
-      if (socketPath === undefined) {
-        throw new Error("Missing value for --socket.");
-      }
-
-      return socketPath;
-    }
-  }
-
-  throw new Error("The --socket argument is required.");
 }
 
 async function main(): Promise<void> {

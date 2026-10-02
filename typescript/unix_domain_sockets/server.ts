@@ -4,6 +4,8 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { once } from "node:events";
 
+import { parseSocketPath } from "./cli.ts";
+
 type ProcessedRequest = {
   result: number;
   timestamp: number;
@@ -193,22 +195,6 @@ export class AsyncIdempotentServer {
 }
 
 export class PermissionError extends Error {}
-
-function parseSocketPath(argv: string[]): string {
-  for (let index = 0; index < argv.length; index += 1) {
-    const value = argv[index];
-    if (value === "-s" || value === "--socket") {
-      const socketPath = argv[index + 1];
-      if (socketPath === undefined) {
-        throw new Error("Missing value for --socket.");
-      }
-
-      return socketPath;
-    }
-  }
-
-  throw new Error("The --socket argument is required.");
-}
 
 async function main(): Promise<void> {
   const socketPath = parseSocketPath(process.argv.slice(2));
