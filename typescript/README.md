@@ -16,11 +16,22 @@ npx tsx index.ts
 npm run format
 ```
 
+## Test coverage
+
+```bash
+npm run coverage
+```
+
+Writes `coverage/coverage-final.json` and prints a summary.
+
 ## Analyze codebase
 
 ```bash
 npm run fallow
 ```
+
+For exact complexity (CRAP) scores, run `npm run coverage` first and pass the
+report: `npm run fallow -- --coverage coverage/coverage-final.json`.
 
 Fallow reports dead code, duplication, and complexity findings. It exits non-zero
 when findings exceed its thresholds. Generated files under `generated/`

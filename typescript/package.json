@@ -17,7 +17,8 @@
     "openapi:generate": "tsx openapi/generate.ts",
     "db:openapi:generate": "drizzle-kit generate --config openapi/drizzle.config.ts",
     "db:openapi:migrate": "drizzle-kit migrate --config openapi/drizzle.config.ts",
-    "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"node_modules/**/*.json,node_modules/**/Dockerfile\" ."
+    "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"node_modules/**/*.json,node_modules/**/Dockerfile\" .",
+    "coverage": "vitest run --coverage --coverage.provider=istanbul --coverage.reporter=json --coverage.reporter=text-summary --coverage.reportsDirectory=coverage"
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "^2.7.1",
@@ -30,6 +31,7 @@
     "@types/pg": "^8.23.1",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
+    "@vitest/coverage-istanbul": "^4.1.11",
     "drizzle-kit": "^0.31.11",
     "fallow": "^3.31.0",
     "knip": "^6.39.0",
