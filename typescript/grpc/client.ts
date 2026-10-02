@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { optionValue, reportTermination } from "./cli.ts";
 
 import { createDoublerClient, type DoubleRequest, type DoublerClient, invokeDouble } from "./grpc_support.js";
 
@@ -49,30 +50,11 @@ function parseNumber(value: string | undefined): number {
 }
 
 function parseTarget(argv: string[]): string {
-  for (let index = 0; index < argv.length; index += 1) {
-    const value = argv[index];
-    if (value === "-t" || value === "--target") {
-      const target = argv[index + 1];
-      if (target === undefined) {
-        throw new Error("Missing value for --target.");
-      }
-
-      return target;
-    }
-  }
-
-  return "localhost:50051";
+  return optionValue(argv, ["-t", "--target"]) ?? "localhost:50051";
 }
 
 function parseNumberArg(argv: string[]): number {
-  for (let index = 0; index < argv.length; index += 1) {
-    const value = argv[index];
-    if (value === "-n" || value === "--number") {
-      return parseNumber(argv[index + 1]);
-    }
-  }
-
-  return 55;
+  return parseNumber(optionValue(argv, ["-n", "--number"]) ?? "55");
 }
 
 async function main(): Promise<void> {
@@ -84,12 +66,7 @@ async function main(): Promise<void> {
   try {
     await requestDouble(target, number);
   } catch (error) {
-    if (error instanceof Error) {
-      console.log(`Execution terminated: ${error.message}`);
-      return;
-    }
-
-    console.log(`Execution terminated: ${error}`);
+    reportTermination(error);
   }
 }
 

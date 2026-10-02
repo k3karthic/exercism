@@ -1,6 +1,7 @@
 import * as grpc from "@grpc/grpc-js";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { optionValue, reportTermination } from "./cli.ts";
 
 import {
   getDoublerServiceConstructor,
@@ -115,19 +116,7 @@ export async function serve(address: string): Promise<void> {
 }
 
 function parseAddress(argv: string[]): string {
-  for (let index = 0; index < argv.length; index += 1) {
-    const value = argv[index];
-    if (value === "-a" || value === "--address") {
-      const address = argv[index + 1];
-      if (address === undefined) {
-        throw new Error("Missing value for --address.");
-      }
-
-      return address;
-    }
-  }
-
-  return "[::]:50051";
+  return optionValue(argv, ["-a", "--address"]) ?? "[::]:50051";
 }
 
 async function main(): Promise<void> {
@@ -136,12 +125,7 @@ async function main(): Promise<void> {
   try {
     await serve(address);
   } catch (error) {
-    if (error instanceof Error) {
-      console.log(`Execution terminated: ${error.message}`);
-      return;
-    }
-
-    console.log(`Execution terminated: ${error}`);
+    reportTermination(error);
   }
 }
 
