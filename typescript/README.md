@@ -16,6 +16,12 @@ npx tsx index.ts
 npm run format
 ```
 
+## Analyze unused code
+
+```bash
+npm run knip
+```
+
 ## Scan CVEs
 
 ```bash

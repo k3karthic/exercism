@@ -1,0 +1,28 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "index.ts",
+    "concurrency/async.ts",
+    "cpu_memory_visualization/ex_*.ts",
+    "debugger/debugger_test.ts",
+    "durable_execution/client.ts",
+    "durable_execution/worker.ts",
+    "grpc/client.ts",
+    "grpc/server.ts",
+    "kafka/app.ts",
+    "keycloak/app.ts",
+    "opentelemetry/app.ts",
+    "opentelemetry/service-2-process.ts",
+    "parallelism/cluster.ts",
+    "rabbitmq/app.ts",
+    "testcontainers/redis.ts",
+    "unix_domain_sockets/client.ts",
+    "unix_domain_sockets/server.ts",
+    "openapi/client_driver.ts",
+    "openapi/drizzle.config.ts",
+    "openapi/generate.ts",
+    "openapi/server.ts",
+    "scripts/check-dependency-age.ts"
+  ],
+  "ignore": ["**/generated/**"]
+}
