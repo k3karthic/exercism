@@ -21,7 +21,7 @@ function runGenerator(args: string[]): void {
   });
 }
 
-async function pathExists(path: string): Promise<boolean> {
+export async function pathExists(path: string): Promise<boolean> {
   try {
     await access(path);
     return true;
@@ -98,7 +98,7 @@ type OpenApiSpec = {
 
 const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 
-function controllerAlias(
+export function controllerAlias(
   method: string,
   operation: { operationId?: string; tags?: string[] },
 ): { controllerName: string; alias: string } {
@@ -113,7 +113,7 @@ function controllerAlias(
   };
 }
 
-async function appendControllerAliases(serverPath: string): Promise<void> {
+export async function appendControllerAliases(serverPath: string): Promise<void> {
   const spec = JSON.parse(await readFile(SPEC_PATH, "utf8")) as OpenApiSpec;
   const aliases = new Map<string, Set<string>>();
   for (const pathItem of Object.values(spec.paths)) {
@@ -136,7 +136,7 @@ async function appendControllerAliases(serverPath: string): Promise<void> {
   }
 }
 
-function normalizeGeneratedFile(path: string, source: string): string {
+export function normalizeGeneratedFile(path: string, source: string): string {
   let normalized = source
     .replace(/\.js(?=['"])/g, ".ts")
     .split(/\r?\n/)
@@ -149,7 +149,7 @@ function normalizeGeneratedFile(path: string, source: string): string {
   return `${normalized}\n`;
 }
 
-async function disableGeneratedClientTypeChecking(directory: string): Promise<void> {
+export async function disableGeneratedClientTypeChecking(directory: string): Promise<void> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
@@ -172,7 +172,7 @@ async function rollbackTargets(installed: InstalledTarget[]): Promise<void> {
   }
 }
 
-async function installTargets(stagingRoot: string, targets: GeneratedTarget[]): Promise<void> {
+export async function installTargets(stagingRoot: string, targets: GeneratedTarget[]): Promise<void> {
   const installed: InstalledTarget[] = [];
   try {
     for (const target of targets) {

@@ -78,7 +78,7 @@ async function adminFetch(baseUrl: string, token: string, path: string, init: Re
     },
   });
 
-  if (!response.ok && response.status !== 201 && response.status !== 204) {
+  if (!response.ok) {
     throw new Error(`${init.method ?? "GET"} ${path} failed with ${response.status}`);
   }
 
@@ -227,14 +227,8 @@ function parseLoginForm(html: string): {
   const action = html.match(/<form[^>]*action="([^"]+)"/i)?.[1] ?? "";
   const fields: Record<string, string> = {};
 
-  for (const match of html.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/gi)) {
-    const name = match[1];
-    const value = match[2];
-    if (name === undefined || value === undefined) {
-      continue;
-    }
-
-    fields[name] = value;
+  for (const [, name, value] of html.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/gi)) {
+    fields[name as string] = value as string;
   }
 
   return { action, fields };

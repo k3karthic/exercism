@@ -16,6 +16,7 @@ import {
   PetSearchCriteriaSortOrderEnum,
   PetStatus,
 } from "./generated/client/models/index.ts";
+import { uploadPetImage } from "./server-adapters/PetService.ts";
 import { petStore } from "./store.ts";
 
 const API_KEY = "some-api-key";
@@ -464,4 +465,17 @@ test("malformed JSON bodies keep their error status", async () => {
 
   expect(response.status).toBe(400);
   expect(response.body.message).toBeTypeOf("string");
+});
+
+test("uploadPetImage reports byte counts and optional metadata", async () => {
+  const pet = await petStore.createPet({ name: "Uploader", photoUrls: [] });
+  const petId = pet.id as number;
+
+  const withBody = await uploadPetImage({ petId, additionalMetadata: "meta", body: Buffer.from("abcd") });
+  expect(withBody.message).toBe(`Uploaded 4 bytes for pet ${petId}; metadata=meta`);
+
+  const withoutBody = await uploadPetImage({ petId });
+  expect(withoutBody.message).toBe(`Uploaded 0 bytes for pet ${petId}; metadata=none`);
+
+  await expect(uploadPetImage({ petId: 999_999 })).rejects.toThrow();
 });

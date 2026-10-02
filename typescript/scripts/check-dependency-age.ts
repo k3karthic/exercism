@@ -37,15 +37,22 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 async function main() {
   const { dependencyNames, thresholdDays, jsonOutput } = parseArgs(process.argv.slice(2));
-  const rootDir = await findProjectRoot(process.cwd());
-  const packageJsonPath = path.join(rootDir, "package.json");
-  const packageLockPath = path.join(rootDir, "package-lock.json");
+  const results = await collectResults(dependencyNames, thresholdDays);
 
-  const packageJson = await readJson<PackageJson>(packageJsonPath);
-  const packageLock = await readJson<PackageLock | null>(packageLockPath).catch(() => null);
+  if (jsonOutput) {
+    process.stdout.write(JSON.stringify(results, null, 2) + "\n");
+  } else {
+    printResults(results, thresholdDays);
+  }
+  process.exit(results.some((result) => result.stale) ? 1 : 0);
+}
+
+export async function collectResults(dependencyNames: string[], thresholdDays: number): Promise<DependencyResult[]> {
+  const rootDir = await findProjectRoot(process.cwd());
+  const packageJson = await readJson<PackageJson>(path.join(rootDir, "package.json"));
+  const packageLock = await readJson<PackageLock | null>(path.join(rootDir, "package-lock.json")).catch(() => null);
 
   const targetNames = dependencyNames.length > 0 ? dependencyNames : collectDependencyNames(packageJson);
-
   if (targetNames.length === 0) {
     throw new Error("No dependencies found in package.json.");
   }
@@ -56,18 +63,21 @@ async function main() {
     if (!spec) {
       throw new Error(`Dependency "${name}" is not listed in package.json.`);
     }
+    results.push(await inspectDependency(name, spec, packageLock, thresholdDays));
+  }
+  return results;
+}
 
-    const result = await inspectDependency(name, spec, packageLock, thresholdDays);
-    results.push(result);
+function parseDays(value: string | undefined): number {
+  if (!value) {
+    throw new Error("--days requires a numeric value.");
   }
 
-  if (jsonOutput) {
-    process.stdout.write(JSON.stringify(results, null, 2) + "\n");
-    process.exit(results.some((result) => result.stale) ? 1 : 0);
+  const days = Number(value);
+  if (!Number.isFinite(days) || days <= 0) {
+    throw new Error("--days must be a positive number.");
   }
-
-  printResults(results, thresholdDays);
-  process.exit(results.some((result) => result.stale) ? 1 : 0);
+  return days;
 }
 
 export function parseArgs(args: string[]) {
@@ -82,30 +92,15 @@ export function parseArgs(args: string[]) {
     }
 
     if (arg === "--days") {
-      const value = args[index + 1];
-      if (!value) {
-        throw new Error("--days requires a numeric value.");
-      }
-
-      thresholdDays = Number(value);
-      if (!Number.isFinite(thresholdDays) || thresholdDays <= 0) {
-        throw new Error("--days must be a positive number.");
-      }
-
       index += 1;
-      continue;
-    }
-
-    if (arg === "--json") {
+      thresholdDays = parseDays(args[index]);
+    } else if (arg === "--json") {
       jsonOutput = true;
-      continue;
-    }
-
-    if (arg.startsWith("-")) {
+    } else if (arg.startsWith("-")) {
       throw new Error(`Unknown argument: ${arg}`);
+    } else {
+      dependencyNames.push(arg);
     }
-
-    dependencyNames.push(arg);
   }
 
   return { dependencyNames, thresholdDays, jsonOutput };
@@ -140,7 +135,7 @@ export function collectDependencyNames(packageJson: PackageJson) {
   ).sort();
 }
 
-function findDependencySpec(packageJson: PackageJson, name: string) {
+export function findDependencySpec(packageJson: PackageJson, name: string) {
   return packageJson.dependencies?.[name] ?? packageJson.devDependencies?.[name] ?? null;
 }
 
@@ -248,7 +243,15 @@ export function encodePackageName(name: string) {
     : encodeURIComponent(name);
 }
 
-function printResults(results: DependencyResult[], thresholdDays: number) {
+function resultRow(result: DependencyResult): string[] {
+  const publishedAt = result.publishedAt?.toISOString().slice(0, 10) ?? "unknown";
+  const age = result.ageDays === null ? "unknown" : `${result.ageDays}d`;
+  return [result.name, result.version ?? "unknown", publishedAt, age, "STALE", result.source, result.note ?? ""].filter(
+    Boolean,
+  );
+}
+
+export function printResults(results: DependencyResult[], thresholdDays: number) {
   const staleResults = results.filter((result) => result.stale);
 
   if (staleResults.length === 0) {
@@ -256,13 +259,7 @@ function printResults(results: DependencyResult[], thresholdDays: number) {
     return;
   }
 
-  const rows = staleResults.map((result) => {
-    const status = result.stale ? "STALE" : "fresh";
-    const version = result.version ?? "unknown";
-    const publishedAt = result.publishedAt ? result.publishedAt.toISOString().slice(0, 10) : "unknown";
-    const age = result.ageDays !== null ? `${result.ageDays}d` : "unknown";
-    return [result.name, version, publishedAt, age, status, result.source, result.note ?? ""].filter(Boolean);
-  });
+  const rows = staleResults.map(resultRow);
 
   const headers = ["dependency", "version", "published", "age", "status", "source", "note"];
   const widths = headers.map((header, columnIndex) =>
@@ -279,7 +276,8 @@ function printResults(results: DependencyResult[], thresholdDays: number) {
 
   console.log("");
   const staleCount = staleResults.length;
-  console.log(`${staleCount} dependency${staleCount === 1 ? "" : "ies"} are older than ${thresholdDays} days.`);
+  const noun = staleCount === 1 ? "dependency is" : "dependencies are";
+  console.log(`${staleCount} ${noun} older than ${thresholdDays} days.`);
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {

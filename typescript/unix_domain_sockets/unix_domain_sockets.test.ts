@@ -174,3 +174,13 @@ test("send request with retry retries then fails", async () => {
   ).rejects.toThrow("boom");
   expect(attempts).toBe(2);
 });
+
+test("purgeExpired removes only requests older than five minutes", async () => {
+  const service = new server.AsyncIdempotentServer(securedSocketPath());
+  service.processedRequests.set("old", { result: 1, timestamp: 0 });
+  service.processedRequests.set("fresh", { result: 2, timestamp: 400_000 });
+
+  expect(service.purgeExpired(400_000)).toBe(1);
+  expect([...service.processedRequests.keys()]).toEqual(["fresh"]);
+  expect(service.purgeExpired(400_000)).toBe(0);
+});

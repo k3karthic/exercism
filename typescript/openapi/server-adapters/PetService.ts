@@ -97,7 +97,7 @@ export async function uploadPetImage({
   if ((await petStore.getPet(petId)) === undefined) {
     throw new PetNotFoundError();
   }
-  const length = Buffer.isBuffer(body) ? body.length : (body?.length ?? 0);
+  const length = body?.length ?? 0;
   return {
     code: 200,
     type: "unknown",

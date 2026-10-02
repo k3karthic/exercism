@@ -169,22 +169,23 @@ export class AsyncIdempotentServer {
     while (this.isRunning) {
       await sleep(30_000);
 
-      const now = Date.now();
-      const expired: string[] = [];
-      for (const [reqId, request] of this.processedRequests) {
-        if (now - request.timestamp > 300_000) {
-          expired.push(reqId);
-        }
-      }
-
-      for (const reqId of expired) {
-        this.processedRequests.delete(reqId);
-      }
-
-      if (expired.length > 0) {
-        console.log(`[CLEANUP] Purged ${expired.length} expired requests from memory.`);
-      }
+      this.purgeExpired(Date.now());
     }
+  }
+
+  public purgeExpired(now: number): number {
+    const expired = [...this.processedRequests]
+      .filter(([, request]) => now - request.timestamp > 300_000)
+      .map(([reqId]) => reqId);
+
+    for (const reqId of expired) {
+      this.processedRequests.delete(reqId);
+    }
+
+    if (expired.length > 0) {
+      console.log(`[CLEANUP] Purged ${expired.length} expired requests from memory.`);
+    }
+    return expired.length;
   }
 }
 

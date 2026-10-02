@@ -2,6 +2,9 @@ import { afterEach, expect, test, vi } from "vitest";
 
 import {
   collectDependencyNames,
+  collectResults,
+  findDependencySpec,
+  printResults,
   encodePackageName,
   getPackageLockVersion,
   inspectDependency,
@@ -60,6 +63,10 @@ test("encodePackageName encodes scoped names", () => {
   expect(encodePackageName("@scope/pkg")).toBe("@scope%2fpkg");
   expect(encodePackageName("plain")).toBe("plain");
 });
+
+function squash(lines: string[]): string[] {
+  return lines.map((line) => line.replace(/\s+/g, " ").trim());
+}
 
 function stubRegistry(body: unknown, ok = true) {
   vi.stubGlobal(
@@ -120,4 +127,67 @@ test("inspectDependency reports registry failures", async () => {
 
   stubRegistry({});
   await expect(inspectDependency("no-latest-pkg", "^1.0.0", null, 365)).rejects.toThrow("latest registry version");
+});
+
+test("findDependencySpec prefers dependencies over devDependencies", () => {
+  const packageJson = { dependencies: { a: "1.0.0" }, devDependencies: { a: "2.0.0", b: "3.0.0" } };
+  expect(findDependencySpec(packageJson, "a")).toBe("1.0.0");
+  expect(findDependencySpec(packageJson, "b")).toBe("3.0.0");
+  expect(findDependencySpec(packageJson, "c")).toBeNull();
+});
+
+test("collectResults inspects the named dependency and rejects unknown ones", async () => {
+  stubRegistry({ time: { "9.9.9": "2020-01-01T00:00:00Z" } });
+  await expect(collectResults(["nope-not-listed"], 365)).rejects.toThrow("is not listed in package.json");
+});
+
+test("printResults reports when nothing is stale", () => {
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  printResults([], 30);
+  expect(log).toHaveBeenCalledWith("No dependencies are older than 30 days.");
+  log.mockRestore();
+});
+
+test("printResults lists stale dependencies with correct pluralization", () => {
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  const stale = (name: string) => ({
+    name,
+    spec: "1.0.0",
+    version: "1.0.0",
+    publishedAt: new Date("2020-01-01T00:00:00Z"),
+    ageDays: 2000,
+    stale: true,
+    source: "package.json" as const,
+  });
+
+  printResults([stale("one")], 30);
+  printResults([stale("one"), stale("two")], 30);
+  const lines = log.mock.calls.map(([line]) => String(line));
+  log.mockRestore();
+
+  expect(squash(lines).some((line) => line.startsWith("one 1.0.0 2020-01-01 2000d STALE"))).toBe(true);
+  expect(lines).toContain("1 dependency is older than 30 days.");
+  expect(lines).toContain("2 dependencies are older than 30 days.");
+});
+
+test("printResults shows unknown values and notes", () => {
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+  printResults(
+    [
+      {
+        name: "x",
+        spec: "^1",
+        version: null,
+        publishedAt: null,
+        ageDays: null,
+        stale: true,
+        source: "registry",
+        note: "n",
+      },
+    ],
+    30,
+  );
+  const lines = log.mock.calls.map(([line]) => String(line));
+  log.mockRestore();
+  expect(squash(lines)).toContain("x unknown unknown unknown STALE registry n");
 });

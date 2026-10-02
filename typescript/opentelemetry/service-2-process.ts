@@ -65,6 +65,18 @@ export class Service2 {
   }
 }
 
+function carrierFromEnv(): Record<string, string> {
+  const carrier: Record<string, string> = {};
+  const { TRACEPARENT: traceparent, TRACESTATE: tracestate } = process.env;
+  if (traceparent !== undefined) {
+    carrier.traceparent = traceparent;
+  }
+  if (tracestate !== undefined) {
+    carrier.tracestate = tracestate;
+  }
+  return carrier;
+}
+
 async function main(): Promise<void> {
   const value = process.argv[2];
   if (value === undefined) {
@@ -79,13 +91,7 @@ async function main(): Promise<void> {
   // The carrier is whatever "headers" a real transport would have carried
   // across the wire. Here it's just the environment variables Service1 set
   // before spawning this process.
-  const carrier: Record<string, string> = {};
-  if (process.env.TRACEPARENT !== undefined) {
-    carrier.traceparent = process.env.TRACEPARENT;
-  }
-  if (process.env.TRACESTATE !== undefined) {
-    carrier.tracestate = process.env.TRACESTATE;
-  }
+  const carrier = carrierFromEnv();
 
   // In production, an HTTP server framework's OTel instrumentation (or a
   // gRPC server interceptor) would call `propagation.extract` for you on

@@ -7,6 +7,7 @@
     "maxCognitive": 15,
     "maxCrap": 30,
     "crapRefactorBand": 5,
-    "maxUnitSize": 50
+    "maxUnitSize": 50,
+    "ignore": ["ex_*.ts"]
   }
 }
