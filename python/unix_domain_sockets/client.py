@@ -23,6 +23,48 @@ def verify_socket_permissions(socket_path):
         )
 
 
+def _receive_response(client, req_id):
+    response_chunks = []
+    while True:
+        chunk = client.recv(1024)
+        if not chunk:
+            break
+        response_chunks.append(chunk)
+
+    response_data = b"".join(response_chunks).decode("utf-8")
+    if not response_data:
+        raise socket.error("Empty response received from server")
+
+    received_id, result_str = response_data.split(":", 1)
+    if received_id != req_id:
+        raise ValueError(
+            f"Security/Integrity Fault! Request ID mismatch. "
+            f"Expected '{req_id}', received '{received_id}'"
+        )
+
+    print(f"Success! [Validated ID: {received_id}] Result: {result_str}")
+    return int(result_str)
+
+
+def _execute_request(socket_path, payload, req_id, attempt):
+    try:
+        verify_socket_permissions(socket_path)
+    except PermissionError as error:
+        print(f"[FATAL SECURITY ERROR]: {error}")
+        raise
+
+    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        print(f"Attempt {attempt}: Connecting to server...")
+        client.connect(socket_path)
+        client.sendall(payload)
+        if hasattr(client, "shutdown"):
+            client.shutdown(socket.SHUT_WR)
+        return _receive_response(client, req_id)
+    finally:
+        client.close()
+
+
 def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-locals
     socket_path, number, req_id=None, max_retries=5, initial_backoff=0.5
 ):
@@ -37,43 +79,7 @@ def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-local
 
     for attempt in range(1, max_retries + 1):
         try:
-            verify_socket_permissions(socket_path)
-        except PermissionError as e:
-            print(f"[FATAL SECURITY ERROR]: {e}")
-            raise e
-
-        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            print(f"Attempt {attempt}: Connecting to server...")
-            client.connect(socket_path)
-            client.sendall(payload)
-            if hasattr(client, "shutdown"):
-                client.shutdown(socket.SHUT_WR)
-
-            # Receive response formatted as "req_id:result"
-            response_chunks = []
-            while True:
-                chunk = client.recv(1024)
-                if not chunk:
-                    break
-                response_chunks.append(chunk)
-
-            response_data = b"".join(response_chunks).decode("utf-8")
-            if not response_data:
-                raise socket.error("Empty response received from server")
-
-            received_id, result_str = response_data.split(":", 1)
-
-            # --- VALIDATION BLOCK ---
-            if received_id != req_id:
-                raise ValueError(
-                    f"Security/Integrity Fault! Request ID mismatch. "
-                    f"Expected '{req_id}', received '{received_id}'"
-                )
-
-            print(f"Success! [Validated ID: {received_id}] Result: {result_str}")
-            return int(result_str)
-
+            return _execute_request(socket_path, payload, req_id, attempt)
         except (socket.error, ConnectionRefusedError, FileNotFoundError) as e:
             print(f"  Attempt {attempt} failed: {e}")
             if attempt == max_retries:
@@ -83,14 +89,10 @@ def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-local
             print(f"  Retrying in {backoff} seconds...")
             time.sleep(backoff)
             backoff *= 2
-
         except ValueError as val_err:
             # Drop the connection immediately if data integrity fails
             print(f"  [CRITICAL DATA FAILURE]: {val_err}")
             raise val_err
-
-        finally:
-            client.close()
 
     raise RuntimeError("Retry loop exited without a response")
 

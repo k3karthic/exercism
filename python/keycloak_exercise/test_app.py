@@ -12,11 +12,12 @@ import jwt
 import pytest
 from requests.exceptions import HTTPError
 from fastapi import FastAPI
+from fastapi import HTTPException
 from testcontainers.core.config import testcontainers_config
 from testcontainers.keycloak import KeycloakContainer
 from testcontainers.redis import RedisContainer
 
-from keycloak_exercise.app import Settings, create_app
+from keycloak_exercise.app import Settings, _require_access_token, create_app
 
 REALM = "my-app-realm"
 CLIENT_ID = "my-app-client"
@@ -28,6 +29,15 @@ EMAIL = "testuser@example.com"
 APP_BASE_URL = "http://testserver"
 CALLBACK_URI = f"{APP_BASE_URL}/api/auth/callback/keycloak"
 POST_LOGOUT_REDIRECT_URI = f"{APP_BASE_URL}/"
+
+
+def test_require_access_token() -> None:
+    assert _require_access_token({"access_token": "token"}) == "token"
+
+    with pytest.raises(HTTPException, match="missing access token") as error:
+        _require_access_token({})
+
+    assert error.value.status_code == 502
 
 
 @dataclass(slots=True)

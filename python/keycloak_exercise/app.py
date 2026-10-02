@@ -406,6 +406,13 @@ def _normalize_next_path(next_path: str) -> str:
     return "/"
 
 
+def _require_access_token(token_payload: dict[str, Any]) -> str:
+    access_token = token_payload.get("access_token")
+    if access_token is None:
+        raise HTTPException(status_code=502, detail="missing access token")
+    return str(access_token)
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     resolved_settings = settings or Settings.from_env()
     session_store = RedisSessionStore(resolved_settings)
@@ -464,11 +471,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         token_payload = await keycloak.exchange_code(code)
         id_token = str(token_payload["id_token"])
-        access_token = token_payload.get("access_token")
-        if access_token is None:
-            raise HTTPException(status_code=502, detail="missing access token")
+        access_token = _require_access_token(token_payload)
         claims = await keycloak.validate_id_token(id_token, pending.nonce)
-        await keycloak.validate_access_token(str(access_token))
+        await keycloak.validate_access_token(access_token)
         session = await session_store.create_session(id_token=id_token, claims=claims)
 
         response = RedirectResponse(

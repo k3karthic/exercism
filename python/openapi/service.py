@@ -72,6 +72,38 @@ def _pet_matches_search(row: Pet, criteria: dict[str, Any]) -> bool:
     return True
 
 
+def _order_matches_date_range(row: Order, date_range: dict[str, Any]) -> bool:
+    if not date_range:
+        return True
+    if row.ship_date is None:
+        return False
+
+    start = date_range.get("from")
+    if start is not None and row.ship_date < _parse_datetime(start):
+        return False
+
+    end = date_range.get("to")
+    if end is not None and row.ship_date > _parse_datetime(end):
+        return False
+
+    return True
+
+
+def _order_matches_quantity_range(
+    row: Order, quantity_range: dict[str, Any]
+) -> bool:
+    quantity = row.quantity or 0
+    minimum = quantity_range.get("min")
+    if minimum is not None and quantity < minimum:
+        return False
+
+    maximum = quantity_range.get("max")
+    if maximum is not None and quantity > maximum:
+        return False
+
+    return True
+
+
 def _order_matches_search(  # pylint: disable=too-many-return-statements
     row: Order, criteria: dict[str, Any]
 ) -> bool:
@@ -91,25 +123,10 @@ def _order_matches_search(  # pylint: disable=too-many-return-statements
     if complete is not None and row.complete != complete:
         return False
 
-    date_range = criteria.get("dateRange") or {}
-    if date_range and row.ship_date is None:
+    if not _order_matches_date_range(row, criteria.get("dateRange") or {}):
         return False
-    if date_range.get("from") is not None and row.ship_date is not None:
-        if row.ship_date < _parse_datetime(date_range["from"]):
-            return False
-    if date_range.get("to") is not None and row.ship_date is not None:
-        if row.ship_date > _parse_datetime(date_range["to"]):
-            return False
-
-    quantity_range = criteria.get("quantityRange") or {}
-    if (
-        quantity_range.get("min") is not None
-        and (row.quantity or 0) < quantity_range["min"]
-    ):
-        return False
-    if (
-        quantity_range.get("max") is not None
-        and (row.quantity or 0) > quantity_range["max"]
+    if not _order_matches_quantity_range(
+        row, criteria.get("quantityRange") or {}
     ):
         return False
 

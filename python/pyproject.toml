@@ -45,6 +45,12 @@ exclude = [
     "**/*_pb2_grpc.py",
 ]
 
+[tool.pylint.main]
+load-plugins = ["pylint.extensions.mccabe"]
+
+[tool.pylint.design]
+max-complexity = 10
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 asyncio_mode = "auto"
