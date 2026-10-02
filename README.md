@@ -25,7 +25,7 @@ Categories:
     * [gRPC](https://grpc.io/)
     * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
     * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/))
-    * [Keycloak](https://www.keycloak.org/) - Excluding Zig, C++
+    * Keycloak - Excluding Zig, C++
     * [OpenTelemetry](https://opentelemetry.io/)
     * NUMA Aware (hwloc) - Only Zig, Rust, C++
     * [OpenAPI](https://www.openapis.org) - Excluding Zig, C++
