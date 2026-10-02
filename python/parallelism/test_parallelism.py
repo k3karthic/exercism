@@ -1,6 +1,8 @@
+# pylint: disable=too-few-public-methods
 from __future__ import annotations
 
 import importlib.util
+import queue as std_queue
 import sys
 from multiprocessing import shared_memory
 from pathlib import Path
@@ -37,10 +39,10 @@ class FakeQueue:
         self.results: list[int] = []
         self.task_done_calls = 0
 
-    def get(self, timeout: int) -> int:
+    def get(self, timeout: int) -> int:  # pylint: disable=unused-argument
         if self.items:
             return self.items.pop(0)
-        raise Exception("empty")
+        raise std_queue.Empty
 
     def put(self, value: int) -> None:
         self.results.append(value)
@@ -59,6 +61,15 @@ def test_queue_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert output_queue.results == [2, 6, 10]
     assert input_queue.task_done_calls == 3
+
+
+def test_queue_worker_propagates_unexpected_queue_errors() -> None:
+    class BrokenQueue:
+        def get(self, timeout: int) -> int:  # pylint: disable=unused-argument
+            raise RuntimeError("queue failure")
+
+    with pytest.raises(RuntimeError, match="queue failure"):
+        queue_module.worker(BrokenQueue(), FakeQueue([]))
 
 
 def test_shared_memory_worker_doubles_bytes(monkeypatch: pytest.MonkeyPatch) -> None:

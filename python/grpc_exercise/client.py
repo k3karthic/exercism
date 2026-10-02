@@ -42,7 +42,8 @@ def send_request_with_retry(target, number, req_id=None):
 
         if response.request_id != req_id:
             raise ValueError(
-                f"Security/Integrity Fault! Request ID mismatch. Expected '{req_id}', received '{response.request_id}'"
+                f"Security/Integrity Fault! Request ID mismatch. "
+                f"Expected '{req_id}', received '{response.request_id}'"
             )
 
         print(
@@ -71,5 +72,5 @@ if __name__ == "__main__":
     print("--- Running gRPC Doubler Client ---")
     try:
         send_request_with_retry(target=args.target, number=args.number)
-    except Exception as e:
+    except (grpc.RpcError, ValueError) as e:
         print(f"Execution terminated: {e}")

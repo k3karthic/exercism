@@ -25,7 +25,7 @@ DATABASE_URL = os.getenv(
 )
 
 
-class Base(DeclarativeBase):
+class Base(DeclarativeBase):  # pylint: disable=too-few-public-methods
     pass
 
 
@@ -119,9 +119,9 @@ class Order(Base):
 
 
 engine = create_async_engine(DATABASE_URL, echo=False)
-AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
+    async with async_session_factory() as session:
         yield session

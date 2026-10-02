@@ -1,4 +1,5 @@
-# From https://github.com/bloomberg/memray/blob/main/docs/tutorials/exercise_2/holding_onto_memory.py
+# From the Memray "holding onto memory" exercise:
+# https://github.com/bloomberg/memray/blob/main/docs/tutorials/exercise_2/holding_onto_memory.py
 import numpy as np
 
 # DO NOT CHANGE
@@ -12,7 +13,7 @@ ADD_AMOUNT = 10
 # DO NOT CHANGE
 
 
-def load_xMb_of_data(mb: int) -> np.ndarray:
+def load_x_mb_of_data(mb: int) -> np.ndarray:
     size = MB_CONVERSION * mb  # DO NOT CHANGE
     return np.ones(size, dtype=np.uint8)
 
@@ -34,7 +35,7 @@ def raise_to_power(data: np.ndarray, power: int) -> np.ndarray:
 
 
 def process_data() -> np.ndarray:
-    data = load_xMb_of_data(SIZE_OF_DATA_IN_MB)
+    data = load_x_mb_of_data(SIZE_OF_DATA_IN_MB)
     data = subtract_scalar(data, SUBTRACT_AMOUNT)
     data_pow = raise_to_power(data, POWER_AMOUNT)
     return add_scalar(duplicate_data(data_pow), ADD_AMOUNT)

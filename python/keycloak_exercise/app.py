@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -11,7 +12,7 @@ from urllib.parse import urlencode
 
 import httpx2 as httpx
 import jwt
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -33,7 +34,7 @@ DEFAULT_PENDING_LOGIN_TTL_SECONDS = 300
 
 
 @dataclass(slots=True)
-class Settings:
+class Settings:  # pylint: disable=too-many-instance-attributes
     keycloak_base_url: str = DEFAULT_KEYCLOAK_BASE_URL
     keycloak_realm: str = DEFAULT_KEYCLOAK_REALM
     keycloak_client_id: str = DEFAULT_KEYCLOAK_CLIENT_ID
@@ -105,7 +106,7 @@ class PendingLogin:
 
 
 @dataclass(slots=True)
-class SessionRecord:
+class SessionRecord:  # pylint: disable=too-many-instance-attributes
     session_id: str
     user_name: str
     email: str | None
@@ -144,8 +145,6 @@ class SessionRecord:
 
 
 def _env(name: str, default: str) -> str:
-    import os
-
     return os.getenv(name, default)
 
 
@@ -419,10 +418,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         session = await session_store.touch_session(session_id)
         return session
 
-    app = FastAPI(title="Keycloak FastAPI exercise")
-    app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+    application = FastAPI(title="Keycloak FastAPI exercise")
+    application.mount(
+        "/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static"
+    )
 
-    @app.get("/", response_class=HTMLResponse)
+    @application.get("/", response_class=HTMLResponse)
     async def home(
         request: Request,
         current_session: SessionRecord | None = Depends(get_current_session),
@@ -440,22 +441,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         }
         return TEMPLATES.TemplateResponse(request, "index.html", context)
 
-    @app.get("/api/auth/login")
-    async def login(next: str = "/") -> RedirectResponse:
+    @application.get("/api/auth/login")
+    async def login(next_path: str = Query("/", alias="next")) -> RedirectResponse:
         state = secrets.token_urlsafe(24)
         nonce = secrets.token_urlsafe(24)
         await session_store.store_pending_login(
             PendingLogin(
                 state=state,
                 nonce=nonce,
-                next_path=_normalize_next_path(next),
+                next_path=_normalize_next_path(next_path),
                 created_at=_iso_now(),
             )
         )
         auth_url = await keycloak.authorization_url(state=state, nonce=nonce)
         return RedirectResponse(url=auth_url, status_code=303)
 
-    @app.get("/api/auth/callback/keycloak")
+    @application.get("/api/auth/callback/keycloak")
     async def keycloak_callback(code: str, state: str) -> RedirectResponse:
         pending = await session_store.pop_pending_login(state)
         if pending is None:
@@ -484,7 +485,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         return response
 
-    @app.post("/logout")
+    @application.post("/logout")
     async def logout(
         current_session: SessionRecord | None = Depends(get_current_session),
     ) -> RedirectResponse:
@@ -496,7 +497,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response.delete_cookie(resolved_settings.session_cookie_name, path="/")
         return response
 
-    return app
+    return application
 
 
 app = create_app()

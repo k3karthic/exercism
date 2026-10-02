@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
 import pytest
@@ -19,7 +20,6 @@ from opentelemetry_exercise.utils import (
 def service_1() -> Service1:
     service_1 = Service1()
     service_1.telemetry = TelemetryBundle(tracer_provider=TracerProvider())
-    service_1.tracer  # Initialize the tracer after installing the test provider.
     return service_1
 
 

@@ -27,7 +27,7 @@ def _decode(value: bytes) -> str:
     return value.decode("utf-8")
 
 
-class KafkaProducer:
+class KafkaProducer:  # pylint: disable=too-few-public-methods
     def __init__(self, bootstrap_servers: str, topic: str) -> None:
         self.topic = topic
         self._producer = _KafkaProducer(
@@ -54,7 +54,7 @@ def ensure_topic(bootstrap_servers: str, topic: str) -> None:
         admin.close()
 
 
-class KafkaConsumer:
+class KafkaConsumer:  # pylint: disable=too-few-public-methods
     def __init__(self, bootstrap_servers: str, topic: str) -> None:
         self.topic = topic
         self._consumer = _KafkaConsumer(

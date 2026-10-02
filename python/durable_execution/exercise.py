@@ -23,7 +23,7 @@ async def double_number_activity(number: int) -> int:
 
 
 @workflow.defn
-class DoublerWorkflow:
+class DoublerWorkflow:  # pylint: disable=too-few-public-methods
     @workflow.run
     async def run(self) -> int:
         number = await workflow.execute_activity(

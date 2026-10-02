@@ -46,7 +46,7 @@ def build_connection_parameters(
     )
 
 
-class RabbitMQProducer:
+class RabbitMQProducer:  # pylint: disable=too-few-public-methods
     def __init__(
         self, connection_parameters: pika.ConnectionParameters, queue: str
     ) -> None:
@@ -80,7 +80,7 @@ def ensure_queue(connection_parameters: pika.ConnectionParameters, queue: str) -
         _close_connection(connection)
 
 
-class RabbitMQConsumer:
+class RabbitMQConsumer:  # pylint: disable=too-few-public-methods
     def __init__(
         self, connection_parameters: pika.ConnectionParameters, queue: str
     ) -> None:
@@ -106,7 +106,7 @@ class RabbitMQConsumer:
             def on_message(
                 ch: BlockingChannel,
                 method: Basic.Deliver,
-                properties: BasicProperties,
+                _properties: BasicProperties,
                 body: bytes,
             ) -> None:
                 nonlocal seen_messages

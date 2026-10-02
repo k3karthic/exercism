@@ -72,7 +72,9 @@ def _pet_matches_search(row: Pet, criteria: dict[str, Any]) -> bool:
     return True
 
 
-def _order_matches_search(row: Order, criteria: dict[str, Any]) -> bool:
+def _order_matches_search(  # pylint: disable=too-many-return-statements
+    row: Order, criteria: dict[str, Any]
+) -> bool:
     order_id = criteria.get("orderId")
     if order_id is not None and row.id != order_id:
         return False

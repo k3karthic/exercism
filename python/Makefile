@@ -21,7 +21,12 @@ vulture:
 ruff:
 	uv run ruff check .
 
+# Exercise READMEs replace boilerplate docstrings; parallel variants intentionally share code.
 pylint:
-	uv run pylint --errors-only --disable=typecheck --init-hook='import sys; sys.path.extend(["concurrency", "durable_execution", "grpc_exercise"])' $(PYTHON_FILES)
+	uv run pylint \
+		--max-line-length=120 \
+		--disable=typecheck,missing-module-docstring,missing-class-docstring,missing-function-docstring,duplicate-code \
+		--init-hook='import sys; sys.path.extend(["concurrency", "durable_execution", "grpc_exercise"])' \
+		$(PYTHON_FILES)
 
 lint: ruff pylint

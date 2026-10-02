@@ -1,5 +1,6 @@
 import time
 import multiprocessing
+import queue
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -7,7 +8,7 @@ def worker(input_queue, output_queue):
     while True:
         try:
             num = input_queue.get(timeout=1)
-        except Exception:
+        except queue.Empty:
             break
 
         print(f"Worker {time.time()} processing {num}")

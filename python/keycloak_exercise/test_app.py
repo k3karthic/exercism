@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name,too-many-locals
 from __future__ import annotations
 
 import time
@@ -375,7 +376,7 @@ async def test_logout_clears_session(
     assert logout_query["client_id"] == [CLIENT_ID]
 
     redis = redis_container.get_client(decode_responses=True)
-    assert list(redis.scan_iter(match="keycloak-exercise:session:*")) == []
+    assert not list(redis.scan_iter(match="keycloak-exercise:session:*"))
 
     redirected = await client.get("/", follow_redirects=False)
     assert redirected.status_code == 303

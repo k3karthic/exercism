@@ -14,7 +14,9 @@ class DoublerService(pb2_grpc.DoublerServicer):
         self._processed_requests = {}
         self._lock = asyncio.Lock()
 
-    async def Double(self, request, context):
+    async def Double(  # pylint: disable=invalid-overridden-method
+        self, request, context
+    ):
         async with self._lock:
             cached = self._processed_requests.get(request.request_id)
             if cached is not None:

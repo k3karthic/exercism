@@ -1,3 +1,4 @@
+# pylint: disable=protected-access,too-few-public-methods
 """Tests for the gRPC doubler example."""
 
 # pyright: reportAttributeAccessIssue=false
@@ -16,9 +17,11 @@ GRPC_DIR = Path(__file__).resolve().parent
 if str(GRPC_DIR) not in sys.path:
     sys.path.insert(0, str(GRPC_DIR))
 
+# pylint: disable=wrong-import-position
 import client  # noqa: E402
 import doubler_service_pb2 as pb2  # noqa: E402
 import server  # noqa: E402
+# pylint: enable=wrong-import-position
 
 
 class DummyChannel:
@@ -59,7 +62,9 @@ async def test_cleanup_expired_requests_removes_old_entries(
 
     calls = 0
 
-    async def fake_wait_for(awaitable: Coroutine[Any, Any, bool], timeout: int) -> bool:
+    async def fake_wait_for(
+        awaitable: Coroutine[Any, Any, bool], timeout: int  # pylint: disable=unused-argument
+    ) -> bool:
         nonlocal calls
         calls += 1
         if calls == 1:
@@ -88,7 +93,9 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
         def __init__(self) -> None:
             self.calls = 0
 
-        def Double(self, request: pb2.DoubleRequest) -> pb2.DoubleResponse:
+        def Double(  # pylint: disable=invalid-name
+            self, request: pb2.DoubleRequest
+        ) -> pb2.DoubleResponse:
             self.calls += 1
             return pb2.DoubleResponse(request_id="wrong-id", result=request.number * 2)
 

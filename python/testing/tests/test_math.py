@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from testing.src.math import average, clamp, sum
+from testing.src.math import average, clamp, sum  # pylint: disable=redefined-builtin
 
 
 def test_clamps_values_into_the_requested_range() -> None:

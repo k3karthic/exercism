@@ -1,3 +1,4 @@
+# pylint: disable=protected-access
 from __future__ import annotations
 
 import sys
@@ -13,7 +14,9 @@ DURABLE_EXECUTION_DIR = Path(__file__).resolve().parent
 if str(DURABLE_EXECUTION_DIR) not in sys.path:
     sys.path.insert(0, str(DURABLE_EXECUTION_DIR))
 
+# pylint: disable=wrong-import-position
 import exercise as durable_execution  # noqa: E402
+# pylint: enable=wrong-import-position
 
 
 @pytest.mark.asyncio

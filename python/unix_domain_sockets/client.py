@@ -23,9 +23,12 @@ def verify_socket_permissions(socket_path):
         )
 
 
-def send_request_with_retry(
+def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-locals
     socket_path, number, req_id=None, max_retries=5, initial_backoff=0.5
 ):
+    if max_retries < 1:
+        raise ValueError("max_retries must be greater than zero")
+
     if req_id is None:
         req_id = str(uuid.uuid4())[:8]
 
@@ -64,7 +67,8 @@ def send_request_with_retry(
             # --- VALIDATION BLOCK ---
             if received_id != req_id:
                 raise ValueError(
-                    f"Security/Integrity Fault! Request ID mismatch. Expected '{req_id}', received '{received_id}'"
+                    f"Security/Integrity Fault! Request ID mismatch. "
+                    f"Expected '{req_id}', received '{received_id}'"
                 )
 
             print(f"Success! [Validated ID: {received_id}] Result: {result_str}")
@@ -88,6 +92,8 @@ def send_request_with_retry(
         finally:
             client.close()
 
+    raise RuntimeError("Retry loop exited without a response")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Secure Validating UDS IPC Client")
@@ -102,5 +108,5 @@ if __name__ == "__main__":
     print("--- Running Secure Validating Client ---")
     try:
         send_request_with_retry(socket_path=args.socket, number=55)
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         print(f"Execution terminated: {e}")

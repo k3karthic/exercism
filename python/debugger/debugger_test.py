@@ -53,7 +53,7 @@ def generate_invoice(
 
 
 if __name__ == "__main__":
-    breakpoint()
+    breakpoint()  # pylint: disable=forgotten-debug-statement
 
     # Sample catalog data
     catalog = [

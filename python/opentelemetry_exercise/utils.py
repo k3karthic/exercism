@@ -14,7 +14,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-DEFAULT_MESSAGES = ["1", "2", "oops", "3", "4"]
+DEFAULT_MESSAGES = ("1", "2", "oops", "3", "4")
 DoubleResult = dict[str, int | str]
 FailureResult = dict[str, str]
 WorkflowResult = dict[str, list[DoubleResult] | list[FailureResult]]
@@ -80,12 +80,12 @@ def configure_telemetry(service_name: str) -> TelemetryBundle:
 
     meter_provider = MeterProvider(resource=resource, metric_readers=meter_readers)
 
-    service_logger = logging.getLogger(service_name)
-    service_logger.setLevel(logging.INFO)
+    service_log = logging.getLogger(service_name)
+    service_log.setLevel(logging.INFO)
     if not any(
-        isinstance(handler, LoggingHandler) for handler in service_logger.handlers
+        isinstance(handler, LoggingHandler) for handler in service_log.handlers
     ):
-        service_logger.addHandler(
+        service_log.addHandler(
             LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
         )
     return TelemetryBundle(
@@ -96,21 +96,28 @@ def configure_telemetry(service_name: str) -> TelemetryBundle:
 
 
 def trace_exporter_class(endpoint: str) -> Any:
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # pylint: disable=import-outside-toplevel
+        OTLPSpanExporter,
+    )
 
     return OTLPSpanExporter(endpoint=endpoint, insecure=True)
 
 
 def metric_exporter_class(endpoint: str) -> Any:
+    # Load the optional exporter only when metrics export is configured.
+    # pylint: disable=import-outside-toplevel
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
         OTLPMetricExporter,
     )
+    # pylint: enable=import-outside-toplevel
 
     return OTLPMetricExporter(endpoint=endpoint, insecure=True)
 
 
 def log_exporter_class(endpoint: str) -> Any:
-    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (  # pylint: disable=import-outside-toplevel
+        OTLPLogExporter,
+    )
 
     return OTLPLogExporter(endpoint=endpoint, insecure=True)
 

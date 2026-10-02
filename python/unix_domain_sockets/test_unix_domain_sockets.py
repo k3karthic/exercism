@@ -1,3 +1,4 @@
+# pylint: disable=protected-access,too-few-public-methods
 from __future__ import annotations
 
 import importlib.util
@@ -25,11 +26,19 @@ server: Any = load_module("uds_server_test", UDS_DIR / "server.py")
 client: Any = load_module("uds_client_test", UDS_DIR / "client.py")
 
 
+@pytest.mark.parametrize("max_retries", [0, -1])
+def test_send_request_with_retry_rejects_nonpositive_retry_count(
+    max_retries: int,
+) -> None:
+    with pytest.raises(ValueError, match="max_retries must be greater than zero"):
+        client.send_request_with_retry("/unused.sock", 7, max_retries=max_retries)
+
+
 class FakeReader:
     def __init__(self, *chunks: bytes) -> None:
         self.chunks = list(chunks)
 
-    async def read(self, n: int) -> bytes:
+    async def read(self, _n: int) -> bytes:
         if self.chunks:
             return self.chunks.pop(0)
         return b""
@@ -88,6 +97,17 @@ async def test_handle_client_reads_all_chunks() -> None:
     assert writer.buffer.decode("utf-8") == "req-2:10"
 
 
+@pytest.mark.asyncio
+async def test_handle_client_ignores_invalid_request_payload() -> None:
+    service = server.AsyncIdempotentServer("/tmp/unused.sock")
+    writer = FakeWriter()
+
+    await service._handle_client(FakeReader(b"not-a-number:invalid"), writer)
+
+    assert writer.buffer == b""
+    assert writer.closed
+
+
 def test_verify_socket_permissions_rejects_loose_permissions(tmp_path: Path) -> None:
     socket_path = tmp_path / "service.sock"
     socket_path.write_text("placeholder")
@@ -117,7 +137,7 @@ def test_send_request_with_retry_returns_int_result(
         def shutdown(self, _how: int) -> None:
             return None
 
-        def recv(self, size: int) -> bytes:
+        def recv(self, _size: int) -> bytes:
             self._recv_calls += 1
             if self._recv_calls == 1:
                 return self.response
@@ -168,7 +188,7 @@ def test_send_request_with_retry_reads_all_chunks(
         def shutdown(self, _how: int) -> None:
             return None
 
-        def recv(self, size: int) -> bytes:
+        def recv(self, _size: int) -> bytes:
             if self.chunks:
                 return self.chunks.pop(0)
             return b""

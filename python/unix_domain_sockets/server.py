@@ -4,7 +4,7 @@ import time
 import argparse
 
 
-class AsyncIdempotentServer:
+class AsyncIdempotentServer:  # pylint: disable=too-few-public-methods
     def __init__(self, socket_path):
         self.socket_path = socket_path
         # Schema: { req_id: (result_value, timestamp) }
@@ -91,7 +91,7 @@ class AsyncIdempotentServer:
             writer.write(response_payload.encode("utf-8"))
             await writer.drain()  # Ensure data is completely flushed through the socket
 
-        except Exception as e:
+        except (OSError, ValueError) as e:
             print(f"Error handling request: {e}")
         finally:
             writer.close()
