@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Self
 
 import pytest
 from openapi import client_driver
@@ -15,14 +15,14 @@ def test_fetch_inventory_configures_and_calls_generated_client(
         def __init__(self, configuration: Any) -> None:
             captured["configuration"] = configuration
 
-        def __enter__(self) -> FakeApiClient:
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, *args: Any) -> None:
             return None
 
     class FakeStoreApi:
-        def __init__(self, api_client: FakeApiClient) -> None:
+        def __init__(self, api_client: Any) -> None:
             captured["client"] = api_client
 
         def get_inventory(self) -> dict[str, int]:

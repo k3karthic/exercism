@@ -1,4 +1,6 @@
-.PHONY: format test check scan vulture
+.PHONY: format test check scan vulture ruff pylint lint
+
+PYTHON_FILES := $(shell find . -type d \( -path './.venv' -o -path './.pytest_cache' -o -path './.ruff_cache' -o -path '*/__pycache__' -o -path './openapi/generated' -o -path './openapi/alembic/versions' \) -prune -o -type f -name '*.py' ! -name '*_pb2.py' ! -name '*_pb2_grpc.py' -print)
 
 format:
 	uv run ruff format .
@@ -15,3 +17,11 @@ scan:
 
 vulture:
 	uv run vulture . --exclude .venv,.pytest_cache,.ruff_cache,__pycache__,openapi/generated,openapi/alembic/versions,*_pb2.py,*_pb2_grpc.py
+
+ruff:
+	uv run ruff check .
+
+pylint:
+	uv run pylint --errors-only --disable=typecheck --init-hook='import sys; sys.path.extend(["concurrency", "durable_execution", "grpc_exercise"])' $(PYTHON_FILES)
+
+lint: ruff pylint

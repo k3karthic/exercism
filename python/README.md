@@ -16,6 +16,12 @@ uv run python index.py
 make format
 ```
 
+## Lint
+
+```bash
+make lint
+```
+
 ## Check CVEs
 
 ```bash
