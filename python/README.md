@@ -21,3 +21,9 @@ make format
 ```bash
 make scan
 ```
+
+## Find unused code
+
+```bash
+make vulture
+```

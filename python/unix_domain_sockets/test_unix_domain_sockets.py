@@ -114,7 +114,7 @@ def test_send_request_with_retry_returns_int_result(
         def sendall(self, payload: bytes) -> None:
             self.sent = payload
 
-        def shutdown(self, how: int) -> None:
+        def shutdown(self, _how: int) -> None:
             return None
 
         def recv(self, size: int) -> bytes:
@@ -135,9 +135,9 @@ def test_send_request_with_retry_returns_int_result(
         monkeypatch.setattr(
             client.socket,
             "socket",
-            lambda family, kind: fake_socket,
+            lambda _family, _kind: fake_socket,
         )
-        monkeypatch.setattr(client.time, "sleep", lambda seconds: None)
+        monkeypatch.setattr(client.time, "sleep", lambda _: None)
 
         result = client.send_request_with_retry(
             str(socket_path), 7, req_id="req-7", max_retries=1
@@ -165,7 +165,7 @@ def test_send_request_with_retry_reads_all_chunks(
         def sendall(self, payload: bytes) -> None:
             self.sent = payload
 
-        def shutdown(self, how: int) -> None:
+        def shutdown(self, _how: int) -> None:
             return None
 
         def recv(self, size: int) -> bytes:
@@ -185,9 +185,9 @@ def test_send_request_with_retry_reads_all_chunks(
         monkeypatch.setattr(
             client.socket,
             "socket",
-            lambda family, kind: fake_socket,
+            lambda _family, _kind: fake_socket,
         )
-        monkeypatch.setattr(client.time, "sleep", lambda seconds: None)
+        monkeypatch.setattr(client.time, "sleep", lambda _: None)
 
         result = client.send_request_with_retry(
             str(socket_path), 7, req_id="req-7", max_retries=1

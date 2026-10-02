@@ -41,7 +41,7 @@ async def test_doubler_workflow_runs_real_activities(
         calls.append("double_number_activity")
         return await original_double_number_activity(number)
 
-    monkeypatch.setattr(durable_execution.random, "randint", lambda a, b: 21)
+    monkeypatch.setattr(durable_execution.random, "randint", lambda _a, _b: 21)
     monkeypatch.setattr(
         durable_execution,
         "get_random_number_activity",

@@ -1,4 +1,4 @@
-.PHONY: format test check scan
+.PHONY: format test check scan vulture
 
 format:
 	uv run ruff format .
@@ -12,3 +12,6 @@ check:
 
 scan:
 	trivy fs --scanners vuln,secret,misconfig --skip-files "**/*.json" .
+
+vulture:
+	uv run vulture . --exclude .venv,.pytest_cache,.ruff_cache,__pycache__,openapi/generated,openapi/alembic/versions,*_pb2.py,*_pb2_grpc.py

@@ -25,7 +25,7 @@ class DummyChannel:
     def __enter__(self) -> DummyChannel:
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> bool:
+    def __exit__(self, _exc_type, _exc, _tb) -> bool:
         return False
 
 
@@ -94,7 +94,7 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
 
     stub = Stub()
     monkeypatch.setattr(
-        client.grpc, "insecure_channel", lambda target, options=(): DummyChannel()
+        client.grpc, "insecure_channel", lambda target, **_: DummyChannel()
     )
     monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda channel: stub)
 

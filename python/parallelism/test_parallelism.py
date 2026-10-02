@@ -53,7 +53,7 @@ def test_queue_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> None:
     input_queue = FakeQueue([1, 3, 5])
     output_queue = FakeQueue([])
 
-    monkeypatch.setattr(queue_module.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(queue_module.time, "sleep", lambda _: None)
 
     queue_module.worker(input_queue, output_queue)
 
@@ -70,7 +70,7 @@ def test_shared_memory_worker_doubles_bytes(monkeypatch: pytest.MonkeyPatch) -> 
         for index, value in enumerate([1, 2, 3, 4]):
             buf[index] = value
 
-        monkeypatch.setattr(shared_memory_module.time, "sleep", lambda seconds: None)
+        monkeypatch.setattr(shared_memory_module.time, "sleep", lambda _: None)
 
         shared_memory_module.worker(0, 4, shm.name)
 

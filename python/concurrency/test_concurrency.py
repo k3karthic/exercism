@@ -41,7 +41,7 @@ def test_threads_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(threads_module, "input_queue", input_queue)
     monkeypatch.setattr(threads_module, "output_queue", output_queue)
-    monkeypatch.setattr(threads_module.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(threads_module.time, "sleep", lambda _: None)
 
     threads_module.worker(worker_id=1)
 
@@ -66,7 +66,7 @@ async def test_async_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> No
             raise asyncio.TimeoutError
         return await awaitable
 
-    async def fake_sleep(seconds: float) -> None:
+    async def fake_sleep(_: float) -> None:
         return None
 
     monkeypatch.setattr(async_module.asyncio, "wait_for", fake_wait_for)
