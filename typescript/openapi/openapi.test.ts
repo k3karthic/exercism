@@ -8,7 +8,15 @@ import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
 
 import { app } from "./app.js";
 import { closeDatabase, getDatabase } from "./database.ts";
-import { OrderStatus, PetStatus } from "./generated/client/models/index.ts";
+import {
+  OrderSearchCriteriaSortByEnum,
+  OrderSearchCriteriaSortOrderEnum,
+  OrderStatus,
+  PetSearchCriteriaSortByEnum,
+  PetSearchCriteriaSortOrderEnum,
+  PetStatus,
+} from "./generated/client/models/index.ts";
+import { petStore } from "./store.ts";
 
 const API_KEY = "some-api-key";
 const POSTGRES_USER = "petstore";
@@ -338,4 +346,149 @@ test("search orders", async () => {
 
   expect(response.status).toBe(200);
   expect(response.body.orders).toHaveLength(1);
+});
+
+test("store creates, upserts, updates, and deletes pets", async () => {
+  const created = await petStore.createPet({
+    id: 50,
+    name: "Direct",
+    photoUrls: [],
+    status: PetStatus.Available,
+  });
+  expect(created.id).toBe(50);
+
+  const upserted = await petStore.createPet({
+    id: 50,
+    name: "Upserted",
+    photoUrls: [],
+  });
+  expect(upserted.name).toBe("Upserted");
+
+  expect(await petStore.updatePet({ name: "No id", photoUrls: [] })).toBe(
+    undefined,
+  );
+  expect(
+    await petStore.updatePet({ id: 999, name: "Missing", photoUrls: [] }),
+  ).toBe(undefined);
+  const updated = await petStore.updatePet({
+    id: 50,
+    name: "Updated",
+    photoUrls: [],
+    tags: [{ name: "calm" }],
+  });
+  expect(updated?.name).toBe("Updated");
+
+  expect(await petStore.getPet(999)).toBe(undefined);
+  expect(await petStore.updatePetFromForm(50, undefined, undefined)).toBe(true);
+  expect(await petStore.updatePetFromForm(999, undefined, undefined)).toBe(
+    false,
+  );
+  expect(await petStore.updatePetFromForm(50, "Renamed", PetStatus.Sold)).toBe(
+    true,
+  );
+  expect(await petStore.findPetsByStatus(PetStatus.Sold)).toHaveLength(1);
+  expect(await petStore.findPetsByTags([])).toHaveLength(1);
+  expect(await petStore.findPetsByTags(["calm"])).toHaveLength(1);
+  expect(await petStore.inventory()).toEqual({ sold: 1 });
+  expect(await petStore.deletePet(50)).toBe(true);
+  expect(await petStore.deletePet(50)).toBe(false);
+});
+
+test("store searches pets with filters, sorting, and paging", async () => {
+  await petStore.createPet({
+    name: "Alpha",
+    photoUrls: [],
+    status: PetStatus.Available,
+    tags: [{ name: "tame" }],
+  });
+  await petStore.createPet({
+    name: "Beta",
+    photoUrls: [],
+    status: PetStatus.Sold,
+  });
+
+  const everything = await petStore.searchPets({}, 1, 0);
+  expect(everything).toMatchObject({ total: 2, hasMore: true });
+
+  const filtered = await petStore.searchPets(
+    {
+      name: "*alp*",
+      status: [PetStatus.Available],
+      tags: ["tame"],
+      sortBy: PetSearchCriteriaSortByEnum.Status,
+      sortOrder: PetSearchCriteriaSortOrderEnum.Desc,
+    },
+    10,
+    0,
+  );
+  expect(filtered.results.map((pet) => pet.name)).toEqual(["Alpha"]);
+});
+
+test("store creates, upserts, and deletes orders", async () => {
+  const created = await petStore.createOrder({ id: 70, quantity: 1 });
+  expect(created.id).toBe(70);
+  const generated = await petStore.createOrder({
+    petId: 1,
+    shipDate: "2024-01-01T00:00:00.000Z",
+    status: OrderStatus.Placed,
+    complete: true,
+  });
+  expect(generated.complete).toBe(true);
+  expect(await petStore.getOrder(999)).toBe(undefined);
+  expect(await petStore.deleteOrder(70)).toBe(true);
+  expect(await petStore.deleteOrder(70)).toBe(false);
+});
+
+test("store searches orders with ranges, sorting, and paging", async () => {
+  for (const [index, status] of [
+    OrderStatus.Placed,
+    OrderStatus.Approved,
+    OrderStatus.Delivered,
+  ].entries()) {
+    await petStore.createOrder({
+      petId: index + 1,
+      quantity: index + 1,
+      shipDate: `2024-01-0${index + 1}T00:00:00.000Z`,
+      status,
+      complete: index === 2,
+    });
+  }
+
+  const ranged = await petStore.searchOrders(
+    {
+      dateRange: {
+        from: "2024-01-02T00:00:00.000Z",
+        to: "2024-01-03T00:00:00.000Z",
+      },
+      quantityRange: { min: 2, max: 2 },
+      sortBy: OrderSearchCriteriaSortByEnum.Quantity,
+      sortOrder: OrderSearchCriteriaSortOrderEnum.Asc,
+    },
+    1,
+    10,
+  );
+  expect(ranged.orders).toHaveLength(1);
+  expect(ranged.pagination.totalResults).toBe(1);
+
+  const filtered = await petStore.searchOrders(
+    {
+      orderId: 3,
+      petId: 3,
+      status: [OrderStatus.Delivered],
+      complete: true,
+      sortBy: OrderSearchCriteriaSortByEnum.PetId,
+    },
+    1,
+    10,
+  );
+  expect(filtered.orders).toHaveLength(1);
+
+  const empty = await petStore.searchOrders(
+    { sortBy: OrderSearchCriteriaSortByEnum.Id },
+    1,
+    10,
+  );
+  expect(empty.pagination.totalPages).toBe(1);
+  const none = await petStore.searchOrders({ petId: 99 }, 1, 10);
+  expect(none.pagination.totalPages).toBe(0);
 });
