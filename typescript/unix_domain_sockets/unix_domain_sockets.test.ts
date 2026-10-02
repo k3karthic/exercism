@@ -38,7 +38,7 @@ class FakeClientSocket extends EventEmitter {
   public sent = "";
   public destroyed = false;
 
-  public constructor() {
+  public constructor(private readonly reply = ["req-7:", "14"]) {
     super();
     queueMicrotask(() => {
       this.emit("connect");
@@ -51,8 +51,9 @@ class FakeClientSocket extends EventEmitter {
     }
 
     queueMicrotask(() => {
-      this.emit("data", Buffer.from("req-7:"));
-      this.emit("data", Buffer.from("14"));
+      for (const chunk of this.reply) {
+        this.emit("data", Buffer.from(chunk));
+      }
       this.emit("end");
     });
 
@@ -152,4 +153,50 @@ test("handle client reads the full request across multiple chunks", async () => 
   expect(socket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe(
     "req-2:12",
   );
+});
+
+function securedSocketPath(): string {
+  const tempDir = mkdtempSync(join(tmpdir(), "uds-"));
+  const socketPath = join(tempDir, "service.sock");
+  writeFileSync(socketPath, "placeholder");
+  chmodSync(socketPath, 0o600);
+  return socketPath;
+}
+
+test.each([
+  [["req-7"], "malformed"],
+  [["other:14"], "mismatch"],
+  [["req-7:abc"], "non-numeric"],
+])("send request with retry rejects bad response %j", async (reply, text) => {
+  const socketPath = securedSocketPath();
+  await expect(
+    client.sendRequestWithRetry(
+      socketPath,
+      7,
+      "req-7",
+      3,
+      0,
+      () => new FakeClientSocket(reply) as never,
+    ),
+  ).rejects.toThrow(new RegExp(text.slice(0, 4), "i"));
+});
+
+test("send request with retry rejects loose permissions without retrying", async () => {
+  const socketPath = securedSocketPath();
+  chmodSync(socketPath, 0o644);
+  await expect(
+    client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0),
+  ).rejects.toThrow("too open");
+});
+
+test("send request with retry retries then fails", async () => {
+  const socketPath = securedSocketPath();
+  let attempts = 0;
+  await expect(
+    client.sendRequestWithRetry(socketPath, 7, "req-7", 2, 0, () => {
+      attempts += 1;
+      throw new Error("boom");
+    }),
+  ).rejects.toThrow("boom");
+  expect(attempts).toBe(2);
 });

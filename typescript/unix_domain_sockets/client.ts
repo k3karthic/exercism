@@ -96,6 +96,39 @@ async function requestOnce(
   }
 }
 
+function parseResponse(responseData: string, requestId: string): number {
+  const [receivedId, resultStr] = responseData.split(":", 2);
+
+  if (receivedId === undefined || resultStr === undefined) {
+    throw new IntegrityError("Server returned a malformed response.");
+  }
+
+  if (receivedId !== requestId) {
+    throw new IntegrityError(
+      `Security/Integrity Fault! Request ID mismatch. Expected '${requestId}', received '${receivedId}'`,
+    );
+  }
+
+  const result = Number.parseInt(resultStr, 10);
+  if (Number.isNaN(result)) {
+    throw new IntegrityError("Server returned a non-numeric result.");
+  }
+
+  return result;
+}
+
+function rethrowFatalError(error: unknown): void {
+  if (error instanceof PermissionError) {
+    console.log(`[FATAL SECURITY ERROR]: ${error.message}`);
+    throw error;
+  }
+
+  if (error instanceof IntegrityError) {
+    console.log(`  [CRITICAL DATA FAILURE]: ${error.message}`);
+    throw error;
+  }
+}
+
 export async function sendRequestWithRetry(
   socketPath: string,
   number: number,
@@ -113,37 +146,12 @@ export async function sendRequestWithRetry(
       verifySocketPermissions(socketPath);
 
       const responseData = await requestOnce(socketPath, payload, createSocket);
-      const [receivedId, resultStr] = responseData.split(":", 2);
+      const result = parseResponse(responseData, requestId);
 
-      if (receivedId === undefined || resultStr === undefined) {
-        throw new IntegrityError("Server returned a malformed response.");
-      }
-
-      if (receivedId !== requestId) {
-        throw new IntegrityError(
-          `Security/Integrity Fault! Request ID mismatch. Expected '${requestId}', received '${receivedId}'`,
-        );
-      }
-
-      const result = Number.parseInt(resultStr, 10);
-      if (Number.isNaN(result)) {
-        throw new IntegrityError("Server returned a non-numeric result.");
-      }
-
-      console.log(
-        `Success! [Validated ID: ${receivedId}] Result: ${resultStr}`,
-      );
+      console.log(`Success! [Validated ID: ${requestId}] Result: ${result}`);
       return result;
     } catch (error) {
-      if (error instanceof PermissionError) {
-        console.log(`[FATAL SECURITY ERROR]: ${error.message}`);
-        throw error;
-      }
-
-      if (error instanceof IntegrityError) {
-        console.log(`  [CRITICAL DATA FAILURE]: ${error.message}`);
-        throw error;
-      }
+      rethrowFatalError(error);
 
       console.log(`  Attempt ${attempt} failed: ${error}`);
       if (attempt === maxRetries) {
