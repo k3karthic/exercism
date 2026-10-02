@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { afterEach, test } from "vitest";
 
+import { Service1 } from "./app.js";
+import { Service2 } from "./service-2-process.js";
 import {
   DEFAULT_MESSAGES,
-  Service1,
-  Service2,
   TelemetryBundle,
   type WorkflowResult,
-} from "./app.js";
+} from "./utils.js";
 
 const services: Array<Service1 | Service2> = [];
 

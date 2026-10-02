@@ -7,10 +7,10 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 
-from opentelemetry_exercise.app import (
+from opentelemetry_exercise.app import Service1
+from opentelemetry_exercise.service_2_process import Service2
+from opentelemetry_exercise.utils import (
     DEFAULT_MESSAGES,
-    Service1,
-    Service2,
     TelemetryBundle,
 )
 

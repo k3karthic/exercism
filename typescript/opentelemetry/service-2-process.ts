@@ -1,15 +1,92 @@
-// Subprocess entry point simulating an integration with no OTel SDK.
+// Service 2 implementation and subprocess entry point.
 //
-// This script stands in for a real external system (a legacy script,
-// another team's CLI, a queue worker written in a different stack) that has
-// no OpenTelemetry auto-instrumentation for its transport. `Service1` in
-// `app.ts` spawns this file as a subprocess (via `tsx`) and hands it trace
-// context through environment variables instead of an HTTP/gRPC call a
-// propagator library would normally intercept for you.
+// `Service1` in `app.ts` spawns this file as a subprocess (via `tsx`) and
+// hands it trace context through environment variables instead of an
+// instrumented HTTP/gRPC transport propagating context automatically.
 
-import { context, propagation } from "@opentelemetry/api";
+import { pathToFileURL } from "node:url";
 
-import { Service2, type DoubleResponse } from "./app.js";
+import {
+  context,
+  propagation,
+  SpanStatusCode,
+  type Span,
+} from "@opentelemetry/api";
+import type { MeterProvider } from "@opentelemetry/sdk-metrics";
+import type { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
+
+import {
+  ServiceLogger,
+  TelemetryBundle,
+  traceIdHex,
+  type DoubleResponse,
+} from "./utils.js";
+
+export class Service2 {
+  readonly telemetry: TelemetryBundle;
+  readonly logger: ServiceLogger;
+  readonly tracer: ReturnType<NodeTracerProvider["getTracer"]>;
+  readonly meter: ReturnType<MeterProvider["getMeter"]>;
+  readonly doubledCounter: ReturnType<
+    ReturnType<MeterProvider["getMeter"]>["createCounter"]
+  >;
+  readonly errorCounter: ReturnType<
+    ReturnType<MeterProvider["getMeter"]>["createCounter"]
+  >;
+  readonly durationHistogram: ReturnType<
+    ReturnType<MeterProvider["getMeter"]>["createHistogram"]
+  >;
+
+  constructor() {
+    this.telemetry = new TelemetryBundle("service_2");
+    this.logger = new ServiceLogger("service_2", this.telemetry.loggerProvider);
+    this.tracer = this.telemetry.tracerProvider.getTracer("otel.service_2");
+    this.meter = this.telemetry.meterProvider.getMeter("otel.service_2");
+    this.doubledCounter = this.meter.createCounter(
+      "otel_numbers_doubled_total",
+    );
+    this.errorCounter = this.meter.createCounter("otel_number_errors_total");
+    this.durationHistogram = this.meter.createHistogram(
+      "otel_double_duration_ms",
+    );
+  }
+
+  async doubleNumber(value: string): Promise<DoubleResponse> {
+    const startedAt = performance.now();
+    return await this.tracer.startActiveSpan(
+      "service_2.double_number",
+      async (span: Span) => {
+        span.setAttribute("service_2.message.value", value);
+        try {
+          const number = Number.parseInt(value, 10);
+          if (Number.isNaN(number)) {
+            const error = new Error("value must be numeric");
+            this.errorCounter.add(1);
+            span.recordException(error);
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: error.message,
+            });
+            this.logger.exception(`invalid number received: ${value}`, error);
+            throw error;
+          }
+
+          const doubled = number * 2;
+          this.doubledCounter.add(1);
+          this.durationHistogram.record(performance.now() - startedAt);
+          this.logger.info(`doubled ${number} to ${doubled}`);
+          return {
+            value,
+            doubled,
+            traceId: traceIdHex(span),
+          };
+        } finally {
+          span.end();
+        }
+      },
+    );
+  }
+}
 
 async function main(): Promise<void> {
   const value = process.argv[2];
@@ -19,7 +96,7 @@ async function main(): Promise<void> {
 
   // Constructing Service2 registers its TelemetryBundle's tracer provider
   // globally (context manager + W3C propagator), which propagation.extract
-  // below depends on. See TelemetryBundle in app.ts.
+  // below depends on. See TelemetryBundle in utils.ts.
   const service2 = new Service2();
 
   // The carrier is whatever "headers" a real transport would have carried
@@ -56,4 +133,9 @@ async function main(): Promise<void> {
   process.stdout.write(`${JSON.stringify(result)}\n`);
 }
 
-void main();
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  void main();
+}

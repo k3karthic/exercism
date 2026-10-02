@@ -8,10 +8,9 @@ plus manual trace context propagation across a subprocess boundary.
 - `Service1` spawns `service_2_process.py` as a **subprocess** for each
   message and hands it trace context through `TRACEPARENT`/`TRACESTATE`
   environment variables
-- `service_2_process.py` simulates an external integration with no OTel SDK
-  of its own (e.g. a legacy script, another team's CLI, a queue worker
-  written in a different stack) — it doubles numeric values and rejects one
-  invalid message
+- `service_2_process.py` contains the `Service2` implementation and process
+  entry point; it doubles numeric values and rejects an invalid message
+- common telemetry setup and helpers live in `utils.py`
 - both processes emit traces, metrics, and logs, and the subprocess's span
   nests under the same trace as the caller's, even though nothing but an
   env var crossed the process boundary
