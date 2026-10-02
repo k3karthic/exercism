@@ -9,16 +9,11 @@ import { test } from "vitest";
 import { DEFAULT_FAILED_MESSAGES_FILE, runDemo } from "./app.js";
 
 test("runDemo processes numbers and logs failed messages", async () => {
-  const container = await new RabbitMQContainer(
-    "rabbitmq:3.9.10-management-alpine",
-  ).start();
+  const container = await new RabbitMQContainer("rabbitmq:3.9.10-management-alpine").start();
 
   try {
     const tempDirectory = await mkdtemp(path.join(tmpdir(), "rabbitmq-"));
-    const failedMessagesPath = path.join(
-      tempDirectory,
-      DEFAULT_FAILED_MESSAGES_FILE,
-    );
+    const failedMessagesPath = path.join(tempDirectory, DEFAULT_FAILED_MESSAGES_FILE);
 
     const doubledNumbers = await runDemo(container.getAmqpUrl(), {
       failedMessagesPath,

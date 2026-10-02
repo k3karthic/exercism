@@ -14,8 +14,7 @@ afterEach(() => {
 
 test("doubler workflow runs real activities", async () => {
   const calls: string[] = [];
-  const originalGetRandomNumberActivity =
-    durableExecution.getRandomNumberActivity;
+  const originalGetRandomNumberActivity = durableExecution.getRandomNumberActivity;
   const originalDoubleNumberActivity = durableExecution.doubleNumberActivity;
 
   const activityImplementations = {

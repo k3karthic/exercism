@@ -41,21 +41,15 @@ export interface OrderSearchResultsPagination {
 /**
  * Check if a given object implements the OrderSearchResultsPagination interface.
  */
-export function instanceOfOrderSearchResultsPagination(
-  value: object,
-): value is OrderSearchResultsPagination {
-  if (!("totalResults" in value) || value["totalResults"] === undefined)
-    return false;
-  if (!("totalPages" in value) || value["totalPages"] === undefined)
-    return false;
+export function instanceOfOrderSearchResultsPagination(value: object): value is OrderSearchResultsPagination {
+  if (!("totalResults" in value) || value["totalResults"] === undefined) return false;
+  if (!("totalPages" in value) || value["totalPages"] === undefined) return false;
   if (!("pageSize" in value) || value["pageSize"] === undefined) return false;
   if (!("page" in value) || value["page"] === undefined) return false;
   return true;
 }
 
-export function OrderSearchResultsPaginationFromJSON(
-  json: any,
-): OrderSearchResultsPagination {
+export function OrderSearchResultsPaginationFromJSON(json: any): OrderSearchResultsPagination {
   return OrderSearchResultsPaginationFromJSONTyped(json, false);
 }
 
@@ -74,9 +68,7 @@ export function OrderSearchResultsPaginationFromJSONTyped(
   };
 }
 
-export function OrderSearchResultsPaginationToJSON(
-  json: any,
-): OrderSearchResultsPagination {
+export function OrderSearchResultsPaginationToJSON(json: any): OrderSearchResultsPagination {
   return OrderSearchResultsPaginationToJSONTyped(json, false);
 }
 

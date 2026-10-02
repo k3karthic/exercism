@@ -41,15 +41,8 @@ test("parseExactVersion handles exact, aliased, and ranged specs", () => {
 
 test("getPackageLockVersion checks packages then legacy dependencies", () => {
   expect(getPackageLockVersion(null, "a")).toBeNull();
-  expect(
-    getPackageLockVersion(
-      { packages: { "node_modules/a": { version: "1.0.0" } } },
-      "a",
-    ),
-  ).toBe("1.0.0");
-  expect(
-    getPackageLockVersion({ dependencies: { a: { version: "2.0.0" } } }, "a"),
-  ).toBe("2.0.0");
+  expect(getPackageLockVersion({ packages: { "node_modules/a": { version: "1.0.0" } } }, "a")).toBe("1.0.0");
+  expect(getPackageLockVersion({ dependencies: { a: { version: "2.0.0" } } }, "a")).toBe("2.0.0");
   expect(getPackageLockVersion({}, "a")).toBeNull();
 });
 
@@ -123,12 +116,8 @@ test("inspectDependency handles exact specs without publish time", async () => {
 
 test("inspectDependency reports registry failures", async () => {
   stubRegistry({}, false);
-  await expect(
-    inspectDependency("broken-pkg", "5.0.0", null, 365),
-  ).rejects.toThrow("Failed to fetch npm metadata");
+  await expect(inspectDependency("broken-pkg", "5.0.0", null, 365)).rejects.toThrow("Failed to fetch npm metadata");
 
   stubRegistry({});
-  await expect(
-    inspectDependency("no-latest-pkg", "^1.0.0", null, 365),
-  ).rejects.toThrow("latest registry version");
+  await expect(inspectDependency("no-latest-pkg", "^1.0.0", null, 365)).rejects.toThrow("latest registry version");
 });

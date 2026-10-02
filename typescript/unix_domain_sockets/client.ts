@@ -31,17 +31,12 @@ export function verifySocketPermissions(socketPath: string): void {
 
   const fileStat = fs.statSync(socketPath);
   if (fileStat.uid !== currentUid()) {
-    throw new PermissionError(
-      "Security Violation: Socket file is owned by another user.",
-    );
+    throw new PermissionError("Security Violation: Socket file is owned by another user.");
   }
 
-  const unwantedPermissions =
-    fileStat.mode & (fs.constants.S_IRWXG | fs.constants.S_IRWXO);
+  const unwantedPermissions = fileStat.mode & (fs.constants.S_IRWXG | fs.constants.S_IRWXO);
   if (unwantedPermissions !== 0) {
-    throw new PermissionError(
-      "Security Violation: Socket permissions are too open (must be 0600).",
-    );
+    throw new PermissionError("Security Violation: Socket permissions are too open (must be 0600).");
   }
 }
 
@@ -179,9 +174,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1]
-) {
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main();
 }

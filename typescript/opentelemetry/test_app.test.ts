@@ -5,11 +5,7 @@ import { afterEach, test } from "vitest";
 
 import { Service1 } from "./app.js";
 import { Service2 } from "./service-2-process.js";
-import {
-  DEFAULT_MESSAGES,
-  TelemetryBundle,
-  type WorkflowResult,
-} from "./utils.js";
+import { DEFAULT_MESSAGES, TelemetryBundle, type WorkflowResult } from "./utils.js";
 
 const services: Array<Service1 | Service2> = [];
 
@@ -32,10 +28,7 @@ test("service 1 calls service 2 via subprocess", async () => {
     payload.failures.map((item) => item.value),
     ["oops"],
   );
-  assert.equal(
-    new Set(payload.results.map((item) => item.traceId)).size,
-    payload.results.length,
-  );
+  assert.equal(new Set(payload.results.map((item) => item.traceId)).size, payload.results.length);
   assert.ok(payload.results.length > 0);
   assert.ok(DEFAULT_MESSAGES.includes(payload.results[0]?.value ?? ""));
 });
@@ -46,9 +39,7 @@ test("subprocess span nests under the caller's trace", async () => {
   // vars + propagation.inject/extract) context still produces a child span
   // sharing the parent's trace id.
   const exporter = new InMemorySpanExporter();
-  const telemetry = new TelemetryBundle("service_1", [
-    new SimpleSpanProcessor(exporter),
-  ]);
+  const telemetry = new TelemetryBundle("service_1", [new SimpleSpanProcessor(exporter)]);
   const service1 = new Service1(telemetry);
   services.push(service1);
 
@@ -67,8 +58,5 @@ test("service 2 rejects invalid number", async () => {
   const service2 = new Service2();
   services.push(service2);
 
-  await assert.rejects(
-    () => service2.doubleNumber("oops"),
-    /value must be numeric/,
-  );
+  await assert.rejects(() => service2.doubleNumber("oops"), /value must be numeric/);
 });

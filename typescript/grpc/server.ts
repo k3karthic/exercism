@@ -24,18 +24,14 @@ export class DoublerService {
     let result: number;
     if (cached !== undefined) {
       result = cached.result;
-      console.log(
-        `[CACHE HIT] Returning cached result for Request ${requestId}`,
-      );
+      console.log(`[CACHE HIT] Returning cached result for Request ${requestId}`);
     } else {
       result = call.request.number * 2;
       this.processedRequests.set(requestId, {
         result,
         timestamp: Date.now(),
       });
-      console.log(
-        `[NEW REQ] Processing Request ${requestId}: Double ${call.request.number}`,
-      );
+      console.log(`[NEW REQ] Processing Request ${requestId}: Double ${call.request.number}`);
     }
 
     callback(null, {
@@ -44,10 +40,7 @@ export class DoublerService {
     });
   };
 
-  public purgeExpiredRequests(
-    ttlSeconds = 300,
-    nowFn: () => number = () => Date.now(),
-  ): number {
+  public purgeExpiredRequests(ttlSeconds = 300, nowFn: () => number = () => Date.now()): number {
     const now = nowFn();
     const expired: string[] = [];
 
@@ -62,9 +55,7 @@ export class DoublerService {
     }
 
     if (expired.length > 0) {
-      console.log(
-        `[CLEANUP] Purged ${expired.length} expired requests from memory.`,
-      );
+      console.log(`[CLEANUP] Purged ${expired.length} expired requests from memory.`);
     }
 
     return expired.length;
@@ -97,19 +88,15 @@ export async function serve(address: string): Promise<void> {
   server.addService(getDoublerServiceConstructor().service, implementation);
 
   await new Promise<void>((resolve, reject) => {
-    server.bindAsync(
-      address,
-      grpc.ServerCredentials.createInsecure(),
-      (error) => {
-        if (error !== null) {
-          reject(error);
-          return;
-        }
+    server.bindAsync(address, grpc.ServerCredentials.createInsecure(), (error) => {
+      if (error !== null) {
+        reject(error);
+        return;
+      }
 
-        console.log(`gRPC server listening on ${address}...`);
-        resolve();
-      },
-    );
+      console.log(`gRPC server listening on ${address}...`);
+      resolve();
+    });
   });
 
   const stopController = new AbortController();
@@ -158,9 +145,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1]
-) {
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main();
 }

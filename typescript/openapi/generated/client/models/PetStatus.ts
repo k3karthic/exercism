@@ -39,10 +39,7 @@ export function PetStatusFromJSON(json: any): PetStatus {
   return PetStatusFromJSONTyped(json, false);
 }
 
-export function PetStatusFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): PetStatus {
+export function PetStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetStatus {
   return json as PetStatus;
 }
 
@@ -50,9 +47,6 @@ export function PetStatusToJSON(value?: PetStatus | null): any {
   return value as any;
 }
 
-export function PetStatusToJSONTyped(
-  value: any,
-  ignoreDiscriminator: boolean,
-): PetStatus {
+export function PetStatusToJSONTyped(value: any, ignoreDiscriminator: boolean): PetStatus {
   return value as PetStatus;
 }

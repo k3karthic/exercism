@@ -1,24 +1,11 @@
 import { execFileSync } from "node:child_process";
-import {
-  appendFile,
-  access,
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rename,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { appendFile, access, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const OPENAPI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const SPEC_PATH = join(OPENAPI_ROOT, "openapi", "petstore.json");
-const GENERATED_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "generated",
-);
+const GENERATED_ROOT = join(dirname(fileURLToPath(import.meta.url)), "generated");
 
 interface GeneratedTarget {
   name: "server" | "client";
@@ -47,16 +34,10 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 function isNotFoundError(error: unknown): boolean {
-  return (
-    error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT"
-  );
+  return error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT";
 }
 
-async function replaceText(
-  path: string,
-  before: string,
-  after: string,
-): Promise<void> {
+async function replaceText(path: string, before: string, after: string): Promise<void> {
   const original = await readFile(path, "utf8");
   if (!original.includes(before)) {
     throw new Error(`Expected generated code not found in ${path}`);
@@ -102,28 +83,17 @@ async function patchGeneratedServer(serverPath: string): Promise<void> {
   // `js-yaml.safeLoad` was removed in js-yaml v4 (in favor of `load`, which
   // is safe by default), but the generator template still emits the old API
   // name, so calling it throws at startup unless it's rewritten.
-  await replaceText(
-    join(serverPath, "expressServer.js"),
-    "jsYaml.safeLoad(",
-    "jsYaml.load(",
-  );
+  await replaceText(join(serverPath, "expressServer.js"), "jsYaml.safeLoad(", "jsYaml.load(");
   // The handwritten app.ts wrapper already registers express.json() before
   // mounting the generated server. Removing the generator's own duplicate
   // registration avoids double body-parsing/registration conflicts.
-  await replaceText(
-    join(serverPath, "expressServer.js"),
-    "    this.app.use(express.json());\n",
-    "",
-  );
+  await replaceText(join(serverPath, "expressServer.js"), "    this.app.use(express.json());\n", "");
 
   await appendControllerAliases(serverPath);
 }
 
 type OpenApiSpec = {
-  paths: Record<
-    string,
-    Record<string, { operationId?: string; tags?: string[] }>
-  >;
+  paths: Record<string, Record<string, { operationId?: string; tags?: string[] }>>;
 };
 
 const HTTP_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
@@ -134,13 +104,9 @@ function controllerAlias(
 ): { controllerName: string; alias: string } {
   const [tag] = operation.tags ?? [];
   if (operation.operationId === undefined || tag === undefined) {
-    throw new Error(
-      `OpenAPI operation is missing an operationId or tag: ${method}`,
-    );
+    throw new Error(`OpenAPI operation is missing an operationId or tag: ${method}`);
   }
-  const methodName =
-    operation.operationId.charAt(0).toLowerCase() +
-    operation.operationId.slice(1);
+  const methodName = operation.operationId.charAt(0).toLowerCase() + operation.operationId.slice(1);
   return {
     controllerName: `${tag}Controller`,
     alias: `module.exports.${operation.operationId} = ${methodName};`,
@@ -183,17 +149,12 @@ function normalizeGeneratedFile(path: string, source: string): string {
   return `${normalized}\n`;
 }
 
-async function disableGeneratedClientTypeChecking(
-  directory: string,
-): Promise<void> {
+async function disableGeneratedClientTypeChecking(directory: string): Promise<void> {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
       await disableGeneratedClientTypeChecking(path);
-    } else if (
-      entry.isFile() &&
-      (path.endsWith(".ts") || path.endsWith(".md"))
-    ) {
+    } else if (entry.isFile() && (path.endsWith(".ts") || path.endsWith(".md"))) {
       const source = await readFile(path, "utf8");
       await writeFile(path, normalizeGeneratedFile(path, source), "utf8");
     }
@@ -211,10 +172,7 @@ async function rollbackTargets(installed: InstalledTarget[]): Promise<void> {
   }
 }
 
-async function installTargets(
-  stagingRoot: string,
-  targets: GeneratedTarget[],
-): Promise<void> {
+async function installTargets(stagingRoot: string, targets: GeneratedTarget[]): Promise<void> {
   const installed: InstalledTarget[] = [];
   try {
     for (const target of targets) {

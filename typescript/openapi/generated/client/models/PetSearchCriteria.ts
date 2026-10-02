@@ -15,12 +15,7 @@
 
 import { mapValues } from "../runtime.ts";
 import type { PetStatus } from "./PetStatus.ts";
-import {
-  PetStatusFromJSON,
-  PetStatusFromJSONTyped,
-  PetStatusToJSON,
-  PetStatusToJSONTyped,
-} from "./PetStatus.ts";
+import { PetStatusFromJSON, PetStatusFromJSONTyped, PetStatusToJSON, PetStatusToJSONTyped } from "./PetStatus.ts";
 
 /**
  *
@@ -70,9 +65,7 @@ export enum PetSearchCriteriaSortOrderEnum {
 /**
  * Check if a given object implements the PetSearchCriteria interface.
  */
-export function instanceOfPetSearchCriteria(
-  value: object,
-): value is PetSearchCriteria {
+export function instanceOfPetSearchCriteria(value: object): value is PetSearchCriteria {
   return true;
 }
 
@@ -80,19 +73,13 @@ export function PetSearchCriteriaFromJSON(json: any): PetSearchCriteria {
   return PetSearchCriteriaFromJSONTyped(json, false);
 }
 
-export function PetSearchCriteriaFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): PetSearchCriteria {
+export function PetSearchCriteriaFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetSearchCriteria {
   if (json == null) {
     return json;
   }
   return {
     name: json["name"] == null ? undefined : json["name"],
-    status:
-      json["status"] == null
-        ? undefined
-        : (json["status"] as Array<any>).map(PetStatusFromJSON),
+    status: json["status"] == null ? undefined : (json["status"] as Array<any>).map(PetStatusFromJSON),
     tags: json["tags"] == null ? undefined : json["tags"],
     sortBy: json["sortBy"] == null ? undefined : json["sortBy"],
     sortOrder: json["sortOrder"] == null ? undefined : json["sortOrder"],
@@ -113,10 +100,7 @@ export function PetSearchCriteriaToJSONTyped(
 
   return {
     name: value["name"],
-    status:
-      value["status"] == null
-        ? undefined
-        : (value["status"] as Array<any>).map(PetStatusToJSON),
+    status: value["status"] == null ? undefined : (value["status"] as Array<any>).map(PetStatusToJSON),
     tags: value["tags"],
     sortBy: value["sortBy"],
     sortOrder: value["sortOrder"],

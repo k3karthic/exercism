@@ -11,17 +11,12 @@ import { DEFAULT_FAILED_MESSAGES_FILE, runDemo } from "./app.js";
 const KAFKA_BROKER_PORT = 9093;
 
 test("runDemo processes numbers and logs failed messages", async () => {
-  const kafkaContainer = await new KafkaContainer(
-    "confluentinc/cp-kafka:7.2.2",
-  ).start();
+  const kafkaContainer = await new KafkaContainer("confluentinc/cp-kafka:7.2.2").start();
 
   try {
     const bootstrapServers = `${kafkaContainer.getHost()}:${kafkaContainer.getMappedPort(KAFKA_BROKER_PORT)}`;
     const tempDirectory = await mkdtemp(path.join(tmpdir(), "kafka-"));
-    const failedMessagesPath = path.join(
-      tempDirectory,
-      DEFAULT_FAILED_MESSAGES_FILE,
-    );
+    const failedMessagesPath = path.join(tempDirectory, DEFAULT_FAILED_MESSAGES_FILE);
 
     const doubledNumbers = await runDemo(bootstrapServers, {
       failedMessagesPath,

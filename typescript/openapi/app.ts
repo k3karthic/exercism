@@ -13,10 +13,7 @@ import swaggerUi from "swagger-ui-express";
 
 const API_KEY = "some-api-key";
 const API_SPEC_PATH = resolve(process.cwd(), "../openapi/petstore.json");
-const SERVER_SPEC_PATH = new URL(
-  "./generated/server/api/openapi.yaml",
-  import.meta.url,
-);
+const SERVER_SPEC_PATH = new URL("./generated/server/api/openapi.yaml", import.meta.url);
 const swaggerDocument = JSON.parse(readFileSync(API_SPEC_PATH, "utf8"));
 
 interface GeneratedExpressServer {
@@ -24,14 +21,10 @@ interface GeneratedExpressServer {
   setupMiddleware(): void;
 }
 
-type GeneratedExpressServerConstructor = new (
-  port: number,
-  openApiYaml: string,
-) => GeneratedExpressServer;
+type GeneratedExpressServerConstructor = new (port: number, openApiYaml: string) => GeneratedExpressServer;
 
 const require = createRequire(import.meta.url);
-const GeneratedExpressServer =
-  require("./generated/server/expressServer.js") as GeneratedExpressServerConstructor;
+const GeneratedExpressServer = require("./generated/server/expressServer.js") as GeneratedExpressServerConstructor;
 
 function requiresApiKey(request: Request): boolean {
   return (
@@ -45,37 +38,23 @@ function requiresApiKey(request: Request): boolean {
 class PetstoreExpressServer extends GeneratedExpressServer {
   override setupMiddleware(): void {
     this.app.use(express.raw({ type: "application/octet-stream" }));
-    this.app.use(
-      (request: Request, response: Response, next: NextFunction): void => {
-        if (requiresApiKey(request) && request.header("api_key") !== API_KEY) {
-          response.status(403).json({ message: "Forbidden" });
-          return;
-        }
-        next();
-      },
-    );
-    this.app.use(
-      ["/openapi", "/docs", "/swagger"],
-      swaggerUi.serve,
-      swaggerUi.setup(swaggerDocument),
-    );
+    this.app.use((request: Request, response: Response, next: NextFunction): void => {
+      if (requiresApiKey(request) && request.header("api_key") !== API_KEY) {
+        response.status(403).json({ message: "Forbidden" });
+        return;
+      }
+      next();
+    });
+    this.app.use(["/openapi", "/docs", "/swagger"], swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     super.setupMiddleware();
   }
 }
 
-const generatedServer = new PetstoreExpressServer(
-  3000,
-  fileURLToPath(SERVER_SPEC_PATH),
-);
+const generatedServer = new PetstoreExpressServer(3000, fileURLToPath(SERVER_SPEC_PATH));
 
 export const app = generatedServer.app;
 
-const errorHandler: ErrorRequestHandler = (
-  error: unknown,
-  _request,
-  response,
-  next,
-): void => {
+const errorHandler: ErrorRequestHandler = (error: unknown, _request, response, next): void => {
   if (typeof error !== "object" || error === null || !("status" in error)) {
     next(error);
     return;
@@ -100,10 +79,7 @@ const errorHandler: ErrorRequestHandler = (
   }
 
   response.status(candidate.status).json({
-    message:
-      typeof candidate.message === "string"
-        ? candidate.message
-        : "Request failed",
+    message: typeof candidate.message === "string" ? candidate.message : "Request failed",
   });
 };
 

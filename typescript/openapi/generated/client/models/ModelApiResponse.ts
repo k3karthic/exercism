@@ -37,9 +37,7 @@ export interface ModelApiResponse {
 /**
  * Check if a given object implements the ModelApiResponse interface.
  */
-export function instanceOfModelApiResponse(
-  value: object,
-): value is ModelApiResponse {
+export function instanceOfModelApiResponse(value: object): value is ModelApiResponse {
   return true;
 }
 
@@ -47,10 +45,7 @@ export function ModelApiResponseFromJSON(json: any): ModelApiResponse {
   return ModelApiResponseFromJSONTyped(json, false);
 }
 
-export function ModelApiResponseFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): ModelApiResponse {
+export function ModelApiResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelApiResponse {
   if (json == null) {
     return json;
   }

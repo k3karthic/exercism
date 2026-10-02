@@ -16,6 +16,8 @@ npx tsx index.ts
 npm run format
 ```
 
+Prettier uses a 120-character line width (`.prettierrc.json`), matching the Python workspace's Ruff `line-length`. There is no separate linter in this workspace.
+
 ## Test coverage
 
 ```bash

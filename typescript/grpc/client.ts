@@ -1,12 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
-import {
-  createDoublerClient,
-  type DoubleRequest,
-  type DoublerClient,
-  invokeDouble,
-} from "./grpc_support.js";
+import { createDoublerClient, type DoubleRequest, type DoublerClient, invokeDouble } from "./grpc_support.js";
 
 export class IntegrityError extends Error {}
 
@@ -33,9 +28,7 @@ export async function requestDouble(
       );
     }
 
-    console.log(
-      `Success! [Validated ID: ${response.request_id}] Result: ${response.result}`,
-    );
+    console.log(`Success! [Validated ID: ${response.request_id}] Result: ${response.result}`);
     return response.result;
   } finally {
     client.close();
@@ -100,9 +93,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1]
-) {
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main();
 }

@@ -4,19 +4,9 @@ import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-grpc";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-grpc";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import {
-  BatchLogRecordProcessor,
-  LoggerProvider,
-} from "@opentelemetry/sdk-logs";
-import {
-  MeterProvider,
-  PeriodicExportingMetricReader,
-} from "@opentelemetry/sdk-metrics";
-import {
-  BatchSpanProcessor,
-  NodeTracerProvider,
-  type SpanProcessor,
-} from "@opentelemetry/sdk-trace-node";
+import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
+import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
+import { BatchSpanProcessor, NodeTracerProvider, type SpanProcessor } from "@opentelemetry/sdk-trace-node";
 
 export const DEFAULT_MESSAGES = ["1", "2", "oops", "3", "4"];
 const SERVICE_NAMESPACE = "typescript";
@@ -84,10 +74,7 @@ export class TelemetryBundle {
   readonly meterProvider: MeterProvider;
   readonly loggerProvider: LoggerProvider;
 
-  constructor(
-    serviceName: string,
-    extraSpanProcessors: readonly SpanProcessor[] = [],
-  ) {
+  constructor(serviceName: string, extraSpanProcessors: readonly SpanProcessor[] = []) {
     const resource = resourceFromAttributes({
       "service.name": serviceName,
       "service.namespace": SERVICE_NAMESPACE,
@@ -99,12 +86,7 @@ export class TelemetryBundle {
     this.tracerProvider = new NodeTracerProvider({
       resource,
       spanProcessors: hasEndpoint
-        ? [
-            ...extraSpanProcessors,
-            new BatchSpanProcessor(
-              new OTLPTraceExporter({ url: normalizedEndpoint }),
-            ),
-          ]
+        ? [...extraSpanProcessors, new BatchSpanProcessor(new OTLPTraceExporter({ url: normalizedEndpoint }))]
         : [...extraSpanProcessors],
     });
     // Registers this provider as the global tracer provider, plus an
@@ -127,13 +109,7 @@ export class TelemetryBundle {
     });
     this.loggerProvider = new LoggerProvider({
       resource,
-      processors: hasEndpoint
-        ? [
-            new BatchLogRecordProcessor(
-              new OTLPLogExporter({ url: normalizedEndpoint }),
-            ),
-          ]
-        : [],
+      processors: hasEndpoint ? [new BatchLogRecordProcessor(new OTLPLogExporter({ url: normalizedEndpoint }))] : [],
     });
   }
 
@@ -146,11 +122,7 @@ export class TelemetryBundle {
   }
 
   async shutdown(): Promise<void> {
-    await Promise.all([
-      this.tracerProvider.shutdown(),
-      this.meterProvider.shutdown(),
-      this.loggerProvider.shutdown(),
-    ]);
+    await Promise.all([this.tracerProvider.shutdown(), this.meterProvider.shutdown(), this.loggerProvider.shutdown()]);
   }
 }
 

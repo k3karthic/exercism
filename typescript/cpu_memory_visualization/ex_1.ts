@@ -24,11 +24,7 @@ function chain<T>(...iterables: Iterable<T>[]): T[] {
   return iterables.flatMap((iterable) => Array.from(iterable));
 }
 
-function generateFibonacciHash(
-  length_1: number,
-  length_2: number,
-  length_3: number,
-): bigint {
+function generateFibonacciHash(length_1: number, length_2: number, length_3: number): bigint {
   return (
     chain(fibonacci(length_1), fibonacci(length_2), fibonacci(length_3)).reduce(
       (total, value) => total + value,
@@ -46,11 +42,7 @@ async function main() {
   const LENGTH_OF_SEQUENCE_2 = 30000;
   const LENGTH_OF_SEQUENCE_3 = 34567;
   // DO NOT CHANGE
-  const result = generateFibonacciHash(
-    LENGTH_OF_SEQUENCE_1,
-    LENGTH_OF_SEQUENCE_2,
-    LENGTH_OF_SEQUENCE_3,
-  );
+  const result = generateFibonacciHash(LENGTH_OF_SEQUENCE_1, LENGTH_OF_SEQUENCE_2, LENGTH_OF_SEQUENCE_3);
 
   console.log("Execution ended. Holding process open for profiling...");
   await new Promise((resolve) => setTimeout(resolve, 10000));

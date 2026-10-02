@@ -15,26 +15,11 @@
 
 import { mapValues } from "../runtime.ts";
 import type { Category } from "./Category.ts";
-import {
-  CategoryFromJSON,
-  CategoryFromJSONTyped,
-  CategoryToJSON,
-  CategoryToJSONTyped,
-} from "./Category.ts";
+import { CategoryFromJSON, CategoryFromJSONTyped, CategoryToJSON, CategoryToJSONTyped } from "./Category.ts";
 import type { Tag } from "./Tag.ts";
-import {
-  TagFromJSON,
-  TagFromJSONTyped,
-  TagToJSON,
-  TagToJSONTyped,
-} from "./Tag.ts";
+import { TagFromJSON, TagFromJSONTyped, TagToJSON, TagToJSONTyped } from "./Tag.ts";
 import type { PetStatus } from "./PetStatus.ts";
-import {
-  PetStatusFromJSON,
-  PetStatusFromJSONTyped,
-  PetStatusToJSON,
-  PetStatusToJSONTyped,
-} from "./PetStatus.ts";
+import { PetStatusFromJSON, PetStatusFromJSONTyped, PetStatusToJSON, PetStatusToJSONTyped } from "./PetStatus.ts";
 
 /**
  *
@@ -89,14 +74,9 @@ export function PetFromJSONTyped(json: any, ignoreDiscriminator: boolean): Pet {
     id: json["id"] == null ? undefined : json["id"],
     name: json["name"],
     photoUrls: json["photoUrls"],
-    category:
-      json["category"] == null ? undefined : CategoryFromJSON(json["category"]),
-    tags:
-      json["tags"] == null
-        ? undefined
-        : (json["tags"] as Array<any>).map(TagFromJSON),
-    status:
-      json["status"] == null ? undefined : PetStatusFromJSON(json["status"]),
+    category: json["category"] == null ? undefined : CategoryFromJSON(json["category"]),
+    tags: json["tags"] == null ? undefined : (json["tags"] as Array<any>).map(TagFromJSON),
+    status: json["status"] == null ? undefined : PetStatusFromJSON(json["status"]),
   };
 }
 
@@ -104,10 +84,7 @@ export function PetToJSON(json: any): Pet {
   return PetToJSONTyped(json, false);
 }
 
-export function PetToJSONTyped(
-  value?: Pet | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function PetToJSONTyped(value?: Pet | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }
@@ -117,10 +94,7 @@ export function PetToJSONTyped(
     name: value["name"],
     photoUrls: value["photoUrls"],
     category: CategoryToJSON(value["category"]),
-    tags:
-      value["tags"] == null
-        ? undefined
-        : (value["tags"] as Array<any>).map(TagToJSON),
+    tags: value["tags"] == null ? undefined : (value["tags"] as Array<any>).map(TagToJSON),
     status: PetStatusToJSON(value["status"]),
   };
 }

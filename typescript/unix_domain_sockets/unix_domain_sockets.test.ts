@@ -85,28 +85,20 @@ test("handle client caches the computed result", async () => {
   const service = new server.AsyncIdempotentServer("/tmp/unused.sock");
 
   const firstSocket = new FakeWriter();
-  const firstPromise = service._handleClient(
-    firstSocket as unknown as net.Socket,
-  );
+  const firstPromise = service._handleClient(firstSocket as unknown as net.Socket);
   firstSocket.emit("data", Buffer.from("req-1:5"));
   firstSocket.emit("data", Buffer.from(""));
   firstSocket.emit("end");
   await firstPromise;
 
   const secondSocket = new FakeWriter();
-  const secondPromise = service._handleClient(
-    secondSocket as unknown as net.Socket,
-  );
+  const secondPromise = service._handleClient(secondSocket as unknown as net.Socket);
   secondSocket.emit("data", Buffer.from("req-1:99"));
   secondSocket.emit("end");
   await secondPromise;
 
-  expect(
-    firstSocket.buffer.map((chunk) => chunk.toString("utf8")).join(""),
-  ).toBe("req-1:10");
-  expect(
-    secondSocket.buffer.map((chunk) => chunk.toString("utf8")).join(""),
-  ).toBe("req-1:10");
+  expect(firstSocket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe("req-1:10");
+  expect(secondSocket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe("req-1:10");
   expect(service.processedRequests.size).toBe(1);
 });
 
@@ -126,14 +118,7 @@ test("send request with retry returns the numeric result", async () => {
   chmodSync(socketPath, 0o600);
 
   const fakeSocket = new FakeClientSocket();
-  const result = await client.sendRequestWithRetry(
-    socketPath,
-    7,
-    "req-7",
-    1,
-    0.5,
-    () => fakeSocket as never,
-  );
+  const result = await client.sendRequestWithRetry(socketPath, 7, "req-7", 1, 0.5, () => fakeSocket as never);
 
   expect(result).toBe(14);
   expect(fakeSocket.sent).toBe("req-7:7");
@@ -150,9 +135,7 @@ test("handle client reads the full request across multiple chunks", async () => 
   socket.emit("end");
   await promise;
 
-  expect(socket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe(
-    "req-2:12",
-  );
+  expect(socket.buffer.map((chunk) => chunk.toString("utf8")).join("")).toBe("req-2:12");
 });
 
 function securedSocketPath(): string {
@@ -170,23 +153,14 @@ test.each([
 ])("send request with retry rejects bad response %j", async (reply, text) => {
   const socketPath = securedSocketPath();
   await expect(
-    client.sendRequestWithRetry(
-      socketPath,
-      7,
-      "req-7",
-      3,
-      0,
-      () => new FakeClientSocket(reply) as never,
-    ),
+    client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0, () => new FakeClientSocket(reply) as never),
   ).rejects.toThrow(new RegExp(text.slice(0, 4), "i"));
 });
 
 test("send request with retry rejects loose permissions without retrying", async () => {
   const socketPath = securedSocketPath();
   chmodSync(socketPath, 0o644);
-  await expect(
-    client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0),
-  ).rejects.toThrow("too open");
+  await expect(client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0)).rejects.toThrow("too open");
 });
 
 test("send request with retry retries then fails", async () => {

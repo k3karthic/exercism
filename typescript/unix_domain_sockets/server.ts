@@ -38,9 +38,7 @@ export class AsyncIdempotentServer {
 
     const fileStat = fs.statSync(this.socketPath);
     if (fileStat.uid !== this.currentUid()) {
-      throw new PermissionError(
-        `Security Alert: Socket path '${this.socketPath}' is owned by another user.`,
-      );
+      throw new PermissionError(`Security Alert: Socket path '${this.socketPath}' is owned by another user.`);
     }
 
     fs.rmSync(this.socketPath);
@@ -57,9 +55,7 @@ export class AsyncIdempotentServer {
       this.server?.once("error", reject);
       this.server?.listen(this.socketPath, () => {
         fs.chmodSync(this.socketPath, 0o600);
-        console.log(
-          `[SECURITY] Set safe permissions (0600) on ${this.socketPath}`,
-        );
+        console.log(`[SECURITY] Set safe permissions (0600) on ${this.socketPath}`);
         console.log(`Async Server listening on path: ${this.socketPath}...`);
         this.isRunning = true;
         this.cleanupTimer = setInterval(() => {
@@ -186,9 +182,7 @@ export class AsyncIdempotentServer {
       }
 
       if (expired.length > 0) {
-        console.log(
-          `[CLEANUP] Purged ${expired.length} expired requests from memory.`,
-        );
+        console.log(`[CLEANUP] Purged ${expired.length} expired requests from memory.`);
       }
     }
   }
@@ -215,9 +209,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1]
-) {
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main();
 }

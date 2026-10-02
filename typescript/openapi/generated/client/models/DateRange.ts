@@ -41,10 +41,7 @@ export function DateRangeFromJSON(json: any): DateRange {
   return DateRangeFromJSONTyped(json, false);
 }
 
-export function DateRangeFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): DateRange {
+export function DateRangeFromJSONTyped(json: any, ignoreDiscriminator: boolean): DateRange {
   if (json == null) {
     return json;
   }
@@ -58,10 +55,7 @@ export function DateRangeToJSON(json: any): DateRange {
   return DateRangeToJSONTyped(json, false);
 }
 
-export function DateRangeToJSONTyped(
-  value?: DateRange | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function DateRangeToJSONTyped(value?: DateRange | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

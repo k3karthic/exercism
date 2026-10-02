@@ -3,11 +3,7 @@ const sleep = (delayMs: number): Promise<void> =>
     setTimeout(resolve, delayMs);
   });
 
-async function worker(
-  input: number[],
-  output: number[],
-  workerId: number,
-): Promise<void> {
+async function worker(input: number[], output: number[], workerId: number): Promise<void> {
   while (input.length > 0) {
     const num = input.shift();
 
@@ -25,9 +21,7 @@ async function main(): Promise<void> {
   const input = Array.from({ length: 10 }, (_, index) => index);
   const output: number[] = [];
 
-  await Promise.all(
-    Array.from({ length: 3 }, (_, workerId) => worker(input, output, workerId)),
-  );
+  await Promise.all(Array.from({ length: 3 }, (_, workerId) => worker(input, output, workerId)));
 
   console.log("Results:", output);
 }

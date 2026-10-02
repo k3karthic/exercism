@@ -2,19 +2,11 @@ import { mkdir, appendFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-import {
-  connect,
-  type Channel,
-  type ChannelModel,
-  type ConsumeMessage,
-} from "amqplib";
+import { connect, type Channel, type ChannelModel, type ConsumeMessage } from "amqplib";
 
 export const DEFAULT_QUEUE = "sample-numbers";
 export const DEFAULT_MESSAGES = ["1", "2", "oops", "3", "4"];
-export const DEFAULT_FAILED_MESSAGES_FILE = path.join(
-  "rabbitmq",
-  "failed_messages.txt",
-);
+export const DEFAULT_FAILED_MESSAGES_FILE = path.join("rabbitmq", "failed_messages.txt");
 const DEFAULT_AMQP_URL = "amqp://guest:guest@localhost:5672";
 
 async function closeConnection(connection: ChannelModel | null): Promise<void> {
@@ -48,10 +40,7 @@ class RabbitMQProducer {
     }
   }
 
-  async sendMessages(
-    queue: string,
-    messages: readonly string[],
-  ): Promise<void> {
+  async sendMessages(queue: string, messages: readonly string[]): Promise<void> {
     const connection = await connect(this.amqpUrl);
     const channel = await connection.createChannel();
 
@@ -93,9 +82,7 @@ class RabbitMQConsumer {
       let settled = false;
 
       const completion = new Promise<number[]>((resolve, reject) => {
-        const handleMessage = async (
-          message: ConsumeMessage | null,
-        ): Promise<void> => {
+        const handleMessage = async (message: ConsumeMessage | null): Promise<void> => {
           if (message === null || settled) {
             return;
           }
@@ -106,9 +93,7 @@ class RabbitMQConsumer {
           try {
             const parsedNumber = Number.parseInt(rawValue, 10);
             if (!Number.isFinite(parsedNumber)) {
-              throw new Error(
-                `invalid literal for int() with base 10: '${rawValue}'`,
-              );
+              throw new Error(`invalid literal for int() with base 10: '${rawValue}'`);
             }
             doubledNumbers.push(parsedNumber * 2);
             channel.ack(message);
@@ -156,18 +141,14 @@ class RabbitMQConsumer {
   }
 }
 
-export async function runDemo(
-  amqpUrl: string,
-  options: { failedMessagesPath?: string } = {},
-): Promise<number[]> {
+export async function runDemo(amqpUrl: string, options: { failedMessagesPath?: string } = {}): Promise<number[]> {
   const producer = new RabbitMQProducer(amqpUrl);
   const consumer = new RabbitMQConsumer(amqpUrl);
 
   await producer.ensureQueue(DEFAULT_QUEUE);
   await producer.sendMessages(DEFAULT_QUEUE, DEFAULT_MESSAGES);
   return await consumer.consumeAndDoubleMessages(DEFAULT_QUEUE, {
-    failedMessagesPath:
-      options.failedMessagesPath ?? DEFAULT_FAILED_MESSAGES_FILE,
+    failedMessagesPath: options.failedMessagesPath ?? DEFAULT_FAILED_MESSAGES_FILE,
     expectedMessages: DEFAULT_MESSAGES.length,
   });
 }
@@ -177,10 +158,7 @@ async function main(): Promise<void> {
   console.log(doubledNumbers);
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error: unknown) => {
     console.error(error);
     process.exitCode = 1;

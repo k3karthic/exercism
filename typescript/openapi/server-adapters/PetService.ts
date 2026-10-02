@@ -55,27 +55,15 @@ export async function updatePet({ pet }: { pet: Pet }): Promise<Pet> {
   return updated;
 }
 
-export async function findPetsByStatus({
-  status,
-}: {
-  status?: PetStatus;
-}): Promise<Pet[]> {
+export async function findPetsByStatus({ status }: { status?: PetStatus }): Promise<Pet[]> {
   return petStore.findPetsByStatus(status ?? ("available" as PetStatus));
 }
 
-export async function findPetsByTags({
-  tags,
-}: {
-  tags?: string | string[];
-}): Promise<Pet[]> {
+export async function findPetsByTags({ tags }: { tags?: string | string[] }): Promise<Pet[]> {
   return petStore.findPetsByTags(tagNames(tags));
 }
 
-export async function searchPets({
-  petSearchCriteria,
-  limit,
-  offset,
-}: PetSearchRequest): Promise<PetSearchResults> {
+export async function searchPets({ petSearchCriteria, limit, offset }: PetSearchRequest): Promise<PetSearchResults> {
   return petStore.searchPets(petSearchCriteria, limit ?? 20, offset ?? 0);
 }
 
@@ -87,22 +75,14 @@ export async function getPetById({ petId }: { petId: number }): Promise<Pet> {
   return pet;
 }
 
-export async function updatePetWithForm({
-  petId,
-  name,
-  status,
-}: UpdatePetFormRequest): Promise<Record<string, never>> {
+export async function updatePetWithForm({ petId, name, status }: UpdatePetFormRequest): Promise<Record<string, never>> {
   if (!(await petStore.updatePetFromForm(petId, name, status))) {
     throw new PetNotFoundError();
   }
   return {};
 }
 
-export async function deletePet({
-  petId,
-}: {
-  petId: number;
-}): Promise<Record<string, never>> {
+export async function deletePet({ petId }: { petId: number }): Promise<Record<string, never>> {
   if (!(await petStore.deletePet(petId))) {
     throw new PetNotFoundError();
   }

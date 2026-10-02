@@ -4,10 +4,7 @@ const ExpressServer = require("./expressServer");
 
 const launchServer = async () => {
   try {
-    this.expressServer = new ExpressServer(
-      config.URL_PORT,
-      config.OPENAPI_YAML,
-    );
+    this.expressServer = new ExpressServer(config.URL_PORT, config.OPENAPI_YAML);
     this.expressServer.launch();
     logger.info("Express server running");
   } catch (error) {

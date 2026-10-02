@@ -6,85 +6,62 @@
 
 import { pathToFileURL } from "node:url";
 
-import {
-  context,
-  propagation,
-  SpanStatusCode,
-  type Span,
-} from "@opentelemetry/api";
+import { context, propagation, SpanStatusCode, type Span } from "@opentelemetry/api";
 import type { MeterProvider } from "@opentelemetry/sdk-metrics";
 import type { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
-import {
-  ServiceLogger,
-  TelemetryBundle,
-  traceIdHex,
-  type DoubleResponse,
-} from "./utils.js";
+import { ServiceLogger, TelemetryBundle, traceIdHex, type DoubleResponse } from "./utils.js";
 
 export class Service2 {
   readonly telemetry: TelemetryBundle;
   readonly logger: ServiceLogger;
   readonly tracer: ReturnType<NodeTracerProvider["getTracer"]>;
   readonly meter: ReturnType<MeterProvider["getMeter"]>;
-  readonly doubledCounter: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createCounter"]
-  >;
-  readonly errorCounter: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createCounter"]
-  >;
-  readonly durationHistogram: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createHistogram"]
-  >;
+  readonly doubledCounter: ReturnType<ReturnType<MeterProvider["getMeter"]>["createCounter"]>;
+  readonly errorCounter: ReturnType<ReturnType<MeterProvider["getMeter"]>["createCounter"]>;
+  readonly durationHistogram: ReturnType<ReturnType<MeterProvider["getMeter"]>["createHistogram"]>;
 
   constructor() {
     this.telemetry = new TelemetryBundle("service_2");
     this.logger = new ServiceLogger("service_2", this.telemetry.loggerProvider);
     this.tracer = this.telemetry.tracerProvider.getTracer("otel.service_2");
     this.meter = this.telemetry.meterProvider.getMeter("otel.service_2");
-    this.doubledCounter = this.meter.createCounter(
-      "otel_numbers_doubled_total",
-    );
+    this.doubledCounter = this.meter.createCounter("otel_numbers_doubled_total");
     this.errorCounter = this.meter.createCounter("otel_number_errors_total");
-    this.durationHistogram = this.meter.createHistogram(
-      "otel_double_duration_ms",
-    );
+    this.durationHistogram = this.meter.createHistogram("otel_double_duration_ms");
   }
 
   async doubleNumber(value: string): Promise<DoubleResponse> {
     const startedAt = performance.now();
-    return await this.tracer.startActiveSpan(
-      "service_2.double_number",
-      async (span: Span) => {
-        span.setAttribute("service_2.message.value", value);
-        try {
-          const number = Number.parseInt(value, 10);
-          if (Number.isNaN(number)) {
-            const error = new Error("value must be numeric");
-            this.errorCounter.add(1);
-            span.recordException(error);
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: error.message,
-            });
-            this.logger.exception(`invalid number received: ${value}`, error);
-            throw error;
-          }
-
-          const doubled = number * 2;
-          this.doubledCounter.add(1);
-          this.durationHistogram.record(performance.now() - startedAt);
-          this.logger.info(`doubled ${number} to ${doubled}`);
-          return {
-            value,
-            doubled,
-            traceId: traceIdHex(span),
-          };
-        } finally {
-          span.end();
+    return await this.tracer.startActiveSpan("service_2.double_number", async (span: Span) => {
+      span.setAttribute("service_2.message.value", value);
+      try {
+        const number = Number.parseInt(value, 10);
+        if (Number.isNaN(number)) {
+          const error = new Error("value must be numeric");
+          this.errorCounter.add(1);
+          span.recordException(error);
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error.message,
+          });
+          this.logger.exception(`invalid number received: ${value}`, error);
+          throw error;
         }
-      },
-    );
+
+        const doubled = number * 2;
+        this.doubledCounter.add(1);
+        this.durationHistogram.record(performance.now() - startedAt);
+        this.logger.info(`doubled ${number} to ${doubled}`);
+        return {
+          value,
+          doubled,
+          traceId: traceIdHex(span),
+        };
+      } finally {
+        span.end();
+      }
+    });
   }
 }
 
@@ -119,9 +96,7 @@ async function main(): Promise<void> {
 
   let result: DoubleResponse | { value: string; error: string };
   try {
-    result = await context.with(parentContext, () =>
-      service2.doubleNumber(value),
-    );
+    result = await context.with(parentContext, () => service2.doubleNumber(value));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     result = { value, error: message };
@@ -133,9 +108,6 @@ async function main(): Promise<void> {
   process.stdout.write(`${JSON.stringify(result)}\n`);
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

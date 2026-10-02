@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 
 import { GenericContainer, Wait } from "testcontainers";
-import {
-  RedisContainer,
-  type StartedRedisContainer,
-} from "@testcontainers/redis";
+import { RedisContainer, type StartedRedisContainer } from "@testcontainers/redis";
 import request from "supertest";
 import { createClient as createRedisClient } from "redis";
 import { afterAll, beforeAll, beforeEach, test } from "vitest";
@@ -40,19 +37,14 @@ let keycloakRuntime: KeycloakRuntime;
 let appSettings: Settings;
 let app = createApp();
 
-function buildBaseUrl(container: {
-  getHost(): string;
-  getMappedPort(port: number): number;
-}) {
+function buildBaseUrl(container: { getHost(): string; getMappedPort(port: number): number }) {
   return `http://${container.getHost()}:${container.getMappedPort(8080)}`;
 }
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   if (!response.ok) {
-    throw new Error(
-      `${init?.method ?? "GET"} ${url} failed with ${response.status}`,
-    );
+    throw new Error(`${init?.method ?? "GET"} ${url} failed with ${response.status}`);
   }
 
   return (await response.json()) as T;
@@ -66,26 +58,18 @@ async function getAdminAccessToken(baseUrl: string): Promise<string> {
     password: KEYCLOAK_ADMIN_PASSWORD,
   });
 
-  const payload = await fetchJson<{ access_token: string }>(
-    `${baseUrl}/realms/master/protocol/openid-connect/token`,
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body,
+  const payload = await fetchJson<{ access_token: string }>(`${baseUrl}/realms/master/protocol/openid-connect/token`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
     },
-  );
+    body,
+  });
 
   return payload.access_token;
 }
 
-async function adminFetch(
-  baseUrl: string,
-  token: string,
-  path: string,
-  init: RequestInit = {},
-): Promise<Response> {
+async function adminFetch(baseUrl: string, token: string, path: string, init: RequestInit = {}): Promise<Response> {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
@@ -95,9 +79,7 @@ async function adminFetch(
   });
 
   if (!response.ok && response.status !== 201 && response.status !== 204) {
-    throw new Error(
-      `${init.method ?? "GET"} ${path} failed with ${response.status}`,
-    );
+    throw new Error(`${init.method ?? "GET"} ${path} failed with ${response.status}`);
   }
 
   return response;
@@ -115,40 +97,31 @@ async function createRealm(baseUrl: string, token: string): Promise<void> {
 }
 
 async function createClient(baseUrl: string, token: string): Promise<string> {
-  const response = await adminFetch(
-    baseUrl,
-    token,
-    `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/clients`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        clientId: DEFAULT_KEYCLOAK_CLIENT_ID,
-        name: "My Application Client",
-        enabled: true,
-        protocol: "openid-connect",
-        publicClient: false,
-        standardFlowEnabled: true,
-        implicitFlowEnabled: false,
-        directAccessGrantsEnabled: false,
-        serviceAccountsEnabled: false,
-        fullScopeAllowed: false,
-        redirectUris: [CALLBACK_URI],
-        webOrigins: ["+"],
-      }),
-    },
-  );
+  const response = await adminFetch(baseUrl, token, `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/clients`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      clientId: DEFAULT_KEYCLOAK_CLIENT_ID,
+      name: "My Application Client",
+      enabled: true,
+      protocol: "openid-connect",
+      publicClient: false,
+      standardFlowEnabled: true,
+      implicitFlowEnabled: false,
+      directAccessGrantsEnabled: false,
+      serviceAccountsEnabled: false,
+      fullScopeAllowed: false,
+      redirectUris: [CALLBACK_URI],
+      webOrigins: ["+"],
+    }),
+  });
 
   const location = response.headers.get("location");
   assert.ok(location);
   return location.split("/").pop() ?? "";
 }
 
-async function createClientSecret(
-  baseUrl: string,
-  token: string,
-  clientId: string,
-): Promise<string> {
+async function createClientSecret(baseUrl: string, token: string, clientId: string): Promise<string> {
   const payload = await fetchJson<{ value: string }>(
     `${baseUrl}/admin/realms/${DEFAULT_KEYCLOAK_REALM}/clients/${clientId}/client-secret`,
     {
@@ -161,35 +134,23 @@ async function createClientSecret(
   return payload.value;
 }
 
-async function createClientScope(
-  baseUrl: string,
-  token: string,
-): Promise<string> {
-  const response = await adminFetch(
-    baseUrl,
-    token,
-    `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/client-scopes`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
-        protocol: "openid-connect",
-        description: "Adds the API audience to tokens only when requested.",
-      }),
-    },
-  );
+async function createClientScope(baseUrl: string, token: string): Promise<string> {
+  const response = await adminFetch(baseUrl, token, `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/client-scopes`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      name: DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
+      protocol: "openid-connect",
+      description: "Adds the API audience to tokens only when requested.",
+    }),
+  });
 
   const location = response.headers.get("location");
   assert.ok(location);
   return location.split("/").pop() ?? "";
 }
 
-async function addMapperToClientScope(
-  baseUrl: string,
-  token: string,
-  scopeId: string,
-): Promise<void> {
+async function addMapperToClientScope(baseUrl: string, token: string, scopeId: string): Promise<void> {
   await adminFetch(
     baseUrl,
     token,
@@ -226,23 +187,18 @@ async function addOptionalClientScope(
 }
 
 async function createUser(baseUrl: string, token: string): Promise<string> {
-  await adminFetch(
-    baseUrl,
-    token,
-    `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/users`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        username: USERNAME,
-        enabled: true,
-        email: EMAIL,
-        emailVerified: true,
-        firstName: "Test",
-        lastName: "User",
-      }),
-    },
-  );
+  await adminFetch(baseUrl, token, `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      username: USERNAME,
+      enabled: true,
+      email: EMAIL,
+      emailVerified: true,
+      firstName: "Test",
+      lastName: "User",
+    }),
+  });
 
   const users = await fetchJson<Array<{ id: string }>>(
     `${baseUrl}/admin/realms/${DEFAULT_KEYCLOAK_REALM}/users?username=${encodeURIComponent(USERNAME)}`,
@@ -252,25 +208,16 @@ async function createUser(baseUrl: string, token: string): Promise<string> {
   return users[0].id;
 }
 
-async function setUserPassword(
-  baseUrl: string,
-  token: string,
-  userId: string,
-): Promise<void> {
-  await adminFetch(
-    baseUrl,
-    token,
-    `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/users/${userId}/reset-password`,
-    {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        type: "password",
-        value: PASSWORD,
-        temporary: false,
-      }),
-    },
-  );
+async function setUserPassword(baseUrl: string, token: string, userId: string): Promise<void> {
+  await adminFetch(baseUrl, token, `/admin/realms/${DEFAULT_KEYCLOAK_REALM}/users/${userId}/reset-password`, {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      type: "password",
+      value: PASSWORD,
+      temporary: false,
+    }),
+  });
 }
 
 function parseLoginForm(html: string): {
@@ -280,9 +227,7 @@ function parseLoginForm(html: string): {
   const action = html.match(/<form[^>]*action="([^"]+)"/i)?.[1] ?? "";
   const fields: Record<string, string> = {};
 
-  for (const match of html.matchAll(
-    /<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/gi,
-  )) {
+  for (const match of html.matchAll(/<input[^>]*name="([^"]+)"[^>]*value="([^"]*)"/gi)) {
     const name = match[1];
     const value = match[2];
     if (name === undefined || value === undefined) {
@@ -309,17 +254,13 @@ function cookieHeaderFromSetCookie(setCookie: string | null): string {
     .join("; ");
 }
 
-async function authenticateAtKeycloak(
-  authUrl: string,
-): Promise<{ callbackUrl: string; code: string }> {
+async function authenticateAtKeycloak(authUrl: string): Promise<{ callbackUrl: string; code: string }> {
   const loginPage = await fetch(authUrl);
   assert.equal(loginPage.status, 200);
   const { action, fields } = parseLoginForm(await loginPage.text());
   assert.ok(action);
 
-  const cookieHeader = cookieHeaderFromSetCookie(
-    loginPage.headers.get("set-cookie"),
-  );
+  const cookieHeader = cookieHeaderFromSetCookie(loginPage.headers.get("set-cookie"));
   const postUrl = new URL(action, authUrl).toString();
   const payloadVariants = [
     { ...fields, username: USERNAME, password: PASSWORD },
@@ -367,9 +308,7 @@ async function bootstrapContainers(): Promise<void> {
       KEYCLOAK_ADMIN_PASSWORD: KEYCLOAK_ADMIN_PASSWORD,
     })
     .withCommand(["start-dev", "--http-port", "8080"])
-    .withWaitStrategy(
-      Wait.forLogMessage(/.*Listening on: http:\/\/0\.0\.0\.0:8080\..*/, 1),
-    )
+    .withWaitStrategy(Wait.forLogMessage(/.*Listening on: http:\/\/0\.0\.0\.0:8080\..*/, 1))
     .withStartupTimeout(180_000)
     .start();
 
@@ -451,9 +390,7 @@ test("login shows welcome and active sessions", async () => {
 });
 
 test("access token includes optional audience", async () => {
-  const loginResponse = await request(app)
-    .get("/api/auth/login?next=/")
-    .redirects(0);
+  const loginResponse = await request(app).get("/api/auth/login?next=/").redirects(0);
   assert.equal(loginResponse.status, 303);
   const authUrl = loginResponse.headers.location as string;
 
@@ -478,9 +415,7 @@ test("access token includes optional audience", async () => {
   const payloadPart = accessToken.split(".")[1];
   assert.ok(payloadPart);
 
-  const claims = JSON.parse(
-    Buffer.from(payloadPart, "base64url").toString("utf8"),
-  ) as { aud: string | string[] };
+  const claims = JSON.parse(Buffer.from(payloadPart, "base64url").toString("utf8")) as { aud: string | string[] };
   const audience = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
   assert.ok(audience.includes(DEFAULT_KEYCLOAK_API_AUDIENCE));
 });
@@ -493,9 +428,7 @@ test("logout clears session", async () => {
   assert.equal(response.status, 303);
   assert.match(
     response.headers.location as string,
-    new RegExp(
-      `^${keycloakRuntime.baseUrl}/realms/${DEFAULT_KEYCLOAK_REALM}/protocol/openid-connect/logout`,
-    ),
+    new RegExp(`^${keycloakRuntime.baseUrl}/realms/${DEFAULT_KEYCLOAK_REALM}/protocol/openid-connect/logout`),
   );
 
   const redis = createRedisClient({
@@ -512,13 +445,9 @@ test("logout clears session", async () => {
 });
 
 test("login rejects open redirect", async () => {
-  const response = await request(app)
-    .get("/api/auth/login?next=https://evil.com")
-    .redirects(0);
+  const response = await request(app).get("/api/auth/login?next=https://evil.com").redirects(0);
   assert.equal(response.status, 303);
-  const { callbackUrl } = await authenticateAtKeycloak(
-    response.headers.location as string,
-  );
+  const { callbackUrl } = await authenticateAtKeycloak(response.headers.location as string);
 
   const callback = await request(app)
     .get(new URL(callbackUrl).pathname + new URL(callbackUrl).search)
@@ -527,22 +456,15 @@ test("login rejects open redirect", async () => {
   assert.equal(callback.headers.location, "/");
 });
 
-async function authenticate(
-  agent: ReturnType<typeof request.agent>,
-  _baseUrl: string,
-): Promise<void> {
+async function authenticate(agent: ReturnType<typeof request.agent>, _baseUrl: string): Promise<void> {
   const rootResponse = await agent.get("/").redirects(0);
   assert.equal(rootResponse.status, 303);
   assert.equal(rootResponse.headers.location, "/api/auth/login?next=/");
 
   const loginResponse = await agent.get("/api/auth/login?next=/").redirects(0);
   assert.equal(loginResponse.status, 303);
-  const { callbackUrl } = await authenticateAtKeycloak(
-    loginResponse.headers.location as string,
-  );
-  const callback = await agent
-    .get(new URL(callbackUrl).pathname + new URL(callbackUrl).search)
-    .redirects(0);
+  const { callbackUrl } = await authenticateAtKeycloak(loginResponse.headers.location as string);
+  const callback = await agent.get(new URL(callbackUrl).pathname + new URL(callbackUrl).search).redirects(0);
   assert.equal(callback.status, 303);
   assert.equal(callback.headers.location, "/");
 }

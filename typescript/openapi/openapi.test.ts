@@ -23,9 +23,7 @@ const POSTGRES_USER = "petstore";
 const POSTGRES_PASSWORD = "petstore";
 const POSTGRES_DATABASE = "petstore";
 
-let databaseContainer:
-  | Awaited<ReturnType<GenericContainer["start"]>>
-  | undefined;
+let databaseContainer: Awaited<ReturnType<GenericContainer["start"]>> | undefined;
 let originalDatabaseUrl: string | undefined;
 
 beforeAll(async () => {
@@ -36,9 +34,7 @@ beforeAll(async () => {
       POSTGRES_DB: POSTGRES_DATABASE,
     })
     .withExposedPorts(5432)
-    .withWaitStrategy(
-      Wait.forLogMessage(/database system is ready to accept connections/, 2),
-    )
+    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
     .start();
 
   const databaseUrl = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${databaseContainer.getHost()}:${databaseContainer.getMappedPort(5432)}/${POSTGRES_DATABASE}`;
@@ -60,9 +56,7 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  await getDatabase().execute(
-    sql`TRUNCATE TABLE "order", pet RESTART IDENTITY`,
-  );
+  await getDatabase().execute(sql`TRUNCATE TABLE "order", pet RESTART IDENTITY`);
 });
 
 async function createPet(
@@ -80,18 +74,12 @@ async function createPet(
     payload.id = petId;
   }
 
-  const response = await request(app)
-    .post("/pet")
-    .set("api_key", API_KEY)
-    .send(payload);
+  const response = await request(app).post("/pet").set("api_key", API_KEY).send(payload);
   expect(response.status, response.text).toBe(200);
   return response;
 }
 
-async function createOrder(
-  status: OrderStatus = OrderStatus.Placed,
-  orderId?: number,
-): Promise<SupertestResponse> {
+async function createOrder(status: OrderStatus = OrderStatus.Placed, orderId?: number): Promise<SupertestResponse> {
   const payload: Record<string, unknown> = {
     petId: 1,
     quantity: 2,
@@ -103,10 +91,7 @@ async function createOrder(
     payload.id = orderId;
   }
 
-  return request(app)
-    .post("/store/order")
-    .set("api_key", API_KEY)
-    .send(payload);
+  return request(app).post("/store/order").set("api_key", API_KEY).send(payload);
 }
 
 test("add and get pet", async () => {
@@ -193,12 +178,8 @@ test("find pets by status", async () => {
     .query({ status: PetStatus.Available });
 
   expect(response.status, JSON.stringify(response.body)).toBe(200);
-  expect(response.body.map((pet: { name: string }) => pet.name)).toContain(
-    "AvailPet",
-  );
-  expect(response.body.map((pet: { name: string }) => pet.name)).not.toContain(
-    "SoldPet",
-  );
+  expect(response.body.map((pet: { name: string }) => pet.name)).toContain("AvailPet");
+  expect(response.body.map((pet: { name: string }) => pet.name)).not.toContain("SoldPet");
 });
 
 test("find pets by tags", async () => {
@@ -214,15 +195,10 @@ test("find pets by tags", async () => {
 
   expect(created.status).toBe(200);
 
-  const response = await request(app)
-    .get("/pet/findByTags")
-    .set("api_key", API_KEY)
-    .query({ tags: "fluffy" });
+  const response = await request(app).get("/pet/findByTags").set("api_key", API_KEY).query({ tags: "fluffy" });
 
   expect(response.status).toBe(200);
-  expect(response.body.map((pet: { name: string }) => pet.name)).toContain(
-    "TaggedPet",
-  );
+  expect(response.body.map((pet: { name: string }) => pet.name)).toContain("TaggedPet");
 });
 
 test("upload image", async () => {
@@ -244,9 +220,7 @@ test("pet route requires api key", async () => {
 });
 
 test("get missing pet returns 404", async () => {
-  const response = await request(app)
-    .get("/pet/999999")
-    .set("api_key", API_KEY);
+  const response = await request(app).get("/pet/999999").set("api_key", API_KEY);
   expect(response.status).toBe(404);
 });
 
@@ -292,9 +266,7 @@ test("delete order", async () => {
 });
 
 test("get missing order returns 404", async () => {
-  const response = await request(app)
-    .get("/store/order/999999")
-    .set("api_key", API_KEY);
+  const response = await request(app).get("/store/order/999999").set("api_key", API_KEY);
   expect(response.status).toBe(404);
 });
 
@@ -303,9 +275,7 @@ test("inventory counts pet statuses", async () => {
   await createPet("InvPet2", PetStatus.Available);
   await createPet("InvPet3", PetStatus.Sold);
 
-  const response = await request(app)
-    .get("/store/inventory")
-    .set("api_key", API_KEY);
+  const response = await request(app).get("/store/inventory").set("api_key", API_KEY);
 
   expect(response.status).toBe(200);
   expect(response.body.available).toBeGreaterThanOrEqual(2);
@@ -364,12 +334,8 @@ test("store creates, upserts, updates, and deletes pets", async () => {
   });
   expect(upserted.name).toBe("Upserted");
 
-  expect(await petStore.updatePet({ name: "No id", photoUrls: [] })).toBe(
-    undefined,
-  );
-  expect(
-    await petStore.updatePet({ id: 999, name: "Missing", photoUrls: [] }),
-  ).toBe(undefined);
+  expect(await petStore.updatePet({ name: "No id", photoUrls: [] })).toBe(undefined);
+  expect(await petStore.updatePet({ id: 999, name: "Missing", photoUrls: [] })).toBe(undefined);
   const updated = await petStore.updatePet({
     id: 50,
     name: "Updated",
@@ -380,12 +346,8 @@ test("store creates, upserts, updates, and deletes pets", async () => {
 
   expect(await petStore.getPet(999)).toBe(undefined);
   expect(await petStore.updatePetFromForm(50, undefined, undefined)).toBe(true);
-  expect(await petStore.updatePetFromForm(999, undefined, undefined)).toBe(
-    false,
-  );
-  expect(await petStore.updatePetFromForm(50, "Renamed", PetStatus.Sold)).toBe(
-    true,
-  );
+  expect(await petStore.updatePetFromForm(999, undefined, undefined)).toBe(false);
+  expect(await petStore.updatePetFromForm(50, "Renamed", PetStatus.Sold)).toBe(true);
   expect(await petStore.findPetsByStatus(PetStatus.Sold)).toHaveLength(1);
   expect(await petStore.findPetsByTags([])).toHaveLength(1);
   expect(await petStore.findPetsByTags(["calm"])).toHaveLength(1);
@@ -440,11 +402,7 @@ test("store creates, upserts, and deletes orders", async () => {
 });
 
 test("store searches orders with ranges, sorting, and paging", async () => {
-  for (const [index, status] of [
-    OrderStatus.Placed,
-    OrderStatus.Approved,
-    OrderStatus.Delivered,
-  ].entries()) {
+  for (const [index, status] of [OrderStatus.Placed, OrderStatus.Approved, OrderStatus.Delivered].entries()) {
     await petStore.createOrder({
       petId: index + 1,
       quantity: index + 1,
@@ -483,21 +441,14 @@ test("store searches orders with ranges, sorting, and paging", async () => {
   );
   expect(filtered.orders).toHaveLength(1);
 
-  const empty = await petStore.searchOrders(
-    { sortBy: OrderSearchCriteriaSortByEnum.Id },
-    1,
-    10,
-  );
+  const empty = await petStore.searchOrders({ sortBy: OrderSearchCriteriaSortByEnum.Id }, 1, 10);
   expect(empty.pagination.totalPages).toBe(1);
   const none = await petStore.searchOrders({ petId: 99 }, 1, 10);
   expect(none.pagination.totalPages).toBe(0);
 });
 
 test("validation failures return 422 with details", async () => {
-  const response = await request(app)
-    .post("/pet")
-    .set("api_key", API_KEY)
-    .send({ photoUrls: [] });
+  const response = await request(app).post("/pet").set("api_key", API_KEY).send({ photoUrls: [] });
 
   expect(response.status).toBe(422);
   expect(response.body.message).toBe("Validation Failed");

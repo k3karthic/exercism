@@ -15,12 +15,7 @@
 
 import { mapValues } from "../runtime.ts";
 import type { DateRange } from "./DateRange.ts";
-import {
-  DateRangeFromJSON,
-  DateRangeFromJSONTyped,
-  DateRangeToJSON,
-  DateRangeToJSONTyped,
-} from "./DateRange.ts";
+import { DateRangeFromJSON, DateRangeFromJSONTyped, DateRangeToJSON, DateRangeToJSONTyped } from "./DateRange.ts";
 import type { OrderStatus } from "./OrderStatus.ts";
 import {
   OrderStatusFromJSON,
@@ -99,9 +94,7 @@ export enum OrderSearchCriteriaSortOrderEnum {
 /**
  * Check if a given object implements the OrderSearchCriteria interface.
  */
-export function instanceOfOrderSearchCriteria(
-  value: object,
-): value is OrderSearchCriteria {
+export function instanceOfOrderSearchCriteria(value: object): value is OrderSearchCriteria {
   return true;
 }
 
@@ -109,29 +102,17 @@ export function OrderSearchCriteriaFromJSON(json: any): OrderSearchCriteria {
   return OrderSearchCriteriaFromJSONTyped(json, false);
 }
 
-export function OrderSearchCriteriaFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): OrderSearchCriteria {
+export function OrderSearchCriteriaFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderSearchCriteria {
   if (json == null) {
     return json;
   }
   return {
     orderId: json["orderId"] == null ? undefined : json["orderId"],
     petId: json["petId"] == null ? undefined : json["petId"],
-    status:
-      json["status"] == null
-        ? undefined
-        : (json["status"] as Array<any>).map(OrderStatusFromJSON),
+    status: json["status"] == null ? undefined : (json["status"] as Array<any>).map(OrderStatusFromJSON),
     complete: json["complete"] == null ? undefined : json["complete"],
-    dateRange:
-      json["dateRange"] == null
-        ? undefined
-        : DateRangeFromJSON(json["dateRange"]),
-    quantityRange:
-      json["quantityRange"] == null
-        ? undefined
-        : QuantityRangeFromJSON(json["quantityRange"]),
+    dateRange: json["dateRange"] == null ? undefined : DateRangeFromJSON(json["dateRange"]),
+    quantityRange: json["quantityRange"] == null ? undefined : QuantityRangeFromJSON(json["quantityRange"]),
     sortBy: json["sortBy"] == null ? undefined : json["sortBy"],
     sortOrder: json["sortOrder"] == null ? undefined : json["sortOrder"],
   };
@@ -152,10 +133,7 @@ export function OrderSearchCriteriaToJSONTyped(
   return {
     orderId: value["orderId"],
     petId: value["petId"],
-    status:
-      value["status"] == null
-        ? undefined
-        : (value["status"] as Array<any>).map(OrderStatusToJSON),
+    status: value["status"] == null ? undefined : (value["status"] as Array<any>).map(OrderStatusToJSON),
     complete: value["complete"],
     dateRange: DateRangeToJSON(value["dateRange"]),
     quantityRange: QuantityRangeToJSON(value["quantityRange"]),

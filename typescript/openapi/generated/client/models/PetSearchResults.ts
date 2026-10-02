@@ -15,12 +15,7 @@
 
 import { mapValues } from "../runtime.ts";
 import type { Pet } from "./Pet.ts";
-import {
-  PetFromJSON,
-  PetFromJSONTyped,
-  PetToJSON,
-  PetToJSONTyped,
-} from "./Pet.ts";
+import { PetFromJSON, PetFromJSONTyped, PetToJSON, PetToJSONTyped } from "./Pet.ts";
 
 /**
  *
@@ -53,9 +48,7 @@ export interface PetSearchResults {
 /**
  * Check if a given object implements the PetSearchResults interface.
  */
-export function instanceOfPetSearchResults(
-  value: object,
-): value is PetSearchResults {
+export function instanceOfPetSearchResults(value: object): value is PetSearchResults {
   if (!("results" in value) || value["results"] === undefined) return false;
   if (!("total" in value) || value["total"] === undefined) return false;
   if (!("limit" in value) || value["limit"] === undefined) return false;
@@ -68,10 +61,7 @@ export function PetSearchResultsFromJSON(json: any): PetSearchResults {
   return PetSearchResultsFromJSONTyped(json, false);
 }
 
-export function PetSearchResultsFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): PetSearchResults {
+export function PetSearchResultsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PetSearchResults {
   if (json == null) {
     return json;
   }

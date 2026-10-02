@@ -41,10 +41,7 @@ export function QuantityRangeFromJSON(json: any): QuantityRange {
   return QuantityRangeFromJSONTyped(json, false);
 }
 
-export function QuantityRangeFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): QuantityRange {
+export function QuantityRangeFromJSONTyped(json: any, ignoreDiscriminator: boolean): QuantityRange {
   if (json == null) {
     return json;
   }
@@ -58,10 +55,7 @@ export function QuantityRangeToJSON(json: any): QuantityRange {
   return QuantityRangeToJSONTyped(json, false);
 }
 
-export function QuantityRangeToJSONTyped(
-  value?: QuantityRange | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function QuantityRangeToJSONTyped(value?: QuantityRange | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

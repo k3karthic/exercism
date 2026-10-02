@@ -15,12 +15,7 @@
 
 import { mapValues } from "../runtime.ts";
 import type { Order } from "./Order.ts";
-import {
-  OrderFromJSON,
-  OrderFromJSONTyped,
-  OrderToJSON,
-  OrderToJSONTyped,
-} from "./Order.ts";
+import { OrderFromJSON, OrderFromJSONTyped, OrderToJSON, OrderToJSONTyped } from "./Order.ts";
 import type { OrderSearchResultsPagination } from "./OrderSearchResultsPagination.ts";
 import {
   OrderSearchResultsPaginationFromJSON,
@@ -48,12 +43,9 @@ export interface OrderSearchResults {
 /**
  * Check if a given object implements the OrderSearchResults interface.
  */
-export function instanceOfOrderSearchResults(
-  value: object,
-): value is OrderSearchResults {
+export function instanceOfOrderSearchResults(value: object): value is OrderSearchResults {
   if (!("orders" in value) || value["orders"] === undefined) return false;
-  if (!("pagination" in value) || value["pagination"] === undefined)
-    return false;
+  if (!("pagination" in value) || value["pagination"] === undefined) return false;
   return true;
 }
 
@@ -61,10 +53,7 @@ export function OrderSearchResultsFromJSON(json: any): OrderSearchResults {
   return OrderSearchResultsFromJSONTyped(json, false);
 }
 
-export function OrderSearchResultsFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): OrderSearchResults {
+export function OrderSearchResultsFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderSearchResults {
   if (json == null) {
     return json;
   }

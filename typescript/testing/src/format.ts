@@ -7,7 +7,5 @@ export type UserCard = {
 export function formatUserCard(user: UserCard): string {
   const status = user.active ? "active" : "inactive";
 
-  return [`Name: ${user.name}`, `Role: ${user.role}`, `Status: ${status}`].join(
-    "\n",
-  );
+  return [`Name: ${user.name}`, `Role: ${user.role}`, `Status: ${status}`].join("\n");
 }

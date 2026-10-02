@@ -24,10 +24,7 @@ declare module "jsonwebtoken" {
   }
 
   const jwt: {
-    decode(
-      token: string,
-      options: JwtDecodeOptions & { complete: true },
-    ): JwtDecodeCompleteResult | null;
+    decode(token: string, options: JwtDecodeOptions & { complete: true }): JwtDecodeCompleteResult | null;
     verify(
       token: string,
       key: KeyObject,

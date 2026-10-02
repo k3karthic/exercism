@@ -39,10 +39,7 @@ export function OrderStatusFromJSON(json: any): OrderStatus {
   return OrderStatusFromJSONTyped(json, false);
 }
 
-export function OrderStatusFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): OrderStatus {
+export function OrderStatusFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrderStatus {
   return json as OrderStatus;
 }
 
@@ -50,9 +47,6 @@ export function OrderStatusToJSON(value?: OrderStatus | null): any {
   return value as any;
 }
 
-export function OrderStatusToJSONTyped(
-  value: any,
-  ignoreDiscriminator: boolean,
-): OrderStatus {
+export function OrderStatusToJSONTyped(value: any, ignoreDiscriminator: boolean): OrderStatus {
   return value as OrderStatus;
 }

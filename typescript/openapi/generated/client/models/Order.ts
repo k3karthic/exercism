@@ -65,10 +65,7 @@ export function OrderFromJSON(json: any): Order {
   return OrderFromJSONTyped(json, false);
 }
 
-export function OrderFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): Order {
+export function OrderFromJSONTyped(json: any, ignoreDiscriminator: boolean): Order {
   if (json == null) {
     return json;
   }
@@ -77,8 +74,7 @@ export function OrderFromJSONTyped(
     petId: json["petId"] == null ? undefined : json["petId"],
     quantity: json["quantity"] == null ? undefined : json["quantity"],
     shipDate: json["shipDate"] == null ? undefined : json["shipDate"],
-    status:
-      json["status"] == null ? undefined : OrderStatusFromJSON(json["status"]),
+    status: json["status"] == null ? undefined : OrderStatusFromJSON(json["status"]),
     complete: json["complete"] == null ? undefined : json["complete"],
   };
 }
@@ -87,10 +83,7 @@ export function OrderToJSON(json: any): Order {
   return OrderToJSONTyped(json, false);
 }
 
-export function OrderToJSONTyped(
-  value?: Order | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function OrderToJSONTyped(value?: Order | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

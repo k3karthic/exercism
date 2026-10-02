@@ -1,7 +1,6 @@
 import cluster, { type Worker } from "node:cluster";
 
-const sleep = (delayMs: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, delayMs));
+const sleep = (delayMs: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, delayMs));
 
 // Simulates a slow CPU bound calculation. Workers stay alive and handle one
 // task at a time, so this work is spread across a fixed set of processes
@@ -25,9 +24,7 @@ const runPrimary = async (): Promise<void> => {
   const results: number[] = [];
   const queue = inputs.map((value, index) => ({ value, index }));
 
-  const pool: Worker[] = Array.from({ length: POOL_SIZE }, () =>
-    cluster.fork(),
-  );
+  const pool: Worker[] = Array.from({ length: POOL_SIZE }, () => cluster.fork());
 
   await new Promise<void>((resolve, reject) => {
     let pending = inputs.length;

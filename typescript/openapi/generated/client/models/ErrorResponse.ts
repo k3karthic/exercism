@@ -42,10 +42,7 @@ export function ErrorResponseFromJSON(json: any): ErrorResponse {
   return ErrorResponseFromJSONTyped(json, false);
 }
 
-export function ErrorResponseFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): ErrorResponse {
+export function ErrorResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): ErrorResponse {
   if (json == null) {
     return json;
   }
@@ -59,10 +56,7 @@ export function ErrorResponseToJSON(json: any): ErrorResponse {
   return ErrorResponseToJSONTyped(json, false);
 }
 
-export function ErrorResponseToJSONTyped(
-  value?: ErrorResponse | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function ErrorResponseToJSONTyped(value?: ErrorResponse | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

@@ -8,10 +8,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function callDouble(
-  service: DoublerService,
-  request: DoubleRequest,
-): Promise<DoubleResponse> {
+function callDouble(service: DoublerService, request: DoubleRequest): Promise<DoubleResponse> {
   return new Promise<DoubleResponse>((resolve, reject) => {
     service.Double({ request } as never, (error, response) => {
       if (error !== null) {
@@ -62,10 +59,7 @@ test("requestDouble returns the doubled result", async () => {
   class StubClient {
     public calls = 0;
 
-    public Double(
-      request: DoubleRequest,
-      callback: (error: Error | null, response?: DoubleResponse) => void,
-    ): void {
+    public Double(request: DoubleRequest, callback: (error: Error | null, response?: DoubleResponse) => void): void {
       this.calls += 1;
       callback(null, {
         request_id: request.request_id,
@@ -78,12 +72,7 @@ test("requestDouble returns the doubled result", async () => {
 
   const stub = new StubClient();
 
-  const result = await client.requestDouble(
-    "localhost:50051",
-    7,
-    "req-1",
-    () => stub as never,
-  );
+  const result = await client.requestDouble("localhost:50051", 7, "req-1", () => stub as never);
 
   expect(result).toBe(14);
   expect(stub.calls).toBe(1);
@@ -93,10 +82,7 @@ test("requestDouble rejects mismatched request ids", async () => {
   class StubClient {
     public calls = 0;
 
-    public Double(
-      request: DoubleRequest,
-      callback: (error: Error | null, response?: DoubleResponse) => void,
-    ): void {
+    public Double(request: DoubleRequest, callback: (error: Error | null, response?: DoubleResponse) => void): void {
       this.calls += 1;
       callback(null, {
         request_id: "wrong-id",
@@ -109,9 +95,9 @@ test("requestDouble rejects mismatched request ids", async () => {
 
   const stub = new StubClient();
 
-  await expect(
-    client.requestDouble("localhost:50051", 7, "req-2", () => stub as never),
-  ).rejects.toThrow("Request ID mismatch");
+  await expect(client.requestDouble("localhost:50051", 7, "req-2", () => stub as never)).rejects.toThrow(
+    "Request ID mismatch",
+  );
 
   expect(stub.calls).toBe(1);
 });

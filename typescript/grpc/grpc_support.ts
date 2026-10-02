@@ -68,26 +68,17 @@ const packageDefinition = protoLoader.loadSync(protoPath, {
   oneofs: true,
 });
 
-const grpcObject = grpc.loadPackageDefinition(
-  packageDefinition,
-) as unknown as ProtoGrpcType;
+const grpcObject = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
 
 export function getDoublerServiceConstructor(): ProtoGrpcType["doubler_service"]["Doubler"] {
   return grpcObject.doubler_service.Doubler;
 }
 
 export function createDoublerClient(target: string): DoublerClient {
-  return new (getDoublerServiceConstructor())(
-    target,
-    grpc.credentials.createInsecure(),
-    channelOptions,
-  );
+  return new (getDoublerServiceConstructor())(target, grpc.credentials.createInsecure(), channelOptions);
 }
 
-export function invokeDouble(
-  client: DoublerClient,
-  request: DoubleRequest,
-): Promise<DoubleResponseOutput> {
+export function invokeDouble(client: DoublerClient, request: DoubleRequest): Promise<DoubleResponseOutput> {
   return new Promise<DoubleResponseOutput>((resolve, reject) => {
     client.Double(request, (error, response) => {
       if (error !== null) {

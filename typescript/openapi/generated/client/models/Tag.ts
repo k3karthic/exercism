@@ -55,10 +55,7 @@ export function TagToJSON(json: any): Tag {
   return TagToJSONTyped(json, false);
 }
 
-export function TagToJSONTyped(
-  value?: Tag | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function TagToJSONTyped(value?: Tag | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

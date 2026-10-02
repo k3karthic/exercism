@@ -16,11 +16,7 @@ function loadXMbOfData(mb: number) {
 }
 
 // Make function harder for JIT to optimize
-function processNumbers(
-  data: { value: number }[],
-  num: number | undefined,
-  command: string,
-) {
+function processNumbers(data: { value: number }[], num: number | undefined, command: string) {
   switch (command) {
     case "duplicateData":
       return data.map((value) => ({ value: value.value * DUPLICATE_CONST }));
@@ -28,10 +24,7 @@ function processNumbers(
       if (num === undefined) {
         throw new Error("Expected numeric value to be greater than 0");
       }
-      function addScalarFunc(
-        a: { value: number },
-        b: number,
-      ): { value: number } {
+      function addScalarFunc(a: { value: number }, b: number): { value: number } {
         return { value: a.value + b };
       }
       return data.map(addScalarFunc);

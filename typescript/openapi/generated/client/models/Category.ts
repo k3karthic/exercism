@@ -41,10 +41,7 @@ export function CategoryFromJSON(json: any): Category {
   return CategoryFromJSONTyped(json, false);
 }
 
-export function CategoryFromJSONTyped(
-  json: any,
-  ignoreDiscriminator: boolean,
-): Category {
+export function CategoryFromJSONTyped(json: any, ignoreDiscriminator: boolean): Category {
   if (json == null) {
     return json;
   }
@@ -58,10 +55,7 @@ export function CategoryToJSON(json: any): Category {
   return CategoryToJSONTyped(json, false);
 }
 
-export function CategoryToJSONTyped(
-  value?: Category | null,
-  ignoreDiscriminator: boolean = false,
-): any {
+export function CategoryToJSONTyped(value?: Category | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
   }

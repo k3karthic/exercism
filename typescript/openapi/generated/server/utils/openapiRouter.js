@@ -38,10 +38,7 @@ function openApiRouter() {
        * If none was applied This is because the path requested is not in the schema.
        * If there's no openapi object, we have nothing to do, and pass on to next middleware.
        */
-      if (
-        request.openapi === undefined ||
-        request.openapi.schema === undefined
-      ) {
+      if (request.openapi === undefined || request.openapi.schema === undefined) {
         next();
         return;
       }
@@ -49,13 +46,9 @@ function openApiRouter() {
       // request.swagger.params.forEach((param) => {
       //   request.swagger.paramValues[param.name] = getValueFromRequest(request, param);
       // });
-      const controllerName =
-        request.openapi.schema["x-openapi-router-controller"];
+      const controllerName = request.openapi.schema["x-openapi-router-controller"];
       const serviceName = request.openapi.schema["x-openapi-router-service"];
-      if (
-        !controllers[controllerName] ||
-        controllers[controllerName] === undefined
-      ) {
+      if (!controllers[controllerName] || controllers[controllerName] === undefined) {
         handleError(
           `request sent to controller '${controllerName}' which has not been defined`,
           request,
@@ -63,9 +56,7 @@ function openApiRouter() {
           next,
         );
       } else {
-        const apiController = new controllers[controllerName](
-          Services[serviceName],
-        );
+        const apiController = new controllers[controllerName](Services[serviceName]);
         const controllerOperation = request.openapi.schema.operationId;
         await apiController[controllerOperation](request, response, next);
       }

@@ -1,19 +1,5 @@
-import {
-  boolean,
-  integer,
-  jsonb,
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/pg-core";
-import type {
-  Category,
-  OrderStatus,
-  PetStatus,
-  Tag,
-} from "./generated/client/models/index.ts";
+import { boolean, integer, jsonb, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import type { Category, OrderStatus, PetStatus, Tag } from "./generated/client/models/index.ts";
 
 export const pets = pgTable("pet", {
   id: serial("id").primaryKey(),

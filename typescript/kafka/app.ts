@@ -27,11 +27,7 @@ async function appendFailedMessage(
   offset: string,
 ): Promise<void> {
   await mkdir(path.dirname(failedMessagesPath), { recursive: true });
-  await appendFile(
-    failedMessagesPath,
-    `offset=${offset} value=${JSON.stringify(rawValue)} error=${error}\n`,
-    "utf8",
-  );
+  await appendFile(failedMessagesPath, `offset=${offset} value=${JSON.stringify(rawValue)} error=${error}\n`, "utf8");
 }
 
 class KafkaProducer {
@@ -96,9 +92,7 @@ class KafkaConsumer {
             await appendFailedMessage(
               failedMessagesPath,
               rawValue,
-              new Error(
-                `invalid literal for int() with base 10: ${JSON.stringify(rawValue)}`,
-              ),
+              new Error(`invalid literal for int() with base 10: ${JSON.stringify(rawValue)}`),
               message.offset,
             );
           } else {
@@ -136,18 +130,13 @@ export async function runDemo(
   } = {},
 ): Promise<number[]> {
   const topic = options.topic ?? DEFAULT_TOPIC;
-  const failedMessagesPath =
-    options.failedMessagesPath ?? DEFAULT_FAILED_MESSAGES_FILE;
+  const failedMessagesPath = options.failedMessagesPath ?? DEFAULT_FAILED_MESSAGES_FILE;
 
   const producer = new KafkaProducer(bootstrapServers);
   const consumer = new KafkaConsumer(bootstrapServers);
 
   await producer.sendMessages(topic, DEFAULT_MESSAGES);
-  return await consumer.consumeAndDoubleMessages(
-    topic,
-    failedMessagesPath,
-    DEFAULT_MESSAGES.length,
-  );
+  return await consumer.consumeAndDoubleMessages(topic, failedMessagesPath, DEFAULT_MESSAGES.length);
 }
 
 async function main(): Promise<void> {
@@ -158,9 +147,6 @@ async function main(): Promise<void> {
   console.log(doubledNumbers);
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

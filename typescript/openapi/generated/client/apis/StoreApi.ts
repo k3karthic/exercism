@@ -14,11 +14,7 @@
  */
 
 import * as runtime from "../runtime.ts";
-import {
-  type ErrorResponse,
-  ErrorResponseFromJSON,
-  ErrorResponseToJSON,
-} from "../models/ErrorResponse.ts";
+import { type ErrorResponse, ErrorResponseFromJSON, ErrorResponseToJSON } from "../models/ErrorResponse.ts";
 import { type Order, OrderFromJSON, OrderToJSON } from "../models/Order.ts";
 import {
   type OrderSearchCriteria,
@@ -74,9 +70,7 @@ export class StoreApi extends runtime.BaseAPI {
   /**
    * Creates request options for deleteOrder without sending the request
    */
-  async deleteOrderRequestOpts(
-    requestParameters: DeleteOrderRequest,
-  ): Promise<runtime.RequestOpts> {
+  async deleteOrderRequestOpts(requestParameters: DeleteOrderRequest): Promise<runtime.RequestOpts> {
     if (requestParameters["orderId"] == null) {
       throw new runtime.RequiredError(
         "orderId",
@@ -93,10 +87,7 @@ export class StoreApi extends runtime.BaseAPI {
     }
 
     let urlPath = `/store/order/{orderId}`;
-    urlPath = urlPath.replace(
-      "{orderId}",
-      encodeURIComponent(String(requestParameters["orderId"])),
-    );
+    urlPath = urlPath.replace("{orderId}", encodeURIComponent(String(requestParameters["orderId"])));
 
     return {
       path: urlPath,
@@ -124,10 +115,7 @@ export class StoreApi extends runtime.BaseAPI {
     requestParameters: DeleteOrderRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<object> {
-    const response = await this.deleteOrderRaw(
-      requestParameters,
-      initOverrides,
-    );
+    const response = await this.deleteOrderRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -166,9 +154,7 @@ export class StoreApi extends runtime.BaseAPI {
 
   /**
    */
-  async getInventory(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<{ [key: string]: number }> {
+  async getInventory(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<{ [key: string]: number }> {
     const response = await this.getInventoryRaw(initOverrides);
     return await response.value();
   }
@@ -176,9 +162,7 @@ export class StoreApi extends runtime.BaseAPI {
   /**
    * Creates request options for getOrderById without sending the request
    */
-  async getOrderByIdRequestOpts(
-    requestParameters: GetOrderByIdRequest,
-  ): Promise<runtime.RequestOpts> {
+  async getOrderByIdRequestOpts(requestParameters: GetOrderByIdRequest): Promise<runtime.RequestOpts> {
     if (requestParameters["orderId"] == null) {
       throw new runtime.RequiredError(
         "orderId",
@@ -195,10 +179,7 @@ export class StoreApi extends runtime.BaseAPI {
     }
 
     let urlPath = `/store/order/{orderId}`;
-    urlPath = urlPath.replace(
-      "{orderId}",
-      encodeURIComponent(String(requestParameters["orderId"])),
-    );
+    urlPath = urlPath.replace("{orderId}", encodeURIComponent(String(requestParameters["orderId"])));
 
     return {
       path: urlPath,
@@ -214,13 +195,10 @@ export class StoreApi extends runtime.BaseAPI {
     requestParameters: GetOrderByIdRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<Order>> {
-    const requestOptions =
-      await this.getOrderByIdRequestOpts(requestParameters);
+    const requestOptions = await this.getOrderByIdRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      OrderFromJSON(jsonValue),
-    );
+    return new runtime.JSONApiResponse(response, (jsonValue) => OrderFromJSON(jsonValue));
   }
 
   /**
@@ -229,19 +207,14 @@ export class StoreApi extends runtime.BaseAPI {
     requestParameters: GetOrderByIdRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Order> {
-    const response = await this.getOrderByIdRaw(
-      requestParameters,
-      initOverrides,
-    );
+    const response = await this.getOrderByIdRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
    * Creates request options for placeOrder without sending the request
    */
-  async placeOrderRequestOpts(
-    requestParameters: PlaceOrderRequest,
-  ): Promise<runtime.RequestOpts> {
+  async placeOrderRequestOpts(requestParameters: PlaceOrderRequest): Promise<runtime.RequestOpts> {
     if (requestParameters["order"] == null) {
       throw new runtime.RequiredError(
         "order",
@@ -279,9 +252,7 @@ export class StoreApi extends runtime.BaseAPI {
     const requestOptions = await this.placeOrderRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      OrderFromJSON(jsonValue),
-    );
+    return new runtime.JSONApiResponse(response, (jsonValue) => OrderFromJSON(jsonValue));
   }
 
   /**
@@ -297,9 +268,7 @@ export class StoreApi extends runtime.BaseAPI {
   /**
    * Creates request options for searchOrders without sending the request
    */
-  async searchOrdersRequestOpts(
-    requestParameters: SearchOrdersRequest,
-  ): Promise<runtime.RequestOpts> {
+  async searchOrdersRequestOpts(requestParameters: SearchOrdersRequest): Promise<runtime.RequestOpts> {
     if (requestParameters["orderSearchCriteria"] == null) {
       throw new runtime.RequiredError(
         "orderSearchCriteria",
@@ -342,13 +311,10 @@ export class StoreApi extends runtime.BaseAPI {
     requestParameters: SearchOrdersRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<OrderSearchResults>> {
-    const requestOptions =
-      await this.searchOrdersRequestOpts(requestParameters);
+    const requestOptions = await this.searchOrdersRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      OrderSearchResultsFromJSON(jsonValue),
-    );
+    return new runtime.JSONApiResponse(response, (jsonValue) => OrderSearchResultsFromJSON(jsonValue));
   }
 
   /**
@@ -357,10 +323,7 @@ export class StoreApi extends runtime.BaseAPI {
     requestParameters: SearchOrdersRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<OrderSearchResults> {
-    const response = await this.searchOrdersRaw(
-      requestParameters,
-      initOverrides,
-    );
+    const response = await this.searchOrdersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

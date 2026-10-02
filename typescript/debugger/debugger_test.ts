@@ -20,10 +20,7 @@ function applyDiscount(price: number, discountRate: number): number {
   return Math.round(finalPrice * 100) / 100; // JavaScript/TypeScript rounding to 2 decimal places
 }
 
-function generateInvoice(
-  inventory: Product[],
-  discountMapping: Record<string, number>,
-): InvoiceSummary {
+function generateInvoice(inventory: Product[], discountMapping: Record<string, number>): InvoiceSummary {
   // Processes products and aggregates totals.
   const invoiceSummary: InvoiceSummary = {
     itemsProcessed: 0,

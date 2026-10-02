@@ -28,9 +28,6 @@ async function main(): Promise<void> {
   await runWorker();
 }
 
-if (
-  process.argv[1] !== undefined &&
-  fileURLToPath(import.meta.url) === process.argv[1]
-) {
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
   void main();
 }

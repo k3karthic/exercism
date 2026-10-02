@@ -1,16 +1,11 @@
 import crypto from "node:crypto";
 import { pathToFileURL } from "node:url";
 
-import express, {
-  type NextFunction,
-  type Request,
-  type Response as ExpressResponse,
-} from "express";
+import express, { type NextFunction, type Request, type Response as ExpressResponse } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { createClient } from "redis";
 
-export const DEFAULT_REDIRECT_URI =
-  "http://localhost:3000/api/auth/callback/keycloak";
+export const DEFAULT_REDIRECT_URI = "http://localhost:3000/api/auth/callback/keycloak";
 export const DEFAULT_POST_LOGOUT_REDIRECT_URI = "http://localhost:3000/";
 export const DEFAULT_KEYCLOAK_BASE_URL = "http://127.0.0.1:8080";
 export const DEFAULT_KEYCLOAK_REALM = "my-app-realm";
@@ -81,28 +76,15 @@ export function createSettingsFromEnv(): Settings {
     keycloakRealm: env("KEYCLOAK_REALM", DEFAULT_KEYCLOAK_REALM),
     keycloakClientId: env("KEYCLOAK_CLIENT_ID", DEFAULT_KEYCLOAK_CLIENT_ID),
     keycloakClientSecret: env("KEYCLOAK_CLIENT_SECRET", ""),
-    keycloakAudienceScope: env(
-      "KEYCLOAK_AUDIENCE_SCOPE",
-      DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
-    ),
-    keycloakApiAudience: env(
-      "KEYCLOAK_API_AUDIENCE",
-      DEFAULT_KEYCLOAK_API_AUDIENCE,
-    ),
+    keycloakAudienceScope: env("KEYCLOAK_AUDIENCE_SCOPE", DEFAULT_KEYCLOAK_AUDIENCE_SCOPE),
+    keycloakApiAudience: env("KEYCLOAK_API_AUDIENCE", DEFAULT_KEYCLOAK_API_AUDIENCE),
     redirectUri: env("KEYCLOAK_REDIRECT_URI", DEFAULT_REDIRECT_URI),
-    postLogoutRedirectUri: env(
-      "POST_LOGOUT_REDIRECT_URI",
-      DEFAULT_POST_LOGOUT_REDIRECT_URI,
-    ),
+    postLogoutRedirectUri: env("POST_LOGOUT_REDIRECT_URI", DEFAULT_POST_LOGOUT_REDIRECT_URI),
     redisUrl: env("REDIS_URL", "redis://localhost:6379/0"),
     sessionCookieName: env("SESSION_COOKIE_NAME", DEFAULT_SESSION_COOKIE_NAME),
     sessionPrefix: env("SESSION_PREFIX", DEFAULT_SESSION_PREFIX),
-    sessionTtlSeconds: Number(
-      env("SESSION_TTL_SECONDS", DEFAULT_SESSION_TTL_SECONDS),
-    ),
-    pendingLoginTtlSeconds: Number(
-      env("PENDING_LOGIN_TTL_SECONDS", DEFAULT_PENDING_LOGIN_TTL_SECONDS),
-    ),
+    sessionTtlSeconds: Number(env("SESSION_TTL_SECONDS", DEFAULT_SESSION_TTL_SECONDS)),
+    pendingLoginTtlSeconds: Number(env("PENDING_LOGIN_TTL_SECONDS", DEFAULT_PENDING_LOGIN_TTL_SECONDS)),
     httpTimeoutMs: 10_000,
   };
 }
@@ -173,9 +155,7 @@ function formHeaders(): Record<string, string> {
   return { "content-type": "application/x-www-form-urlencoded" };
 }
 
-async function readResponseText(
-  response: globalThis.Response,
-): Promise<string> {
+async function readResponseText(response: globalThis.Response): Promise<string> {
   try {
     return await response.text();
   } catch {
@@ -208,10 +188,7 @@ function createHtmlPage(title: string, body: string): string {
 </html>`;
 }
 
-function renderHomePage(
-  session: SessionRecord,
-  sessions: SessionRecord[],
-): string {
+function renderHomePage(session: SessionRecord, sessions: SessionRecord[]): string {
   const sessionsMarkup = sessions
     .map(
       (item) => `<li data-session-id="${escapeHtml(item.sessionId)}">
@@ -258,13 +235,9 @@ class RedisSessionStore {
     const client = this.client();
     await client.connect();
     try {
-      await client.set(
-        this.pendingKey(pending.state),
-        JSON.stringify(pending),
-        {
-          EX: this.settings.pendingLoginTtlSeconds,
-        },
-      );
+      await client.set(this.pendingKey(pending.state), JSON.stringify(pending), {
+        EX: this.settings.pendingLoginTtlSeconds,
+      });
     } finally {
       await client.quit();
     }
@@ -285,22 +258,11 @@ class RedisSessionStore {
     }
   }
 
-  async createSession(options: {
-    idToken: string;
-    claims: JwtPayload;
-  }): Promise<SessionRecord> {
+  async createSession(options: { idToken: string; claims: JwtPayload }): Promise<SessionRecord> {
     const session: SessionRecord = {
       sessionId: randomToken(),
-      userName: String(
-        options.claims.preferred_username ??
-          options.claims.name ??
-          options.claims.email ??
-          "Developer",
-      ),
-      email:
-        options.claims.email === undefined || options.claims.email === ""
-          ? null
-          : String(options.claims.email),
+      userName: String(options.claims.preferred_username ?? options.claims.name ?? options.claims.email ?? "Developer"),
+      email: options.claims.email === undefined || options.claims.email === "" ? null : String(options.claims.email),
       subject: String(options.claims.sub),
       idToken: options.idToken,
       createdAt: isoNow(),
@@ -311,13 +273,9 @@ class RedisSessionStore {
     const client = this.client();
     await client.connect();
     try {
-      await client.set(
-        this.sessionKey(session.sessionId),
-        JSON.stringify(session),
-        {
-          EX: this.settings.sessionTtlSeconds,
-        },
-      );
+      await client.set(this.sessionKey(session.sessionId), JSON.stringify(session), {
+        EX: this.settings.sessionTtlSeconds,
+      });
     } finally {
       await client.quit();
     }
@@ -394,9 +352,7 @@ class RedisSessionStore {
         }
       }
 
-      return sessions.sort((left, right) =>
-        right.updatedAt.localeCompare(left.updatedAt),
-      );
+      return sessions.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
     } finally {
       await client.quit();
     }
@@ -418,22 +374,16 @@ class KeycloakService {
       return this.configurationCache;
     }
 
-    const payload = await fetchJson<Record<string, unknown>>(
-      this.discoveryUrl(),
-      {
-        headers: jsonHeaders(),
-      },
-    );
+    const payload = await fetchJson<Record<string, unknown>>(this.discoveryUrl(), {
+      headers: jsonHeaders(),
+    });
 
     const configuration: OidcConfiguration = {
       issuer: String(payload.issuer),
       authorizationEndpoint: String(payload.authorization_endpoint),
       tokenEndpoint: String(payload.token_endpoint),
       jwksUri: String(payload.jwks_uri),
-      endSessionEndpoint:
-        typeof payload.end_session_endpoint === "string"
-          ? payload.end_session_endpoint
-          : undefined,
+      endSessionEndpoint: typeof payload.end_session_endpoint === "string" ? payload.end_session_endpoint : undefined,
     };
 
     this.configurationCache = configuration;
@@ -446,12 +396,9 @@ class KeycloakService {
     }
 
     const configuration = await this.configuration();
-    const payload = await fetchJson<{ keys: JsonWebKey[] }>(
-      configuration.jwksUri,
-      {
-        headers: jsonHeaders(),
-      },
-    );
+    const payload = await fetchJson<{ keys: JsonWebKey[] }>(configuration.jwksUri, {
+      headers: jsonHeaders(),
+    });
     this.jwksCache = payload.keys;
     return this.jwksCache;
   }
@@ -502,14 +449,11 @@ class KeycloakService {
       body.set("client_secret", this.settings.keycloakClientSecret);
     }
 
-    return await fetchJson<Record<string, unknown>>(
-      configuration.tokenEndpoint,
-      {
-        method: "POST",
-        headers: formHeaders(),
-        body,
-      },
-    );
+    return await fetchJson<Record<string, unknown>>(configuration.tokenEndpoint, {
+      method: "POST",
+      headers: formHeaders(),
+      body,
+    });
   }
 
   async validateIdToken(idToken: string, nonce: string): Promise<JwtPayload> {
@@ -563,11 +507,7 @@ class KeycloakService {
   }
 }
 
-async function getCurrentSession(
-  request: Request,
-  sessionStore: RedisSessionStore,
-  settings: Settings,
-) {
+async function getCurrentSession(request: Request, sessionStore: RedisSessionStore, settings: Settings) {
   const cookies = parseCookieHeader(request.headers.cookie);
   const sessionId = cookies[settings.sessionCookieName];
   if (!sessionId) {
@@ -581,13 +521,7 @@ function getNextPath(value: unknown): string {
   return typeof value === "string" ? value : "/";
 }
 
-function asyncHandler(
-  handler: (
-    request: Request,
-    response: ExpressResponse,
-    next: NextFunction,
-  ) => Promise<void>,
-) {
+function asyncHandler(handler: (request: Request, response: ExpressResponse, next: NextFunction) => Promise<void>) {
   return (request: Request, response: ExpressResponse, next: NextFunction) => {
     void handler(request, response, next).catch(next);
   };
@@ -603,11 +537,7 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
   app.get(
     "/",
     asyncHandler(async (request, response) => {
-      const currentSession = await getCurrentSession(
-        request,
-        sessionStore,
-        settings,
-      );
+      const currentSession = await getCurrentSession(request, sessionStore, settings);
       if (currentSession === null) {
         response.redirect(303, "/api/auth/login?next=/");
         return;
@@ -681,11 +611,7 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
   app.post(
     "/logout",
     asyncHandler(async (request, response) => {
-      const currentSession = await getCurrentSession(
-        request,
-        sessionStore,
-        settings,
-      );
+      const currentSession = await getCurrentSession(request, sessionStore, settings);
       let logoutUrl = settings.postLogoutRedirectUri;
       if (currentSession !== null) {
         await sessionStore.deleteSession(currentSession.sessionId);
@@ -697,18 +623,10 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
     }),
   );
 
-  app.use(
-    (
-      error: unknown,
-      _request: Request,
-      response: ExpressResponse,
-      _next: NextFunction,
-    ) => {
-      const message =
-        error instanceof Error ? error.message : "Internal Server Error";
-      response.status(500).type("text").send(message);
-    },
-  );
+  app.use((error: unknown, _request: Request, response: ExpressResponse, _next: NextFunction) => {
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    response.status(500).type("text").send(message);
+  });
 
   return app;
 }
@@ -721,9 +639,6 @@ async function main(): Promise<void> {
   });
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

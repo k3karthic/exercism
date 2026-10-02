@@ -17,18 +17,14 @@ export class Algorithms {
       return cached;
     }
 
-    const value =
-      n > 1 ? BigInt(n) * this.factorialPlus(n - 1) + this.inc : 1n + this.inc;
+    const value = n > 1 ? BigInt(n) * this.factorialPlus(n - 1) + this.inc : 1n + this.inc;
 
     cache.get(this)!.set(n, value);
     return value;
   }
 }
 
-export function* generateFactorialPlusLastDigit(
-  plusRange: number,
-  factorialRange: number,
-): IterableIterator<number> {
+export function* generateFactorialPlusLastDigit(plusRange: number, factorialRange: number): IterableIterator<number> {
   for (let i = 0; i < plusRange; i += 1) {
     const algorithm = new Algorithms(BigInt(i));
     for (let j = 0; j < factorialRange; j += 1) {
@@ -50,12 +46,8 @@ export async function compareCountsDifferentFactorials() {
   console.log("Execution will start. Holding process open for profiling...");
   await new Promise((resolve) => setTimeout(resolve, 10000));
 
-  const counts_500 = mostCommon(
-    generateFactorialPlusLastDigit(FIRST_COUNTER_RANGE, FIRST_COUNTER_RANGE),
-  );
-  const counts_1000 = mostCommon(
-    generateFactorialPlusLastDigit(SECOND_COUNTER_RANGE, SECOND_COUNTER_RANGE),
-  );
+  const counts_500 = mostCommon(generateFactorialPlusLastDigit(FIRST_COUNTER_RANGE, FIRST_COUNTER_RANGE));
+  const counts_1000 = mostCommon(generateFactorialPlusLastDigit(SECOND_COUNTER_RANGE, SECOND_COUNTER_RANGE));
 
   console.log("Execution ended. Holding process open for profiling...");
   await new Promise((resolve) => setTimeout(resolve, 10000));

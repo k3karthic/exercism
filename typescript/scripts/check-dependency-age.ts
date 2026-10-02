@@ -36,22 +36,15 @@ const DEFAULT_THRESHOLD_DAYS = 365;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 async function main() {
-  const { dependencyNames, thresholdDays, jsonOutput } = parseArgs(
-    process.argv.slice(2),
-  );
+  const { dependencyNames, thresholdDays, jsonOutput } = parseArgs(process.argv.slice(2));
   const rootDir = await findProjectRoot(process.cwd());
   const packageJsonPath = path.join(rootDir, "package.json");
   const packageLockPath = path.join(rootDir, "package-lock.json");
 
   const packageJson = await readJson<PackageJson>(packageJsonPath);
-  const packageLock = await readJson<PackageLock | null>(packageLockPath).catch(
-    () => null,
-  );
+  const packageLock = await readJson<PackageLock | null>(packageLockPath).catch(() => null);
 
-  const targetNames =
-    dependencyNames.length > 0
-      ? dependencyNames
-      : collectDependencyNames(packageJson);
+  const targetNames = dependencyNames.length > 0 ? dependencyNames : collectDependencyNames(packageJson);
 
   if (targetNames.length === 0) {
     throw new Error("No dependencies found in package.json.");
@@ -64,12 +57,7 @@ async function main() {
       throw new Error(`Dependency "${name}" is not listed in package.json.`);
     }
 
-    const result = await inspectDependency(
-      name,
-      spec,
-      packageLock,
-      thresholdDays,
-    );
+    const result = await inspectDependency(name, spec, packageLock, thresholdDays);
     results.push(result);
   }
 
@@ -133,9 +121,7 @@ async function findProjectRoot(startDir: string) {
     } catch {
       const parentDir = path.dirname(currentDir);
       if (parentDir === currentDir) {
-        throw new Error(
-          "Could not find package.json in the current directory tree.",
-        );
+        throw new Error("Could not find package.json in the current directory tree.");
       }
 
       currentDir = parentDir;
@@ -150,19 +136,12 @@ async function readJson<T>(filePath: string): Promise<T> {
 
 export function collectDependencyNames(packageJson: PackageJson) {
   return Array.from(
-    new Set([
-      ...Object.keys(packageJson.dependencies ?? {}),
-      ...Object.keys(packageJson.devDependencies ?? {}),
-    ]),
+    new Set([...Object.keys(packageJson.dependencies ?? {}), ...Object.keys(packageJson.devDependencies ?? {})]),
   ).sort();
 }
 
 function findDependencySpec(packageJson: PackageJson, name: string) {
-  return (
-    packageJson.dependencies?.[name] ??
-    packageJson.devDependencies?.[name] ??
-    null
-  );
+  return packageJson.dependencies?.[name] ?? packageJson.devDependencies?.[name] ?? null;
 }
 
 export async function inspectDependency(
@@ -181,9 +160,7 @@ export async function inspectDependency(
 
   const registryVersion = version ?? (await getLatestVersion(name));
   const publishedAt = await getPublishedAt(name, registryVersion);
-  const ageDays = publishedAt
-    ? Math.floor((Date.now() - publishedAt.getTime()) / MS_PER_DAY)
-    : null;
+  const ageDays = publishedAt ? Math.floor((Date.now() - publishedAt.getTime()) / MS_PER_DAY) : null;
 
   const result: DependencyResult = {
     name,
@@ -196,27 +173,19 @@ export async function inspectDependency(
   };
 
   if (packageLockVersion === null && version === null) {
-    result.note =
-      "No exact version in package-lock.json; used latest registry release.";
+    result.note = "No exact version in package-lock.json; used latest registry release.";
   }
 
   return result;
 }
 
-export function getPackageLockVersion(
-  packageLock: PackageLock | null,
-  name: string,
-) {
+export function getPackageLockVersion(packageLock: PackageLock | null, name: string) {
   if (!packageLock) {
     return null;
   }
 
   const key = `node_modules/${name}`;
-  return (
-    packageLock.packages?.[key]?.version ??
-    packageLock.dependencies?.[name]?.version ??
-    null
-  );
+  return packageLock.packages?.[key]?.version ?? packageLock.dependencies?.[name]?.version ?? null;
 }
 
 export function parseExactVersion(spec: string) {
@@ -226,9 +195,7 @@ export function parseExactVersion(spec: string) {
     return null;
   }
 
-  const exactVersionMatch = normalizedSpec.match(
-    /^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/,
-  );
+  const exactVersionMatch = normalizedSpec.match(/^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/);
   return exactVersionMatch?.[1] ?? null;
 }
 
@@ -236,9 +203,7 @@ async function getLatestVersion(name: string) {
   const metadata = await fetchRegistryMetadata(name);
   const latest = metadata["dist-tags"]?.latest;
   if (!latest) {
-    throw new Error(
-      `Could not determine the latest registry version for "${name}".`,
-    );
+    throw new Error(`Could not determine the latest registry version for "${name}".`);
   }
 
   return latest;
@@ -267,9 +232,7 @@ async function fetchRegistryMetadata(name: string) {
     },
   }).then(async (response) => {
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch npm metadata for "${name}": ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`Failed to fetch npm metadata for "${name}": ${response.status} ${response.statusText}`);
     }
 
     return (await response.json()) as RegistryMetadata;
@@ -296,64 +259,29 @@ function printResults(results: DependencyResult[], thresholdDays: number) {
   const rows = staleResults.map((result) => {
     const status = result.stale ? "STALE" : "fresh";
     const version = result.version ?? "unknown";
-    const publishedAt = result.publishedAt
-      ? result.publishedAt.toISOString().slice(0, 10)
-      : "unknown";
+    const publishedAt = result.publishedAt ? result.publishedAt.toISOString().slice(0, 10) : "unknown";
     const age = result.ageDays !== null ? `${result.ageDays}d` : "unknown";
-    return [
-      result.name,
-      version,
-      publishedAt,
-      age,
-      status,
-      result.source,
-      result.note ?? "",
-    ].filter(Boolean);
+    return [result.name, version, publishedAt, age, status, result.source, result.note ?? ""].filter(Boolean);
   });
 
-  const headers = [
-    "dependency",
-    "version",
-    "published",
-    "age",
-    "status",
-    "source",
-    "note",
-  ];
+  const headers = ["dependency", "version", "published", "age", "status", "source", "note"];
   const widths = headers.map((header, columnIndex) =>
-    Math.max(
-      header.length,
-      ...rows.map((row) => String(row[columnIndex] ?? "").length),
-      0,
-    ),
+    Math.max(header.length, ...rows.map((row) => String(row[columnIndex] ?? "").length), 0),
   );
 
   console.log(`Threshold: ${thresholdDays} days`);
-  console.log(
-    headers
-      .map((header, index) => header.padEnd(widths[index] ?? 0))
-      .join("  "),
-  );
+  console.log(headers.map((header, index) => header.padEnd(widths[index] ?? 0)).join("  "));
   console.log(widths.map((width) => "-".repeat(width)).join("  "));
 
   for (const row of rows) {
-    console.log(
-      row
-        .map((cell, index) => String(cell ?? "").padEnd(widths[index] ?? 0))
-        .join("  "),
-    );
+    console.log(row.map((cell, index) => String(cell ?? "").padEnd(widths[index] ?? 0)).join("  "));
   }
 
   console.log("");
   const staleCount = staleResults.length;
-  console.log(
-    `${staleCount} dependency${staleCount === 1 ? "" : "ies"} are older than ${thresholdDays} days.`,
-  );
+  console.log(`${staleCount} dependency${staleCount === 1 ? "" : "ies"} are older than ${thresholdDays} days.`);
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   await main();
 }

@@ -30,19 +30,11 @@ export async function placeOrder({ order }: { order: Order }): Promise<Order> {
   return petStore.createOrder(order);
 }
 
-export function searchOrders({
-  orderSearchCriteria,
-  page,
-  pageSize,
-}: OrderSearchRequest): Promise<OrderSearchResults> {
+export function searchOrders({ orderSearchCriteria, page, pageSize }: OrderSearchRequest): Promise<OrderSearchResults> {
   return petStore.searchOrders(orderSearchCriteria, page ?? 1, pageSize ?? 20);
 }
 
-export async function getOrderById({
-  orderId,
-}: {
-  orderId: number;
-}): Promise<Order> {
+export async function getOrderById({ orderId }: { orderId: number }): Promise<Order> {
   const order = await petStore.getOrder(orderId);
   if (order === undefined) {
     throw new OrderNotFoundError();
@@ -50,11 +42,7 @@ export async function getOrderById({
   return order;
 }
 
-export async function deleteOrder({
-  orderId,
-}: {
-  orderId: number;
-}): Promise<Record<string, never>> {
+export async function deleteOrder({ orderId }: { orderId: number }): Promise<Record<string, never>> {
   if (!(await petStore.deleteOrder(orderId))) {
     throw new OrderNotFoundError();
   }

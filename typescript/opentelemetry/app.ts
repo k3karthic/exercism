@@ -1,11 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import {
-  context,
-  propagation,
-  SpanStatusCode,
-} from "@opentelemetry/api";
+import { context, propagation, SpanStatusCode } from "@opentelemetry/api";
 import type { MeterProvider } from "@opentelemetry/sdk-metrics";
 import type { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 
@@ -23,15 +19,9 @@ export class Service1 {
   readonly logger: ServiceLogger;
   readonly tracer: ReturnType<NodeTracerProvider["getTracer"]>;
   readonly meter: ReturnType<MeterProvider["getMeter"]>;
-  readonly sentCounter: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createCounter"]
-  >;
-  readonly failureCounter: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createCounter"]
-  >;
-  readonly latencyHistogram: ReturnType<
-    ReturnType<MeterProvider["getMeter"]>["createHistogram"]
-  >;
+  readonly sentCounter: ReturnType<ReturnType<MeterProvider["getMeter"]>["createCounter"]>;
+  readonly failureCounter: ReturnType<ReturnType<MeterProvider["getMeter"]>["createCounter"]>;
+  readonly latencyHistogram: ReturnType<ReturnType<MeterProvider["getMeter"]>["createHistogram"]>;
 
   constructor(telemetry: TelemetryBundle = new TelemetryBundle("service_1")) {
     this.telemetry = telemetry;
@@ -39,12 +29,8 @@ export class Service1 {
     this.tracer = this.telemetry.tracerProvider.getTracer("otel.service_1");
     this.meter = this.telemetry.meterProvider.getMeter("otel.service_1");
     this.sentCounter = this.meter.createCounter("otel_messages_sent_total");
-    this.failureCounter = this.meter.createCounter(
-      "otel_messages_failed_total",
-    );
-    this.latencyHistogram = this.meter.createHistogram(
-      "otel_message_round_trip_ms",
-    );
+    this.failureCounter = this.meter.createCounter("otel_messages_failed_total");
+    this.latencyHistogram = this.meter.createHistogram("otel_message_round_trip_ms");
   }
 
   /**
@@ -70,60 +56,42 @@ export class Service1 {
     }
 
     const tsxCliPath = fileURLToPath(import.meta.resolve("tsx/cli"));
-    const scriptPath = fileURLToPath(
-      new URL("./service-2-process.ts", import.meta.url),
-    );
-    const stdout = execFileSync(
-      process.execPath,
-      [tsxCliPath, scriptPath, value],
-      { env, encoding: "utf-8" },
-    );
-    const result = JSON.parse(stdout) as
-      | DoubleResponse
-      | { value: string; error: string };
+    const scriptPath = fileURLToPath(new URL("./service-2-process.ts", import.meta.url));
+    const stdout = execFileSync(process.execPath, [tsxCliPath, scriptPath, value], { env, encoding: "utf-8" });
+    const result = JSON.parse(stdout) as DoubleResponse | { value: string; error: string };
     if ("error" in result) {
       throw new Error(result.error);
     }
     return result;
   }
 
-  async sendNumbersToService2(
-    messages: readonly string[] = DEFAULT_MESSAGES,
-  ): Promise<WorkflowResult> {
+  async sendNumbersToService2(messages: readonly string[] = DEFAULT_MESSAGES): Promise<WorkflowResult> {
     const results: DoubleResponse[] = [];
     const failures: FailureRecord[] = [];
 
     for (const [index, rawValue] of messages.entries()) {
       const startedAt = performance.now();
-      await this.tracer.startActiveSpan(
-        "service_1.send_number",
-        async (span) => {
-          span.setAttribute("message.index", index + 1);
-          span.setAttribute("message.value", rawValue);
-          try {
-            const payload = this.callService2(rawValue);
-            span.setAttribute("service_2.trace_id", payload.traceId);
-            this.sentCounter.add(1);
-            results.push(payload);
-            this.logger.info(
-              `sent value ${rawValue} and received ${payload.doubled}`,
-            );
-          } catch (error) {
-            const message =
-              error instanceof Error ? error.message : String(error);
-            this.failureCounter.add(1);
-            failures.push({ value: rawValue, error: message });
-            span.recordException(
-              error instanceof Error ? error : new Error(message),
-            );
-            span.setStatus({ code: SpanStatusCode.ERROR, message });
-            this.logger.exception(`failed to send value ${rawValue}`, error);
-          } finally {
-            this.latencyHistogram.record(performance.now() - startedAt);
-            span.end();
-          }
-        },
-      );
+      await this.tracer.startActiveSpan("service_1.send_number", async (span) => {
+        span.setAttribute("message.index", index + 1);
+        span.setAttribute("message.value", rawValue);
+        try {
+          const payload = this.callService2(rawValue);
+          span.setAttribute("service_2.trace_id", payload.traceId);
+          this.sentCounter.add(1);
+          results.push(payload);
+          this.logger.info(`sent value ${rawValue} and received ${payload.doubled}`);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.failureCounter.add(1);
+          failures.push({ value: rawValue, error: message });
+          span.recordException(error instanceof Error ? error : new Error(message));
+          span.setStatus({ code: SpanStatusCode.ERROR, message });
+          this.logger.exception(`failed to send value ${rawValue}`, error);
+        } finally {
+          this.latencyHistogram.record(performance.now() - startedAt);
+          span.end();
+        }
+      });
     }
 
     return { results, failures };
@@ -141,9 +109,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (
-  process.argv[1] !== undefined &&
-  import.meta.url === pathToFileURL(process.argv[1]).href
-) {
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   void main();
 }

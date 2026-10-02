@@ -60,14 +60,8 @@ function sortValues<T>(values: T[], key: keyof T, order: "asc" | "desc"): T[] {
 }
 
 function orderMatchesRanges(criteria: OrderSearchCriteria) {
-  const from =
-    criteria.dateRange?.from === undefined
-      ? undefined
-      : new Date(criteria.dateRange.from).getTime();
-  const to =
-    criteria.dateRange?.to === undefined
-      ? undefined
-      : new Date(criteria.dateRange.to).getTime();
+  const from = criteria.dateRange?.from === undefined ? undefined : new Date(criteria.dateRange.from).getTime();
+  const to = criteria.dateRange?.to === undefined ? undefined : new Date(criteria.dateRange.to).getTime();
   const minimumQuantity = criteria.quantityRange?.min;
   const maximumQuantity = criteria.quantityRange?.max;
 
@@ -92,9 +86,7 @@ function orderMatchesRanges(criteria: OrderSearchCriteria) {
 
 const ORDER_SORT_FIELDS = ["shipDate", "petId", "quantity", "status"] as const;
 
-function orderSortField(
-  sortBy: string,
-): (typeof ORDER_SORT_FIELDS)[number] | "id" {
+function orderSortField(sortBy: string): (typeof ORDER_SORT_FIELDS)[number] | "id" {
   return ORDER_SORT_FIELDS.find((field) => field === sortBy) ?? "id";
 }
 
@@ -104,9 +96,7 @@ function petFilters(criteria: PetSearchCriteria): SQL | undefined {
     filters.push(inArray(pets.status, criteria.status));
   }
   for (const tag of criteria.tags ?? []) {
-    filters.push(
-      sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
-    );
+    filters.push(sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`);
   }
   return filters.length === 0 ? undefined : and(...filters);
 }
@@ -154,9 +144,7 @@ class PetStore {
     const [row] =
       pet.id === undefined
         ? await insert.returning()
-        : await insert
-            .onConflictDoUpdate({ target: pets.id, set: values })
-            .returning();
+        : await insert.onConflictDoUpdate({ target: pets.id, set: values }).returning();
 
     if (row === undefined) {
       throw new Error("Creating a pet did not return the inserted row");
@@ -188,20 +176,13 @@ class PetStore {
   }
 
   public async getPet(petId: number): Promise<Pet | undefined> {
-    const [row] = await getDatabase()
-      .select()
-      .from(pets)
-      .where(eq(pets.id, petId))
-      .limit(1);
+    const [row] = await getDatabase().select().from(pets).where(eq(pets.id, petId)).limit(1);
 
     return row === undefined ? undefined : petFromRow(row);
   }
 
   public async deletePet(petId: number): Promise<boolean> {
-    const deleted = await getDatabase()
-      .delete(pets)
-      .where(eq(pets.id, petId))
-      .returning({ id: pets.id });
+    const deleted = await getDatabase().delete(pets).where(eq(pets.id, petId)).returning({ id: pets.id });
     return deleted.length > 0;
   }
 
@@ -222,26 +203,17 @@ class PetStore {
       return (await this.getPet(petId)) !== undefined;
     }
 
-    const updated = await getDatabase()
-      .update(pets)
-      .set(values)
-      .where(eq(pets.id, petId))
-      .returning({ id: pets.id });
+    const updated = await getDatabase().update(pets).set(values).where(eq(pets.id, petId)).returning({ id: pets.id });
     return updated.length > 0;
   }
 
   public async findPetsByStatus(status: PetStatus): Promise<Pet[]> {
-    const rows = await getDatabase()
-      .select()
-      .from(pets)
-      .where(eq(pets.status, status));
+    const rows = await getDatabase().select().from(pets).where(eq(pets.status, status));
     return rows.map(petFromRow);
   }
 
   public async findPetsByTags(tags: string[]): Promise<Pet[]> {
-    const filters = tags.map(
-      (tag) => sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`,
-    );
+    const filters = tags.map((tag) => sql`${pets.tags} @> ${JSON.stringify([{ name: tag }])}::jsonb`);
     const rows = await getDatabase()
       .select()
       .from(pets)
@@ -249,19 +221,11 @@ class PetStore {
     return rows.map(petFromRow);
   }
 
-  public async searchPets(
-    criteria: PetSearchCriteria,
-    limit: number,
-    offset: number,
-  ): Promise<PetSearchResults> {
+  public async searchPets(criteria: PetSearchCriteria, limit: number, offset: number): Promise<PetSearchResults> {
     const nameFilter = criteria.name?.replaceAll("*", "").toLowerCase();
-    const matched = (
-      await getDatabase().select().from(pets).where(petFilters(criteria))
-    )
+    const matched = (await getDatabase().select().from(pets).where(petFilters(criteria)))
       .map(petFromRow)
-      .filter(
-        (pet) => !nameFilter || pet.name.toLowerCase().includes(nameFilter),
-      );
+      .filter((pet) => !nameFilter || pet.name.toLowerCase().includes(nameFilter));
 
     const sortBy = criteria.sortBy ?? "name";
     const sortField = sortBy === "status" ? "status" : "name";
@@ -278,10 +242,7 @@ class PetStore {
   }
 
   public async inventory(): Promise<Record<string, number>> {
-    const rows = await getDatabase()
-      .select({ status: pets.status, count: count() })
-      .from(pets)
-      .groupBy(pets.status);
+    const rows = await getDatabase().select({ status: pets.status, count: count() }).from(pets).groupBy(pets.status);
     const inventory: Record<string, number> = {};
     for (const row of rows) {
       if (row.status !== null) {
@@ -295,8 +256,7 @@ class PetStore {
     const values = {
       petId: order.petId ?? null,
       quantity: order.quantity ?? null,
-      shipDate:
-        order.shipDate === undefined ? new Date() : new Date(order.shipDate),
+      shipDate: order.shipDate === undefined ? new Date() : new Date(order.shipDate),
       status: order.status ?? null,
       complete: order.complete ?? false,
     };
@@ -306,9 +266,7 @@ class PetStore {
     const [row] =
       order.id === undefined
         ? await insert.returning()
-        : await insert
-            .onConflictDoUpdate({ target: orders.id, set: values })
-            .returning();
+        : await insert.onConflictDoUpdate({ target: orders.id, set: values }).returning();
 
     if (row === undefined) {
       throw new Error("Creating an order did not return the inserted row");
@@ -320,19 +278,12 @@ class PetStore {
   }
 
   public async getOrder(orderId: number): Promise<Order | undefined> {
-    const [row] = await getDatabase()
-      .select()
-      .from(orders)
-      .where(eq(orders.id, orderId))
-      .limit(1);
+    const [row] = await getDatabase().select().from(orders).where(eq(orders.id, orderId)).limit(1);
     return row === undefined ? undefined : orderFromRow(row);
   }
 
   public async deleteOrder(orderId: number): Promise<boolean> {
-    const deleted = await getDatabase()
-      .delete(orders)
-      .where(eq(orders.id, orderId))
-      .returning({ id: orders.id });
+    const deleted = await getDatabase().delete(orders).where(eq(orders.id, orderId)).returning({ id: orders.id });
     return deleted.length > 0;
   }
 

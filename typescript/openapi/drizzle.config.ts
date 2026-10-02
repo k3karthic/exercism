@@ -5,8 +5,6 @@ export default defineConfig({
   out: "./openapi/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url:
-      process.env.DATABASE_URL ??
-      "postgresql://postgres:mysecretpassword@localhost:5432/petstore",
+    url: process.env.DATABASE_URL ?? "postgresql://postgres:mysecretpassword@localhost:5432/petstore",
   },
 });
