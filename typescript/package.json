@@ -18,7 +18,8 @@
     "db:openapi:generate": "drizzle-kit generate --config openapi/drizzle.config.ts",
     "db:openapi:migrate": "drizzle-kit migrate --config openapi/drizzle.config.ts",
     "scan": "trivy fs --scanners vuln,secret,misconfig --skip-files \"node_modules/**/*.json,node_modules/**/Dockerfile\" .",
-    "coverage": "vitest run --coverage --coverage.provider=istanbul --coverage.reporter=json --coverage.reporter=text-summary --coverage.reportsDirectory=coverage"
+    "coverage": "vitest run --coverage --coverage.provider=istanbul --coverage.reporter=json --coverage.reporter=text-summary --coverage.reportsDirectory=coverage",
+    "fallow:each": "for c in */.fallowrc.json; do d=$(dirname \"$c\"); echo \"== $d\"; cov=\"\"; [ -f coverage/coverage-final.json ] && cov=\"--coverage $PWD/coverage/coverage-final.json\"; fallow --root \"$d\" $cov --summary || s=1; done; exit ${s:-0}"
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "^2.7.1",

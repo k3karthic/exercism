@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": [
+    "client_driver.ts",
+    "drizzle.config.ts",
+    "generate.ts",
+    "server.ts",
+    "server-adapters/*.cjs",
+    "server-adapters/*.ts",
+    "**/*.test.ts"
+  ],
+  "ignorePatterns": ["**/generated/**"],
+  "health": {
+    "maxCyclomatic": 10,
+    "maxCognitive": 15,
+    "maxCrap": 30,
+    "crapRefactorBand": 5,
+    "maxUnitSize": 50
+  },
+  "ignoreFindings": ["server-adapters/**"],
+  "ignoreDependencies": [
+    "@platformatic/flame",
+    "body-parser",
+    "camelcase",
+    "cookie-parser",
+    "cors",
+    "express-openapi-validator",
+    "js-yaml",
+    "winston"
+  ]
+}

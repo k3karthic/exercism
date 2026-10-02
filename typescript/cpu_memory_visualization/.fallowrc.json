@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "entry": ["ex_*.ts", "**/*.test.ts"],
+  "ignorePatterns": ["**/generated/**"],
+  "health": {
+    "maxCyclomatic": 10,
+    "maxCognitive": 15,
+    "maxCrap": 30,
+    "crapRefactorBand": 5,
+    "maxUnitSize": 50
+  }
+}

@@ -35,6 +35,13 @@ npm run fallow
 For exact complexity (CRAP) scores, run `npm run coverage` first and pass the
 report: `npm run fallow -- --coverage coverage/coverage-final.json`.
 
+Each top-level directory is self-contained and has its own `.fallowrc.json`
+(entry points relative to that directory, plus the same complexity thresholds).
+`npm run fallow:each` runs Fallow separately in every directory that has one and
+reports results per directory, using `coverage/coverage-final.json` when it
+exists. `npm run fallow` still analyzes the whole workspace and is the one that
+checks `package.json` dependencies.
+
 Fallow reports dead code, duplication, and complexity findings. Complexity
 thresholds are explicit in `.fallowrc.json` and mirror the Python workspace's
 pylint settings (`python/pyproject.toml`): cyclomatic complexity 10, and a
