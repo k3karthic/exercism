@@ -11,3 +11,8 @@ wheels/
 
 # viztracer output
 result.json
+
+# pytest-cov output
+.coverage
+.coverage.*
+coverage/

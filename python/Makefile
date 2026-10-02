@@ -1,4 +1,4 @@
-.PHONY: format test check scan vulture ruff pylint lint
+.PHONY: format test coverage check scan vulture ruff pylint lint
 
 PYTHON_FILES := $(shell find . -type d \( -path './.venv' -o -path './.pytest_cache' -o -path './.ruff_cache' -o -path '*/__pycache__' -o -path './openapi/generated' -o -path './openapi/alembic/versions' \) -prune -o -type f -name '*.py' ! -name '*_pb2.py' ! -name '*_pb2_grpc.py' -print)
 PYTHON_DIRS := $(sort $(dir $(PYTHON_FILES)))
@@ -9,6 +9,12 @@ format:
 
 test:
 	uv run pytest -n auto --maxprocesses=8
+
+coverage:
+	mkdir -p coverage
+	uv run pytest -n auto --maxprocesses=8 --cov \
+		--cov-report=term-missing \
+		--cov-report=json:coverage/coverage-final.json
 
 check:
 	uv run python check_dependency_releases.py

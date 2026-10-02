@@ -16,6 +16,15 @@ uv run python index.py
 make format
 ```
 
+## Test coverage
+
+```bash
+make coverage
+```
+
+Prints a coverage summary with missing lines and writes
+`coverage/coverage-final.json`.
+
 ## Lint
 
 ```bash
