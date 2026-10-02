@@ -5,7 +5,6 @@ PYTHON_DIRS := $(sort $(dir $(PYTHON_FILES)))
 
 format:
 	uv run ruff format .
-	uv run ruff check --fix .
 
 test:
 	uv run pytest -n auto --maxprocesses=8
@@ -26,7 +25,7 @@ vulture:
 	uv run vulture . --exclude .venv,.pytest_cache,.ruff_cache,__pycache__,openapi/generated,openapi/alembic/versions,*_pb2.py,*_pb2_grpc.py
 
 ruff:
-	uv run ruff check .
+	uv run ruff check --fix .
 
 pylint:
 	@set -e; for dir in $(PYTHON_DIRS); do \
