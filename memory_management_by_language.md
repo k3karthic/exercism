@@ -8,8 +8,8 @@
 | **Go** | Concurrent Mark-Sweep | No | TCMalloc size classes. |
 | **Java (JVM)** | Generational \+ Concurrent | Yes | Physical sliding / Relocation via Load Barriers. |
 | **Erlang** | Per-Process GC | No | Address Order Best Fit (AOBF). |
-| **Rust** | Compile-Time Ownership | No | jemalloc, Arenas (bumpalo), Object Pooling. |
 | **Zig** | Manual \+ Explicit | No | Explicit Arenas, built-in GPA, Fixed Buffers. |
+| **Rust** | Compile-Time Ownership | No | jemalloc, Arenas (bumpalo), Object Pooling. |
 | **Node** | Gen Semi-Space \+ Mark-Sweep | Yes | Copying (Young), Page Compaction (Old), Off-heap Buffers. |
 
 
