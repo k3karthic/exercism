@@ -28,6 +28,10 @@
        * NUMA Aware (hwloc) - Only Zig, Rust, C++
        * [OpenAPI](https://www.openapis.org) - Excluding Zig, C++
        * Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
+* Extensibility - TODO
+  * Script Driven ([Tcl](https://www.tcl-lang.org/))
+  * Plugin ([Extism](https://extism.org/))
+* GUI ([Tk](https://tkdocs.com/)) - TODO
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
     * [Tail Calls](https://github.com/WebAssembly/spec/blob/main/proposals/tail-call/Overview.md)
     * [Function References](https://github.com/WebAssembly/spec/blob/main/proposals/function-references/Overview.md)
@@ -36,7 +40,7 @@
     * [Threads](https://github.com/webassembly/threads)
     * [Component Model](https://github.com/WebAssembly/component-model)
     * [Shared Everything Threads](https://github.com/WebAssembly/shared-everything-threads) - WIP
- * HPC ([Chapel](https://chapel-lang.org/))
+ * HPC ([Chapel](https://chapel-lang.org/)) - TODO
     * Parallel Programming
        * [Data Parallelism](https://chapel-lang.org/docs/language/spec/data-parallelism.html)
        * [Task Parallelism](https://chapel-lang.org/docs/language/spec/task-parallelism-and-synchronization.html)
