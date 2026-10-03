@@ -104,12 +104,12 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 offset=int(offset if offset is not None else 0),
             )
 
-    async def get_pet_by_id(self, petId: float) -> Pet:
+    async def get_pet_by_id(self, petId: float) -> Pet:  # noqa: N803
         async with _session_scope() as session:
             return await get_pet_by_id(session, int(petId))
 
     async def update_pet_with_form(
-        self, petId: float, name: str | None, status: PetStatus | None
+        self, petId: float, name: str | None, status: PetStatus | None  # noqa: N803
     ) -> object:
         async with _session_scope() as session:
             return await update_pet_with_form(
@@ -119,13 +119,13 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 status.value if status is not None else None,
             )
 
-    async def delete_pet(self, petId: float) -> object:
+    async def delete_pet(self, petId: float) -> object:  # noqa: N803
         async with _session_scope() as session:
             return await delete_pet(session, int(petId))
 
     async def upload_pet_image(
         self,
-        petId: float,
+        petId: float,  # noqa: N803
         additional_metadata: str | None,
         body: bytes | str | tuple[str, bytes] | None,
     ) -> ApiResponse:
@@ -161,11 +161,11 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 page_size=int(page_size if page_size is not None else 20),
             )
 
-    async def get_order_by_id(self, orderId: float) -> Order:
+    async def get_order_by_id(self, orderId: float) -> Order:  # noqa: N803
         async with _session_scope() as session:
             return await get_order_by_id(session, int(orderId))
 
-    async def delete_order(self, orderId: float) -> object:
+    async def delete_order(self, orderId: float) -> object:  # noqa: N803
         async with _session_scope() as session:
             return await delete_order(session, int(orderId))
 

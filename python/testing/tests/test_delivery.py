@@ -9,7 +9,7 @@ from testing.src.format import UserCard
 def test_uses_the_mocked_formatter_and_the_real_math_helper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(delivery, "format_user_card", lambda user: "MOCKED CARD")
+    monkeypatch.setattr(delivery, "format_user_card", lambda _user: "MOCKED CARD")
 
     summary = delivery.build_delivery_summary(
         delivery.Delivery(

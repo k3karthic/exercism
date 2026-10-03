@@ -13,8 +13,8 @@ class DoublerService(pb2_grpc.DoublerServicer):
         self._processed_requests = {}
         self._lock = asyncio.Lock()
 
-    async def Double(
-        self, request, context
+    async def Double(  # noqa: N802
+        self, request, context  # noqa: ARG002
     ):
         async with self._lock:
             cached = self._processed_requests.get(request.request_id)

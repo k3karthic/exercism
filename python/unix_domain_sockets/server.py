@@ -3,6 +3,8 @@ import asyncio
 import os
 import time
 
+REQUEST_TTL_SECONDS = 300
+
 
 class AsyncIdempotentServer:
     def __init__(self, socket_path):
@@ -109,7 +111,7 @@ class AsyncIdempotentServer:
                 expired = [
                     req_id
                     for req_id, (_, ts) in self.processed_requests.items()
-                    if now - ts > 300
+                    if now - ts > REQUEST_TTL_SECONDS
                 ]
                 for req_id in expired:
                     del self.processed_requests[req_id]

@@ -47,7 +47,12 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "A", "ARG", "C90", "I", "N", "PL", "T100"]
+ignore = ["PLR6301", "PLW0717"]
 preview = true
+
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["PLR2004"]
+"**/*_test.py" = ["PLR2004"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

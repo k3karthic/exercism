@@ -98,9 +98,9 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
 
     stub = Stub()
     monkeypatch.setattr(
-        client.grpc, "insecure_channel", lambda target, **_: DummyChannel()
+        client.grpc, "insecure_channel", lambda _target, **_: DummyChannel()
     )
-    monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda channel: stub)
+    monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda _channel: stub)
 
     with pytest.raises(ValueError, match="Request ID mismatch"):
         client.send_request_with_retry(

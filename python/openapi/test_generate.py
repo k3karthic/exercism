@@ -81,9 +81,7 @@ def test_generate_package_keeps_previous_output_on_generator_failure(
     sentinel = target / "client.py"
     sentinel.write_text("existing output", encoding="utf-8")
 
-    def fail_run(
-        command: list[str], check: bool, cwd: Path, env: dict[str, str]
-    ) -> None:
+    def fail_run(command: list[str], **_: object) -> None:
         raise subprocess.CalledProcessError(1, command)
 
     monkeypatch.setattr(generate.subprocess, "run", fail_run)
@@ -133,7 +131,7 @@ def test_generate_validates_spec_and_configures_both_outputs(
     monkeypatch.setattr(
         generate.subprocess,
         "run",
-        lambda command, check, cwd, env: calls.append(command),
+        lambda command, **_: calls.append(command),
     )
     monkeypatch.setattr(
         generate,
