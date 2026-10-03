@@ -48,15 +48,9 @@ pylint settings (`python/pyproject.toml`): cyclomatic complexity 10, and a
 50-line unit size matching pylint's `max-statements`. Cognitive complexity (15)
 and CRAP (30) have no pylint equivalent and keep Fallow's defaults. It exits non-zero
 when findings exceed its thresholds. Generated files under `generated/`
-directories are excluded, matching Knip's configuration. Its entry points mirror
-Knip's; OpenAPI adapter exports and dependencies are accounted for explicitly
-because the generated server consumes them dynamically.
-
-## Analyze unused code
-
-```bash
-npm run knip
-```
+directories are excluded. OpenAPI adapter exports and dependencies are accounted
+for explicitly because the generated server consumes them dynamically. Fallow
+also checks for unused code and dependencies.
 
 ## Scan CVEs
 
