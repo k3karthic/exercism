@@ -1,7 +1,7 @@
-import time
 import multiprocessing
-from multiprocessing import shared_memory
+import time
 from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import shared_memory
 
 
 def worker(start_idx, end_idx, shm_name):

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List, Dict
 
 
 @dataclass
@@ -26,7 +25,7 @@ def apply_discount(price: float, discount_rate: float) -> float:
 
 
 def generate_invoice(
-    inventory: List[Product], discount_mapping: Dict[str, float]
+    inventory: list[Product], discount_mapping: dict[str, float]
 ) -> InvoiceSummary:
     """Processes products and aggregates totals. Good for testing loops and local variables."""
     invoice_summary = InvoiceSummary(
@@ -53,7 +52,7 @@ def generate_invoice(
 
 
 if __name__ == "__main__":
-    breakpoint()  # pylint: disable=forgotten-debug-statement
+    breakpoint()  # noqa: T100
 
     # Sample catalog data
     catalog = [

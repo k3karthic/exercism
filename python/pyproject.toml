@@ -33,7 +33,6 @@ dependencies = [
     "viztracer>=1.1.1",
     "temporalio==1.30.0",
     "alembic>=1.20.0",
-    "pylint>=3.3.0",
 ]
 
 [tool.ruff]
@@ -41,27 +40,27 @@ line-length = 120
 exclude = [
     "openapi/generated",
     "openapi/alembic/versions",
+    "cpu_memory_visualization",
     "**/*_pb2.py",
     "**/*_pb2_grpc.py",
 ]
 
-[tool.pylint.main]
-load-plugins = ["pylint.extensions.mccabe"]
-ignore-paths = [".*cpu_memory_visualization/.*"]
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "A", "ARG", "C90", "I", "N", "PL", "T100"]
+preview = true
 
-[tool.pylint.design]
+[tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.ruff.lint.pylint]
 max-args = 5
-max-positional-arguments = 5
-max-attributes = 7
-max-bool-expr = 5
+max-positional-args = 5
 max-branches = 12
+max-bool-expr = 5
 max-locals = 15
-max-parents = 7
 max-public-methods = 20
 max-returns = 6
 max-statements = 50
-min-public-methods = 2
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

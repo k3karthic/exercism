@@ -1,6 +1,5 @@
 """Integration tests for the Petstore API using Testcontainers for Postgres."""
 
-# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
 import pytest

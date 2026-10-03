@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 
 import uvicorn
 from fastapi import HTTPException, Security
@@ -45,7 +45,7 @@ _api_key_header = APIKeyHeader(name="api_key", auto_error=False)
 
 
 async def require_api_key(
-    key: Optional[str] = Security(_api_key_header),
+    key: str | None = Security(_api_key_header),
 ) -> None:
     if key != API_KEY:
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -57,7 +57,7 @@ app.dependency_overrides[get_token_api_key] = require_api_key
 @asynccontextmanager
 async def _session_scope() -> AsyncIterator[AsyncSession]:
     dependency = app.dependency_overrides.get(get_session, get_session)
-    session_generator: AsyncGenerator[AsyncSession, None] = dependency()
+    session_generator: AsyncGenerator[AsyncSession] = dependency()
     try:
         session = await anext(session_generator)
     except StopAsyncIteration as error:
@@ -83,13 +83,13 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
         async with _session_scope() as session:
             return await update_pet(session, pet)
 
-    async def find_pets_by_status(self, status: Optional[PetStatus]) -> list[Pet]:
+    async def find_pets_by_status(self, status: PetStatus | None) -> list[Pet]:
         async with _session_scope() as session:
             return await find_pets_by_status(
                 session, status.value if status is not None else "available"
             )
 
-    async def find_pets_by_tags(self, tags: Optional[list[str]]) -> list[Pet]:
+    async def find_pets_by_tags(self, tags: list[str] | None) -> list[Pet]:
         async with _session_scope() as session:
             return await find_pets_by_tags(session, tags or [])
 
@@ -104,12 +104,12 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 offset=int(offset if offset is not None else 0),
             )
 
-    async def get_pet_by_id(self, petId: int | float) -> Pet:
+    async def get_pet_by_id(self, petId: float) -> Pet:
         async with _session_scope() as session:
             return await get_pet_by_id(session, int(petId))
 
     async def update_pet_with_form(
-        self, petId: int | float, name: Optional[str], status: Optional[PetStatus]
+        self, petId: float, name: str | None, status: PetStatus | None
     ) -> object:
         async with _session_scope() as session:
             return await update_pet_with_form(
@@ -119,15 +119,15 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 status.value if status is not None else None,
             )
 
-    async def delete_pet(self, petId: int | float) -> object:
+    async def delete_pet(self, petId: float) -> object:
         async with _session_scope() as session:
             return await delete_pet(session, int(petId))
 
     async def upload_pet_image(
         self,
-        petId: int | float,
-        additional_metadata: Optional[str],
-        body: Optional[Union[bytes, str, Tuple[str, bytes]]],
+        petId: float,
+        additional_metadata: str | None,
+        body: bytes | str | tuple[str, bytes] | None,
     ) -> ApiResponse:
         if isinstance(body, bytes):
             data = body
@@ -161,11 +161,11 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 page_size=int(page_size if page_size is not None else 20),
             )
 
-    async def get_order_by_id(self, orderId: int | float) -> Order:
+    async def get_order_by_id(self, orderId: float) -> Order:
         async with _session_scope() as session:
             return await get_order_by_id(session, int(orderId))
 
-    async def delete_order(self, orderId: int | float) -> object:
+    async def delete_order(self, orderId: float) -> object:
         async with _session_scope() as session:
             return await delete_order(session, int(orderId))
 

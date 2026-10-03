@@ -5,8 +5,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Callable, Sequence
 
 PACKAGE_ROOT = Path(__file__).parent
 REPOSITORY_ROOT = PACKAGE_ROOT.parents[1]

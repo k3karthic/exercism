@@ -54,10 +54,10 @@ checks `package.json` dependencies.
 
 Fallow reports dead code, duplication, and complexity findings. Complexity
 thresholds are explicit in `.fallowrc.json` and mirror the Python workspace's
-pylint settings (`python/pyproject.toml`): cyclomatic complexity 10, and a
-50-line unit size matching pylint's `max-statements`. Cognitive complexity (15)
-and CRAP (30) have no pylint equivalent and keep Fallow's defaults. It exits non-zero
-when findings exceed its thresholds. Generated files under `generated/`
+Ruff settings (`python/pyproject.toml`): cyclomatic complexity 10, and a
+50-line unit size matching Ruff's `max-statements`. Cognitive complexity (15)
+and CRAP (30) have no corresponding Ruff checks and keep Fallow's defaults. It
+exits non-zero when findings exceed its thresholds. Generated files under `generated/`
 directories are excluded. OpenAPI adapter exports and dependencies are accounted
 for explicitly because the generated server consumes them dynamically. Fallow
 also checks for unused code and dependencies.

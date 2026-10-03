@@ -2,7 +2,6 @@ import asyncio
 import time
 from asyncio import Queue
 
-
 # Input and output queues
 input_queue = Queue()
 output_queue = Queue()
@@ -13,7 +12,7 @@ async def worker(worker_id: int):
     while True:
         try:
             num = await asyncio.wait_for(input_queue.get(), timeout=1)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             break  # no more items
         print(f"Worker {worker_id} {time.time()} processing {num}")
         await asyncio.sleep(1)  # simulate async work

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Sequence
+from collections.abc import Sequence
 
 from openapi.generated.client.api.store_api import StoreApi
 from openapi.generated.client.api_client import ApiClient

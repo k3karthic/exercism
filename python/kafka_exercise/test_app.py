@@ -1,8 +1,7 @@
-# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
-from pathlib import Path
 from collections.abc import Generator
+from pathlib import Path
 
 import pytest
 from testcontainers.kafka import KafkaContainer
@@ -11,7 +10,7 @@ from kafka_exercise.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
 
 
 @pytest.fixture(scope="session")
-def kafka_bootstrap_server() -> Generator[str, None, None]:
+def kafka_bootstrap_server() -> Generator[str]:
     with KafkaContainer().with_kraft() as kafka:
         yield kafka.get_bootstrap_server()
 

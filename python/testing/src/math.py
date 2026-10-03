@@ -8,7 +8,7 @@ def clamp(value: float, minimum: float, maximum: float) -> float:
     return min(max(value, minimum), maximum)
 
 
-def sum(values: Sequence[float]) -> float:  # noqa: A001  # pylint: disable=redefined-builtin
+def sum(values: Sequence[float]) -> float:  # noqa: A001
     return float(builtin_sum(values))
 
 

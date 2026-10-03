@@ -1,9 +1,9 @@
-import socket
+import argparse
 import os
+import socket
+import stat
 import time
 import uuid
-import argparse
-import stat
 
 
 def verify_socket_permissions(socket_path):
@@ -33,7 +33,7 @@ def _receive_response(client, req_id):
 
     response_data = b"".join(response_chunks).decode("utf-8")
     if not response_data:
-        raise socket.error("Empty response received from server")
+        raise OSError("Empty response received from server")
 
     received_id, result_str = response_data.split(":", 1)
     if received_id != req_id:
@@ -65,7 +65,7 @@ def _execute_request(socket_path, payload, req_id, attempt):
         client.close()
 
 
-def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-locals
+def send_request_with_retry(
     socket_path, number, req_id=None, max_retries=5, initial_backoff=0.5
 ):
     if max_retries < 1:
@@ -74,13 +74,13 @@ def send_request_with_retry(  # pylint: disable=too-many-branches,too-many-local
     if req_id is None:
         req_id = str(uuid.uuid4())[:8]
 
-    payload = f"{req_id}:{number}".encode("utf-8")
+    payload = f"{req_id}:{number}".encode()
     backoff = initial_backoff
 
     for attempt in range(1, max_retries + 1):
         try:
             return _execute_request(socket_path, payload, req_id, attempt)
-        except (socket.error, ConnectionRefusedError, FileNotFoundError) as e:
+        except (OSError, ConnectionRefusedError, FileNotFoundError) as e:
             print(f"  Attempt {attempt} failed: {e}")
             if attempt == max_retries:
                 print("Max retries reached. Failing.")

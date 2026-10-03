@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from kafka import (
     KafkaAdminClient,
+)
+from kafka import (
     KafkaConsumer as _KafkaConsumer,
+)
+from kafka import (
     KafkaProducer as _KafkaProducer,
 )
 from kafka.admin import NewTopic
@@ -27,7 +31,7 @@ def _decode(value: bytes) -> str:
     return value.decode("utf-8")
 
 
-class KafkaProducer:  # pylint: disable=too-few-public-methods
+class KafkaProducer:
     def __init__(self, bootstrap_servers: str, topic: str) -> None:
         self.topic = topic
         self._producer = _KafkaProducer(
@@ -54,7 +58,7 @@ def ensure_topic(bootstrap_servers: str, topic: str) -> None:
         admin.close()
 
 
-class KafkaConsumer:  # pylint: disable=too-few-public-methods
+class KafkaConsumer:
     def __init__(self, bootstrap_servers: str, topic: str) -> None:
         self.topic = topic
         self._consumer = _KafkaConsumer(

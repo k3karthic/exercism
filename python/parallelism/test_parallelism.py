@@ -1,4 +1,3 @@
-# pylint: disable=too-few-public-methods
 from __future__ import annotations
 
 import importlib.util
@@ -39,7 +38,7 @@ class FakeQueue:
         self.results: list[int] = []
         self.task_done_calls = 0
 
-    def get(self, timeout: int) -> int:  # pylint: disable=unused-argument
+    def get(self, timeout: int) -> int:  # noqa: ARG002
         if self.items:
             return self.items.pop(0)
         raise std_queue.Empty
@@ -65,7 +64,7 @@ def test_queue_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_queue_worker_propagates_unexpected_queue_errors() -> None:
     class BrokenQueue:
-        def get(self, timeout: int) -> int:  # pylint: disable=unused-argument
+        def get(self, timeout: int) -> int:  # noqa: ARG002
             raise RuntimeError("queue failure")
 
     with pytest.raises(RuntimeError, match="queue failure"):

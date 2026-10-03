@@ -1,10 +1,10 @@
+import argparse
 import asyncio
 import os
 import time
-import argparse
 
 
-class AsyncIdempotentServer:  # pylint: disable=too-few-public-methods
+class AsyncIdempotentServer:
     def __init__(self, socket_path):
         self.socket_path = socket_path
         # Schema: { req_id: (result_value, timestamp) }

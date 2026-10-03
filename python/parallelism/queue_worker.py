@@ -1,6 +1,6 @@
-import time
 import multiprocessing
 import queue
+import time
 from concurrent.futures import ProcessPoolExecutor
 
 

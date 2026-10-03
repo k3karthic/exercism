@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from sqlalchemy import (
     JSON,
@@ -25,7 +25,7 @@ DATABASE_URL = os.getenv(
 )
 
 
-class Base(DeclarativeBase):  # pylint: disable=too-few-public-methods
+class Base(DeclarativeBase):
     pass
 
 
@@ -44,7 +44,7 @@ class Pet(Base):
     status: Mapped[str | None] = mapped_column(nullable=True)
 
     @classmethod
-    async def get(cls, session: AsyncSession, pet_id: int) -> Optional[Pet]:
+    async def get(cls, session: AsyncSession, pet_id: int) -> Pet | None:
         table = cast(Any, cls).__table__
         result = await session.execute(select(cls).where(table.c.id == pet_id))
         return result.scalar_one_or_none()
@@ -103,7 +103,7 @@ class Order(Base):
     complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     @classmethod
-    async def get(cls, session: AsyncSession, order_id: int) -> Optional[Order]:
+    async def get(cls, session: AsyncSession, order_id: int) -> Order | None:
         table = cast(Any, cls).__table__
         result = await session.execute(select(cls).where(table.c.id == order_id))
         return result.scalar_one_or_none()
@@ -122,6 +122,6 @@ engine = create_async_engine(DATABASE_URL, echo=False)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession]:
     async with async_session_factory() as session:
         yield session

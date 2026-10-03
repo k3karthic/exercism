@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException
@@ -104,7 +104,7 @@ def _order_matches_quantity_range(
     return True
 
 
-def _order_matches_search(  # pylint: disable=too-many-return-statements
+def _order_matches_search(  # noqa: PLR0911
     row: Order, criteria: dict[str, Any]
 ) -> bool:
     order_id = criteria.get("orderId")
@@ -135,7 +135,7 @@ def _order_matches_search(  # pylint: disable=too-many-return-statements
 
 def _parse_datetime(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
 
 
 async def add_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
@@ -267,7 +267,7 @@ async def place_order(session: AsyncSession, order: OrderSchema) -> OrderSchema:
         quantity=int(order.quantity) if order.quantity is not None else None,
         ship_date=_parse_datetime(order.ship_date)
         if order.ship_date is not None
-        else datetime.now(timezone.utc),
+        else datetime.now(UTC),
         status=order.status.value if order.status is not None else None,
         complete=order.complete or False,
     )

@@ -1,5 +1,5 @@
-import time
 import queue
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 # Input and output queues

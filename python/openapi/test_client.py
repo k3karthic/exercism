@@ -1,9 +1,9 @@
-# pylint: disable=too-few-public-methods
 from __future__ import annotations
 
 from typing import Any, Self
 
 import pytest
+
 from openapi import client_driver
 
 
@@ -19,7 +19,7 @@ def test_fetch_inventory_configures_and_calls_generated_client(
         def __enter__(self) -> Self:
             return self
 
-        def __exit__(self, *args: Any) -> None:
+        def __exit__(self, *args: object) -> None:
             return None
 
     class FakeStoreApi:

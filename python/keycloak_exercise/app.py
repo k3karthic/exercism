@@ -34,7 +34,7 @@ DEFAULT_PENDING_LOGIN_TTL_SECONDS = 300
 
 
 @dataclass(slots=True)
-class Settings:  # pylint: disable=too-many-instance-attributes
+class Settings:
     keycloak_base_url: str = DEFAULT_KEYCLOAK_BASE_URL
     keycloak_realm: str = DEFAULT_KEYCLOAK_REALM
     keycloak_client_id: str = DEFAULT_KEYCLOAK_CLIENT_ID
@@ -51,7 +51,7 @@ class Settings:  # pylint: disable=too-many-instance-attributes
     http_timeout_seconds: float = 10.0
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         return cls(
             keycloak_base_url=_env("KEYCLOAK_BASE_URL", DEFAULT_KEYCLOAK_BASE_URL),
             keycloak_realm=_env("KEYCLOAK_REALM", DEFAULT_KEYCLOAK_REALM),
@@ -96,7 +96,7 @@ class PendingLogin:
         }
 
     @classmethod
-    def from_mapping(cls, payload: dict[str, Any]) -> "PendingLogin":
+    def from_mapping(cls, payload: dict[str, Any]) -> PendingLogin:
         return cls(
             state=str(payload["state"]),
             nonce=str(payload["nonce"]),
@@ -106,7 +106,7 @@ class PendingLogin:
 
 
 @dataclass(slots=True)
-class SessionRecord:  # pylint: disable=too-many-instance-attributes
+class SessionRecord:
     session_id: str
     user_name: str
     email: str | None
@@ -129,7 +129,7 @@ class SessionRecord:  # pylint: disable=too-many-instance-attributes
         }
 
     @classmethod
-    def from_mapping(cls, payload: dict[str, Any]) -> "SessionRecord":
+    def from_mapping(cls, payload: dict[str, Any]) -> SessionRecord:
         return cls(
             session_id=str(payload["session_id"]),
             user_name=str(payload["user_name"]),

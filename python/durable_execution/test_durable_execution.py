@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 from __future__ import annotations
 
 import sys
@@ -14,9 +13,7 @@ DURABLE_EXECUTION_DIR = Path(__file__).resolve().parent
 if str(DURABLE_EXECUTION_DIR) not in sys.path:
     sys.path.insert(0, str(DURABLE_EXECUTION_DIR))
 
-# pylint: disable=wrong-import-position
 import exercise as durable_execution  # noqa: E402
-# pylint: enable=wrong-import-position
 
 
 @pytest.mark.asyncio
@@ -56,17 +53,16 @@ async def test_doubler_workflow_runs_real_activities(
         tracking_double_number_activity,
     )
 
-    async with await WorkflowEnvironment.start_local() as env:
-        async with Worker(
-            env.client,
-            task_queue=durable_execution.TASK_QUEUE,
-            workflows=[durable_execution.DoublerWorkflow],
-            activities=[
-                durable_execution.get_random_number_activity,
-                durable_execution.double_number_activity,
-            ],
-        ):
-            result = await durable_execution.run_workflow(env.client)
+    async with await WorkflowEnvironment.start_local() as env, Worker(
+        env.client,
+        task_queue=durable_execution.TASK_QUEUE,
+        workflows=[durable_execution.DoublerWorkflow],
+        activities=[
+            durable_execution.get_random_number_activity,
+            durable_execution.double_number_activity,
+        ],
+    ):
+        result = await durable_execution.run_workflow(env.client)
 
     assert result == 42
     assert calls == [

@@ -1,12 +1,11 @@
 # pyright: reportAttributeAccessIssue=false
-import asyncio
 import argparse
+import asyncio
 import time
-
-import grpc
 
 import doubler_service_pb2 as pb2
 import doubler_service_pb2_grpc as pb2_grpc
+import grpc
 
 
 class DoublerService(pb2_grpc.DoublerServicer):
@@ -14,7 +13,7 @@ class DoublerService(pb2_grpc.DoublerServicer):
         self._processed_requests = {}
         self._lock = asyncio.Lock()
 
-    async def Double(  # pylint: disable=invalid-overridden-method
+    async def Double(
         self, request, context
     ):
         async with self._lock:
@@ -40,7 +39,7 @@ class DoublerService(pb2_grpc.DoublerServicer):
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=interval_seconds)
                 break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
             now = time.time()

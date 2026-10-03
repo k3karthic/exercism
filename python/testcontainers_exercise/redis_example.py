@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from testcontainers.redis import RedisContainer
-
 import redis
+from testcontainers.redis import RedisContainer
 
 
 def main() -> None:

@@ -3,11 +3,9 @@ import argparse
 import json
 import uuid
 
-import grpc
-
 import doubler_service_pb2 as pb2
 import doubler_service_pb2_grpc as pb2_grpc
-
+import grpc
 
 RETRY_SERVICE_CONFIG = {
     "methodConfig": [

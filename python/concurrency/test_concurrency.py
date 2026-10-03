@@ -13,10 +13,8 @@ CONCURRENCY_DIR = Path(__file__).resolve().parent
 if str(CONCURRENCY_DIR) not in sys.path:
     sys.path.insert(0, str(CONCURRENCY_DIR))
 
-# pylint: disable=wrong-import-position
 import async_worker as async_module  # noqa: E402
 import thread_worker as threads_module  # noqa: E402
-# pylint: enable=wrong-import-position
 
 
 class FakeQueue:
@@ -25,7 +23,7 @@ class FakeQueue:
         self.results: list[int] = []
         self.task_done_calls = 0
 
-    def get(self, timeout: int) -> int:  # pylint: disable=unused-argument
+    def get(self, timeout: int) -> int:  # noqa: ARG002
         if self.items:
             return self.items.pop(0)
         raise std_queue.Empty
@@ -63,11 +61,11 @@ async def test_async_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> No
     await input_queue.put(7)
 
     async def fake_wait_for(
-        awaitable: Coroutine[Any, Any, int], timeout: int  # pylint: disable=unused-argument
+        awaitable: Coroutine[Any, Any, int], timeout: int  # noqa: ARG001
     ) -> int:
         if input_queue.empty():
             awaitable.close()
-            raise asyncio.TimeoutError
+            raise TimeoutError
         return await awaitable
 
     async def fake_sleep(_: float) -> None:

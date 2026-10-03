@@ -1,4 +1,3 @@
-# pylint: disable=protected-access,too-few-public-methods
 """Tests for the gRPC doubler example."""
 
 # pyright: reportAttributeAccessIssue=false
@@ -7,8 +6,8 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from pathlib import Path
 from collections.abc import Coroutine
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -17,11 +16,9 @@ GRPC_DIR = Path(__file__).resolve().parent
 if str(GRPC_DIR) not in sys.path:
     sys.path.insert(0, str(GRPC_DIR))
 
-# pylint: disable=wrong-import-position
 import client  # noqa: E402
 import doubler_service_pb2 as pb2  # noqa: E402
 import server  # noqa: E402
-# pylint: enable=wrong-import-position
 
 
 class DummyChannel:
@@ -63,13 +60,13 @@ async def test_cleanup_expired_requests_removes_old_entries(
     calls = 0
 
     async def fake_wait_for(
-        awaitable: Coroutine[Any, Any, bool], timeout: int  # pylint: disable=unused-argument
+        awaitable: Coroutine[Any, Any, bool], timeout: int  # noqa: ARG001
     ) -> bool:
         nonlocal calls
         calls += 1
         if calls == 1:
             awaitable.close()
-            raise asyncio.TimeoutError
+            raise TimeoutError
 
         stop_event.set()
         return await awaitable
@@ -93,7 +90,7 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
         def __init__(self) -> None:
             self.calls = 0
 
-        def Double(  # pylint: disable=invalid-name
+        def Double(  # noqa: N802
             self, request: pb2.DoubleRequest
         ) -> pb2.DoubleResponse:
             self.calls += 1

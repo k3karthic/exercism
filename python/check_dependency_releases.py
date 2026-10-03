@@ -33,7 +33,7 @@ class CheckResult:
     def age_days(self) -> int | None:
         if self.latest_release is None:
             return None
-        delta = dt.datetime.now(dt.timezone.utc) - self.latest_release
+        delta = dt.datetime.now(dt.UTC) - self.latest_release
         return int(delta.total_seconds() // 86400)
 
 
@@ -76,8 +76,8 @@ def parse_timestamp(value: str | None) -> dt.datetime | None:
         return None
     parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=dt.timezone.utc)
-    return parsed.astimezone(dt.timezone.utc)
+        return parsed.replace(tzinfo=dt.UTC)
+    return parsed.astimezone(dt.UTC)
 
 
 def normalize_name(name: str) -> str:

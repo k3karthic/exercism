@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from testing.src.format import UserCard
-from testing.src.format import format_user_card
+from testing.src.format import UserCard, format_user_card
 
 
 def test_matches_the_expected_output() -> None:

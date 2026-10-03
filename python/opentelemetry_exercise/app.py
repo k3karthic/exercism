@@ -7,9 +7,10 @@ import os
 import subprocess
 import sys
 import time
+from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from opentelemetry import metrics, trace
 from opentelemetry.propagate import inject
@@ -26,7 +27,6 @@ from opentelemetry_exercise.utils import (
     service_logger,
     tracer_for,
 )
-
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

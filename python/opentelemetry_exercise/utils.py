@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from opentelemetry import metrics, trace
-from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
@@ -96,7 +96,7 @@ def configure_telemetry(service_name: str) -> TelemetryBundle:
 
 
 def trace_exporter_class(endpoint: str) -> Any:
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # pylint: disable=import-outside-toplevel
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: PLC0415
         OTLPSpanExporter,
     )
 
@@ -105,17 +105,15 @@ def trace_exporter_class(endpoint: str) -> Any:
 
 def metric_exporter_class(endpoint: str) -> Any:
     # Load the optional exporter only when metrics export is configured.
-    # pylint: disable=import-outside-toplevel
-    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (  # noqa: PLC0415
         OTLPMetricExporter,
     )
-    # pylint: enable=import-outside-toplevel
 
     return OTLPMetricExporter(endpoint=endpoint, insecure=True)
 
 
 def log_exporter_class(endpoint: str) -> Any:
-    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (  # pylint: disable=import-outside-toplevel
+    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import (  # noqa: PLC0415
         OTLPLogExporter,
     )
 

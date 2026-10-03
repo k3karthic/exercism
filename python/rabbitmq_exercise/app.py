@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from argparse import ArgumentParser
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import pika
 from pika.adapters.blocking_connection import BlockingChannel
@@ -46,7 +46,7 @@ def build_connection_parameters(
     )
 
 
-class RabbitMQProducer:  # pylint: disable=too-few-public-methods
+class RabbitMQProducer:
     def __init__(
         self, connection_parameters: pika.ConnectionParameters, queue: str
     ) -> None:
@@ -80,7 +80,7 @@ def ensure_queue(connection_parameters: pika.ConnectionParameters, queue: str) -
         _close_connection(connection)
 
 
-class RabbitMQConsumer:  # pylint: disable=too-few-public-methods
+class RabbitMQConsumer:
     def __init__(
         self, connection_parameters: pika.ConnectionParameters, queue: str
     ) -> None:

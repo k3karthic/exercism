@@ -1,4 +1,3 @@
-# pylint: disable=protected-access,too-few-public-methods
 from __future__ import annotations
 
 import importlib.util

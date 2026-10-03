@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name,too-many-locals
 from __future__ import annotations
 
 import time
@@ -10,9 +9,8 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import httpx2 as httpx
 import jwt
 import pytest
+from fastapi import FastAPI, HTTPException
 from requests.exceptions import HTTPError
-from fastapi import FastAPI
-from fastapi import HTTPException
 from testcontainers.core.config import testcontainers_config
 from testcontainers.keycloak import KeycloakContainer
 from testcontainers.redis import RedisContainer
@@ -88,13 +86,13 @@ class _FormParser(HTMLParser):
 
 
 @pytest.fixture(scope="session")
-def redis_container() -> Generator[RedisContainer, None, None]:
+def redis_container() -> Generator[RedisContainer]:
     with RedisContainer("redis:7-alpine") as container:
         yield container
 
 
 @pytest.fixture(scope="session")
-def keycloak_runtime() -> Generator[KeycloakRuntime, None, None]:
+def keycloak_runtime() -> Generator[KeycloakRuntime]:
     with _RetryingKeycloakContainer("quay.io/keycloak/keycloak:latest") as container:
         admin = container.get_client()
         admin.create_realm(payload={"realm": REALM, "enabled": True})
@@ -196,7 +194,7 @@ def flush_redis(redis_container: RedisContainer) -> None:
 
 
 @pytest.fixture
-async def client(app: FastAPI) -> AsyncGenerator[httpx.AsyncClient, None]:
+async def client(app: FastAPI) -> AsyncGenerator[httpx.AsyncClient]:
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app),
         base_url=APP_BASE_URL,

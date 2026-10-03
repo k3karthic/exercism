@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -12,9 +11,7 @@ from rabbitmq_exercise.app import DEFAULT_FAILED_MESSAGES_FILE, run_demo
 
 
 @pytest.fixture(scope="session")
-def rabbitmq_connection_parameters() -> Generator[
-    pika.ConnectionParameters, None, None
-]:
+def rabbitmq_connection_parameters() -> Generator[pika.ConnectionParameters]:
     with RabbitMqContainer("rabbitmq:3.9.10") as rabbitmq:
         yield rabbitmq.get_connection_params()
 

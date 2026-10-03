@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name
 from __future__ import annotations
 
 from collections.abc import Generator
@@ -9,7 +8,7 @@ from testing.src.job_queue import JobQueue
 
 
 @pytest.fixture
-def queue() -> Generator[JobQueue, None, None]:
+def queue() -> Generator[JobQueue]:
     job_queue = JobQueue()
     yield job_queue
     job_queue.clear()
