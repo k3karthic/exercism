@@ -1,4 +1,4 @@
-# pyright: reportAttributeAccessIssue=false
+# ty: ignore[unresolved-attribute]
 import argparse
 import asyncio
 import time

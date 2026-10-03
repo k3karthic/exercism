@@ -112,19 +112,23 @@ class RabbitMQConsumer:
                 nonlocal seen_messages
 
                 seen_messages += 1
+                delivery_tag = method.delivery_tag
+                if delivery_tag is None:
+                    raise ValueError("RabbitMQ delivery tag is missing")
+
                 raw_value = _decode(body)
 
                 try:
                     doubled_numbers.append(int(raw_value) * 2)
-                    ch.basic_ack(delivery_tag=method.delivery_tag)
+                    ch.basic_ack(delivery_tag=delivery_tag)
                 except ValueError as error:
                     self._append_failed_message(
                         failed_messages_path=failed_messages_path,
                         raw_value=raw_value,
                         error=error,
-                        delivery_tag=method.delivery_tag,
+                        delivery_tag=delivery_tag,
                     )
-                    ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
+                    ch.basic_nack(delivery_tag=delivery_tag, requeue=False)
 
                 if seen_messages >= expected_messages:
                     ch.stop_consuming()

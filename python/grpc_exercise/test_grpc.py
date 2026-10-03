@@ -1,7 +1,5 @@
 """Tests for the gRPC doubler example."""
 
-# pyright: reportAttributeAccessIssue=false
-
 from __future__ import annotations
 
 import asyncio
@@ -33,8 +31,8 @@ class DummyChannel:
 async def test_double_caches_request_results() -> None:
     service = server.DoublerService()
 
-    first = pb2.DoubleRequest(request_id="abc123", number=21)
-    second = pb2.DoubleRequest(request_id="abc123", number=99)
+    first = pb2.DoubleRequest(request_id="abc123", number=21)  # ty: ignore[unresolved-attribute]
+    second = pb2.DoubleRequest(request_id="abc123", number=99)  # ty: ignore[unresolved-attribute]
 
     first_response = await service.Double(first, None)
     second_response = await service.Double(second, None)
@@ -91,10 +89,12 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
             self.calls = 0
 
         def Double(  # noqa: N802
-            self, request: pb2.DoubleRequest
-        ) -> pb2.DoubleResponse:
+            self, request: pb2.DoubleRequest  # ty: ignore[unresolved-attribute]
+        ) -> pb2.DoubleResponse:  # ty: ignore[unresolved-attribute]
             self.calls += 1
-            return pb2.DoubleResponse(request_id="wrong-id", result=request.number * 2)
+            return pb2.DoubleResponse(  # ty: ignore[unresolved-attribute]
+                request_id="wrong-id", result=request.number * 2
+            )
 
     stub = Stub()
     monkeypatch.setattr(
