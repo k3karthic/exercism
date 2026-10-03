@@ -2,7 +2,7 @@
 
 * Memory Management - memory_management_by_language.md
 * CPU Topology - cpu_topology/
-* [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - keycloak/keycloak_overview.md
+* [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - [keycloak/keycloak_overview.md](/keycloak/keycloak_overview.md)
 * Languages:
    * [Python](https://www.python.org/) (LLM-assisted)
    * [TypeScript](https://www.typescriptlang.org/) (LLM-assisted)
