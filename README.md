@@ -4,14 +4,15 @@
 * CPU Topology - cpu_topology/
 * [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - keycloak/keycloak_overview.md
 * Languages:
-   * Python (LLM-assisted)
-   * TypeScript (LLM-assisted)
-   * Go - TODO
-   * Kotlin - WIP
-   * Rust - TODO
-   * Elixir - TODO
-   * Zig - TODO
-   * C++ - TODO
+   * [Python](https://www.python.org/) (LLM-assisted)
+   * [TypeScript](https://www.typescriptlang.org/) (LLM-assisted)
+   * [Go](https://go.dev/) - TODO
+   * [Kotlin](https://kotlinlang.org/) - WIP
+   * [Rust](https://rust-lang.org/) - TODO
+   * [Elixir](https://elixir-lang.org/) - TODO
+   * [Zig](https://ziglang.org/) - TODO
+   * [C++](https://isocpp.org/) - TODO
+   * [Pharo](https://pharo.org/) - TODO
    * Exercises,
        * CPU / Memory Visualization
        * Debugger
@@ -20,7 +21,7 @@
        * Concurrency
        * Parallelism
        * UNIX Domain Sockets
-       * [gRPC](https://grpc.io/)
+       * [gRPC](https://grpc.io/) - Excluding Pharo
        * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
        * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/))
        * Keycloak - Excluding Zig, C++
