@@ -10,6 +10,7 @@
     "main": "tsx index.ts",
     "check:dependency-age": "tsx scripts/check-dependency-age.ts",
     "format": "prettier . --write",
+    "lint": "eslint .",
     "fallow": "fallow",
     "test": "vitest",
     "test:openapi": "vitest run openapi/openapi.test.ts",
@@ -21,6 +22,7 @@
     "fallow:each": "for c in */.fallowrc.json; do d=$(dirname \"$c\"); echo \"== $d\"; cov=\"\"; [ -f coverage/coverage-final.json ] && cov=\"--coverage $PWD/coverage/coverage-final.json\"; fallow --root \"$d\" $cov --summary || s=1; done; exit ${s:-0}"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@opentelemetry/sdk-trace-base": "^2.7.1",
     "@platformatic/flame": "^1.6.0",
     "@temporalio/testing": "^1.21.1",
@@ -33,12 +35,14 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@vitest/coverage-istanbul": "^4.1.11",
     "drizzle-kit": "^0.31.11",
+    "eslint": "^10.12.0",
     "fallow": "^3.31.0",
     "prettier": "^3.8.3",
     "supertest": "^7.1.4",
     "testcontainers": "^12.0.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^4.1.7"
   },
   "dependencies": {

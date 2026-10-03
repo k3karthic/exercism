@@ -16,7 +16,17 @@ npx tsx index.ts
 npm run format
 ```
 
-Prettier uses a 120-character line width (`.prettierrc.json`), matching the Python workspace's Ruff `line-length`. Fallow (below) is this workspace's linter.
+Prettier uses a 120-character line width (`.prettierrc.json`), matching the Python workspace's Ruff `line-length`.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+ESLint uses the recommended typescript-eslint rules for TypeScript files. Generated
+files under `generated/` are excluded. Use Fallow below for dead-code, dependency,
+duplication, and complexity analysis.
 
 ## Test coverage
 

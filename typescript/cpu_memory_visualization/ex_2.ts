@@ -12,7 +12,7 @@ const ADD_AMOUNT = 10;
 
 function loadXMbOfData(mb: number) {
   // Generates objects on the V8 heap instead of external memory
-  return Array.from({ length: mb * 10000 }, (_, i) => ({ value: 1 }));
+  return Array.from({ length: mb * 10000 }, () => ({ value: 1 }));
 }
 
 // Make function harder for JIT to optimize
@@ -53,7 +53,7 @@ async function main() {
   // Force JS to wait for input to make it harder for JIT to optimize
   const rl = readline.createInterface({ input: stdin, output: stdout });
 
-  let ans: string | undefined = undefined;
+  let ans: string | undefined;
   const data = loadXMbOfData(SIZE_OF_DATA_IN_MB);
 
   ans = await rl.question("proceed?");

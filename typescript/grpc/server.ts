@@ -5,7 +5,6 @@ import { optionValue, reportTermination } from "./cli.ts";
 
 import {
   getDoublerServiceConstructor,
-  type DoubleRequest,
   type DoublerServiceImplementation,
   type SleepFn,
 } from "./grpc_support.js";

@@ -4,7 +4,7 @@ const FIRST_COUNTER_RANGE = 500;
 const SECOND_COUNTER_RANGE = 1000;
 
 // Simulate holding Algorithms instance as part of cache key
-const cache = new Map<any, Map<number, bigint>>();
+const cache = new Map<Algorithms, Map<number, bigint>>();
 
 export class Algorithms {
   constructor(private readonly inc: bigint) {
