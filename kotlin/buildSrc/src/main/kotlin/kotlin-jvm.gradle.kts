@@ -10,6 +10,7 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlinx.rpc.plugin")
     id("org.jlleitschuh.gradle.ktlint")
+    id("dev.detekt")
 }
 
 kotlin {

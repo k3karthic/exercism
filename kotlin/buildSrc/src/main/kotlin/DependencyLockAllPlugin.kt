@@ -11,29 +11,28 @@ class DependencyLockAllPlugin : Plugin<Project> {
             "dependency-lock-all plugin must be applied to the root project only, " + "but was applied to '${project.path}'"
         }
 
-        val projectsToLock = project.rootProject.allprojects.toList()
-
-        project.tasks.register("writeDependencyLocks") {
-            group = "dependency locking"
-            description = "Resolves all configurations across all projects to generate dependency lock files"
-            doLast {
-                projectsToLock.forEach { subproject ->
+        // Each project resolves its own configurations in a task it owns, so Gradle holds that project's lock.
+        val resolveTasks = project.rootProject.allprojects.map { subproject ->
+            subproject.tasks.register("resolveDependencyLocks") {
+                group = "dependency locking"
+                description = "Resolves all configurations of this project to generate dependency lock files"
+                doLast {
                     logger.lifecycle("Resolving configurations for project '${subproject.path}'")
 
                     subproject.configurations
                         .filter { it.isCanBeResolved }
                         .forEach { configuration ->
-                            try {
-                                logger.info("  Resolving configuration '${configuration.name}'")
-                                configuration.resolve()
-                            } catch (e: Exception) {
-                                logger.info(
-                                    "  Skipping configuration '${configuration.name}': ${e.message}"
-                                )
-                            }
+                            logger.info("  Resolving configuration '${configuration.name}'")
+                            configuration.resolve()
                         }
                 }
             }
+        }
+
+        project.tasks.register("writeDependencyLocks") {
+            group = "dependency locking"
+            description = "Resolves all configurations across all projects to generate dependency lock files"
+            dependsOn(resolveTasks)
         }
 
         project.tasks.register("checkDependencyAge", CheckDependencyAgeTask::class.java) {
