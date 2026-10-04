@@ -170,7 +170,9 @@ test.each([
 test("send request with retry rejects loose permissions without retrying", async () => {
   const socketPath = securedSocketPath();
   chmodSync(socketPath, 0o644);
-  await expect(client.sendRequestWithRetry(socketPath, 7, { reqId: "req-7", maxRetries: 3, initialBackoff: 0 })).rejects.toThrow("too open");
+  await expect(
+    client.sendRequestWithRetry(socketPath, 7, { reqId: "req-7", maxRetries: 3, initialBackoff: 0 }),
+  ).rejects.toThrow("too open");
 });
 
 test("send request with retry retries then fails", async () => {

@@ -3,11 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { optionValue, reportTermination } from "./cli.ts";
 
-import {
-  getDoublerServiceConstructor,
-  type DoublerServiceImplementation,
-  type SleepFn,
-} from "./grpc_support.js";
+import { getDoublerServiceConstructor, type DoublerServiceImplementation, type SleepFn } from "./grpc_support.js";
 
 type ProcessedRequest = {
   result: number;
