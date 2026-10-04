@@ -13,6 +13,7 @@ or run it directly from the terminal:
 * Run `./gradlew checkDependencyAge` to check lockfiles and flag direct dependencies whose released versions are older than 365 days.
 * Run `./gradlew ktlintFormat` to format Kotlin sources.
 * Run `./gradlew ktlintCheck` to get a report of violations from [ktlint](https://ktlint.github.io/ktlint/latest/).
+* Run `./gradlew detekt` to get a report of violations from [detekt](https://detekt.dev/).
 * Run `./gradlew build` to only build the application.
 * Run `./gradlew check` to run all checks, including tests.
 * Run `./gradlew clean` to clean all build outputs.
