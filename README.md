@@ -23,7 +23,7 @@
        * UNIX Domain Sockets
        * [gRPC](https://grpc.io/) - Excluding Pharo
        * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
-       * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Bindings](https://docs.dapr.io/developing-applications/building-blocks/bindings/bindings-overview/))
+       * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
        * Keycloak - Excluding Zig, C++
        * [OpenTelemetry](https://opentelemetry.io/)
        * NUMA Aware (hwloc) - Only Zig, Rust, C++
