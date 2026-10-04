@@ -77,3 +77,8 @@ ktlint {
         }
     }
 }
+
+detekt {
+    config.setFrom(files(rootProject.file(".detekt.yml")))
+    buildUponDefaultConfig = true
+}
