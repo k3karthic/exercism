@@ -11,6 +11,8 @@ export default defineConfig(
     extends: [js.configs.recommended, tseslint.configs.recommended],
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "max-params": ["error", { max: 5 }],
+      "max-depth": ["error", { max: 4 }],
     },
   },
   {

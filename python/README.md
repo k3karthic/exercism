@@ -37,6 +37,12 @@ make lint
 make scan
 ```
 
+## Check cognitive complexity
+
+```bash
+make complexity
+```
+
 ## Find unused code
 
 ```bash

@@ -118,7 +118,12 @@ test("send request with retry returns the numeric result", async () => {
   chmodSync(socketPath, 0o600);
 
   const fakeSocket = new FakeClientSocket();
-  const result = await client.sendRequestWithRetry(socketPath, 7, "req-7", 1, 0.5, () => fakeSocket as never);
+  const result = await client.sendRequestWithRetry(socketPath, 7, {
+    reqId: "req-7",
+    maxRetries: 1,
+    initialBackoff: 0.5,
+    createSocket: () => fakeSocket as never,
+  });
 
   expect(result).toBe(14);
   expect(fakeSocket.sent).toBe("req-7:7");
@@ -153,23 +158,33 @@ test.each([
 ])("send request with retry rejects bad response %j", async (reply, text) => {
   const socketPath = securedSocketPath();
   await expect(
-    client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0, () => new FakeClientSocket(reply) as never),
+    client.sendRequestWithRetry(socketPath, 7, {
+      reqId: "req-7",
+      maxRetries: 3,
+      initialBackoff: 0,
+      createSocket: () => new FakeClientSocket(reply) as never,
+    }),
   ).rejects.toThrow(new RegExp(text.slice(0, 4), "i"));
 });
 
 test("send request with retry rejects loose permissions without retrying", async () => {
   const socketPath = securedSocketPath();
   chmodSync(socketPath, 0o644);
-  await expect(client.sendRequestWithRetry(socketPath, 7, "req-7", 3, 0)).rejects.toThrow("too open");
+  await expect(client.sendRequestWithRetry(socketPath, 7, { reqId: "req-7", maxRetries: 3, initialBackoff: 0 })).rejects.toThrow("too open");
 });
 
 test("send request with retry retries then fails", async () => {
   const socketPath = securedSocketPath();
   let attempts = 0;
   await expect(
-    client.sendRequestWithRetry(socketPath, 7, "req-7", 2, 0, () => {
-      attempts += 1;
-      throw new Error("boom");
+    client.sendRequestWithRetry(socketPath, 7, {
+      reqId: "req-7",
+      maxRetries: 2,
+      initialBackoff: 0,
+      createSocket: () => {
+        attempts += 1;
+        throw new Error("boom");
+      },
     }),
   ).rejects.toThrow("boom");
   expect(attempts).toBe(2);

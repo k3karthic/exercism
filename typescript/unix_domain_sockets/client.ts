@@ -124,13 +124,17 @@ function rethrowFatalError(error: unknown): void {
   }
 }
 
+export interface RetryOptions {
+  reqId?: string;
+  maxRetries?: number;
+  initialBackoff?: number;
+  createSocket?: (path: string) => net.Socket;
+}
+
 export async function sendRequestWithRetry(
   socketPath: string,
   number: number,
-  reqId: string | undefined = undefined,
-  maxRetries = 5,
-  initialBackoff = 0.5,
-  createSocket: (path: string) => net.Socket = defaultCreateSocket,
+  { reqId, maxRetries = 5, initialBackoff = 0.5, createSocket = defaultCreateSocket }: RetryOptions = {},
 ): Promise<number> {
   const requestId = reqId ?? randomUUID().slice(0, 8);
   const payload = `${requestId}:${number}`;

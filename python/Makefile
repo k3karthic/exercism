@@ -1,4 +1,4 @@
-.PHONY: format test coverage check scan vulture ruff lint
+.PHONY: format test coverage check scan vulture ruff complexity lint
 
 format:
 	uv run ruff format .
@@ -24,4 +24,7 @@ vulture:
 ruff:
 	uv run ruff check --fix .
 
-lint: ruff
+complexity:
+	uv run complexipy
+
+lint: ruff complexity

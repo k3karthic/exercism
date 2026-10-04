@@ -63,9 +63,20 @@ max-positional-args = 5
 max-branches = 12
 max-bool-expr = 5
 max-locals = 15
+max-nested-blocks = 4
 max-public-methods = 20
 max-returns = 6
 max-statements = 50
+
+[tool.complexipy]
+paths = ["."]
+max-complexity-allowed = 15
+exclude = [
+    "**/generated/**",
+    "**/alembic/versions/**",
+    "**/cpu_memory_visualization/**",
+    "**/.venv/**",
+]
 
 [tool.ty.environment]
 root = [".", "concurrency", "durable_execution", "grpc_exercise"]
@@ -107,6 +118,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",
     "pytest>=9.0.3",
+    "complexipy>=8.0.1",
     "ruff>=0.15.14",
     "ty>=0.0.1",
     "testcontainers[keycloak,postgres,rabbitmq,redis]>=4.14.2",
