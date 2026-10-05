@@ -16,6 +16,7 @@ dependencies {
 	implementation(libs.kotlinxRpcGradlePlugin)
 	implementation(libs.ktlintGradlePlugin)
 	implementation(libs.detektGradlePlugin)
+    implementation(libs.koverGradlePlugin)
 }
 
 gradlePlugin {

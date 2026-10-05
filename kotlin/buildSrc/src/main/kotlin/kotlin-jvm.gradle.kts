@@ -11,6 +11,7 @@ plugins {
     id("org.jetbrains.kotlinx.rpc.plugin")
     id("org.jlleitschuh.gradle.ktlint")
     id("dev.detekt")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 kotlin {
@@ -81,4 +82,20 @@ ktlint {
 detekt {
     config.setFrom(files(rootProject.file(".detekt.yml")))
     buildUponDefaultConfig = true
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                packages("com.github.k3karthic.app", "com.github.k3karthic.debugger", "com.github.k3karthic.utils")
+            }
+        }
+
+        verify {
+            rule {
+                minBound(70)
+            }
+        }
+    }
 }
