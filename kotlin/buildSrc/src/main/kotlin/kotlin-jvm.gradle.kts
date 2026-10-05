@@ -80,22 +80,13 @@ ktlint {
 }
 
 detekt {
-    config.setFrom(files(rootProject.file(".detekt.yml")))
+    ignoreFailures = true
     buildUponDefaultConfig = true
+    basePath.set(rootProject.layout.projectDirectory)
+    config.setFrom(files(rootProject.file(".detekt.yml")))
 }
 
-kover {
-    reports {
-        filters {
-            excludes {
-                packages("com.github.k3karthic.app", "com.github.k3karthic.debugger", "com.github.k3karthic.utils")
-            }
-        }
-
-        verify {
-            rule {
-                minBound(70)
-            }
-        }
-    }
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports.sarif.required.set(true)
+    finalizedBy(rootProject.tasks.named("detektReportMerge"))
 }

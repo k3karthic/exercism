@@ -13,8 +13,8 @@ or run it directly from the terminal:
 * Run `./gradlew checkDependencyAge` to check lockfiles and flag direct dependencies whose released versions are older than 365 days.
 * Run `./gradlew ktlintFormat` to format Kotlin sources.
 * Run `./gradlew ktlintCheck --continue` to get a report of violations from [ktlint](https://ktlint.github.io/ktlint/latest/).
-* Run `./gradlew detekt --continue` to get a report of violations from [detekt](https://detekt.dev/).
-* Run `./gradlew koverHtml` to generate a coverage report for each subproject.
+* Run `./gradlew detekt detektReportMerge --continue` to get a report of violations from [detekt](https://detekt.dev/).
+* Run `./gradlew koverHtmlReport --continue` to generate a coverage report for each subproject.
 * Run `./gradlew koverVerify --continue` to validate that all subprojects meet the kover defined thresholds.
 * Run `./gradlew build` to only build the application.
 * Run `./gradlew check` to run all checks, including tests.
