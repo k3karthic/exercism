@@ -1,6 +1,6 @@
 plugins {
     id("com.github.k3karthic.lockall")
-    id("org.jetbrains.kotlinx.kover")
+    alias(libs.plugins.kover)
 }
 
 dependencies {
