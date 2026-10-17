@@ -3,7 +3,7 @@
 * Memory Management - [memory_management_by_language.md](/memory_management_by_language.md)
 * CPU Topology - [cpu_topology/architectural_mapping_and_hwloc_concepts.md](/cpu_topology/architectural_mapping_and_hwloc_concepts.md)
 * [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - [keycloak/keycloak_overview.md](/keycloak/keycloak_overview.md)
-* Languages:
+* Languages (`cheatsheets` subdirectory within each language contains quick references):
    * [Python](https://www.python.org/) (LLM-assisted)
    * [TypeScript](https://www.typescriptlang.org/) (LLM-assisted)
    * [Go](https://go.dev/) - TODO
