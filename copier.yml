@@ -1,0 +1,15 @@
+language:
+  type: str
+  help: Which language template?
+  choices:
+    - kotlin_subproject
+
+module_name:
+  type: str
+  help: What is the module name?
+
+_subdirectory: "copier/{{ language }}"
+
+_tasks:
+  - command: "mkdir -p src/main/kotlin && mkdir -p src/test/kotlin"
+    when: "{{ language.startswith('kotlin_') }}"
