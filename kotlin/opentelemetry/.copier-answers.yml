@@ -1,0 +1,4 @@
+_commit: edd6899e47ace1441f1c35a62f89c77bb15d4988
+_src_path: ../..
+language: kotlin_subproject
+module_name: opentelemetry

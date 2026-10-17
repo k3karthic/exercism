@@ -2,6 +2,15 @@
 
 Testing is part of the standard Gradle subproject structure and does not have a dedicated module.
 
+## New Module
+
+Run `mkdir <name> && cd <name>`
+Run `copier copy --trust --vcs-ref HEAD -d language=kotlin_subproject ../.. .`
+Add `include(":<name>")` to `./settings.gradle.kts`
+
+To update at a later time, run the following from the module directory
+`copier update --trust --vcs-ref HEAD`
+
 ## Build & Run
 
 This project uses [Gradle](https://gradle.org/).

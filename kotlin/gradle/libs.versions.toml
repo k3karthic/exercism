@@ -22,6 +22,7 @@ kotlinxRpc = "0.11.0-grpc-189"
 grpcJava = "1.84.0"
 mockk = "1.14.11"
 kover = "0.9.11"
+otel = "0.9.0"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -52,12 +53,19 @@ kotlinxRpcClient = { module = "org.jetbrains.kotlinx:kotlinx-rpc-grpc-client", v
 kotlinxRpcServer = { module = "org.jetbrains.kotlinx:kotlinx-rpc-grpc-server", version.ref = "kotlinxRpc" }
 grpcNetty = { module = "io.grpc:grpc-netty", version.ref = "grpcJava" }
 mockk = { module = "io.mockk:mockk-jvm", version.ref = "mockk" }
+otelCore = { module = "io.opentelemetry.kotlin:core", version.ref = "otel" }
+otelImplementation = { module = "io.opentelemetry.kotlin:implementation", version.ref = "otel" }
+otelExport = { module = "io.opentelemetry.kotlin:exporters-otlp", version.ref = "otel" }
+otelApi = { module = "io.opentelemetry.kotlin:api", version.ref = "otel" }
+otelNoop = { module = "io.opentelemetry.kotlin:noop", version.ref = "otel" }
 
 # Libraries can be bundled together for easier import
 [bundles]
 kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
 temporal = ["temporalCore", "temporalTesting"]
 kotlinxRpc = ["kotlinxRpcCore", "kotlinxRpcProtobuf", "kotlinxRpcClient", "kotlinxRpcServer", "grpcNetty"]
+otelInit = ["otelCore", "otelImplementation", "otelExport"]
+otelInstrument = ["otelApi", "otelNoop"]
 
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

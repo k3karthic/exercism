@@ -37,5 +37,6 @@ include(":durableexecution")
 include(":debugger")
 include(":unixdomainsockets")
 include(":grpc")
+include(":opentelemetry")
 
 rootProject.name = "kotlin"
