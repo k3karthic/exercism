@@ -20,7 +20,7 @@
        * Concurrency
        * Parallelism
        * UNIX Domain Sockets
-       * [gRPC](https://grpc.io/) - Excluding Pharo
+       * [gRPC](https://grpc.io/)
        * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
        * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
        * Keycloak - Excluding Zig, C++
