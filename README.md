@@ -12,7 +12,6 @@
    * [Elixir](https://elixir-lang.org/) - TODO
    * [Zig](https://ziglang.org/) - TODO
    * [C++](https://isocpp.org/) - TODO
-   * [Pharo](https://pharo.org/) - TODO
    * Exercises,
        * CPU / Memory Visualization
        * Debugger
