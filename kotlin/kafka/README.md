@@ -34,7 +34,7 @@ numeric ones, and writes malformed records to `failed_messages.txt`.
 ## Run the tests
 
 ```bash
-./gradlew :kakfa:test
+./gradlew :kafka:test
 ```
 
 ## Run Kafbat UI

@@ -20,9 +20,10 @@ or run it directly from the terminal:
 * Run `./gradlew run` to build and run the application.
 * Run `./gradlew writeDependencyLocks --write-locks --no-configuration-cache` to lock dependencies.
 * Run `./gradlew checkDependencyAge` to check lockfiles and flag direct dependencies whose released versions are older than 365 days.
+* Run `./gradlew :scan` to check for CVEs affecting locked dependencies.
 * Run `./gradlew ktlintFormat` to format Kotlin sources.
 * Run `./gradlew ktlintCheck --continue` to get a report of violations from [ktlint](https://ktlint.github.io/ktlint/latest/).
-* Run `./gradlew detekt detektReportMerge --continue` to get a report of violations from [detekt](https://detekt.dev/).
+* Run `./gradlew detekt detektReportMerge --continue` to get a report of violations from [detekt](https://detekt.dev/). Run with `--rerun-tasks` to bypass cached reports.
 * Run `./gradlew koverHtmlReport --continue` to generate a coverage report for each subproject.
 * Run `./gradlew koverVerify --continue` to validate that all subprojects meet the kover defined thresholds.
 * Run `./gradlew build` to only build the application.
@@ -41,17 +42,3 @@ The shared build logic was extracted to a convention plugin located in `buildSrc
 
 This project uses a version catalog (see `gradle/libs.versions.toml`) to declare and version dependencies
 and both a build cache and a configuration cache (see `gradle.properties`).
-
-## Scan CVEs
-
-```bash
-./gradlew :scan
-```
-
-## Check dependency age
-
-```bash
-./gradlew checkDependencyAge
-```
-
-This task scans each `gradle.lockfile`, matches the direct dependencies declared by the build, and fails if any locked direct dependency version was released more than 365 days ago.

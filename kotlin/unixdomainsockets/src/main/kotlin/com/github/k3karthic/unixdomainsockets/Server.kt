@@ -1,0 +1,95 @@
+package com.github.k3karthic.unixdomainsockets
+
+import java.net.StandardProtocolFamily
+import java.net.UnixDomainSocketAddress
+import java.nio.ByteBuffer
+import java.nio.channels.AsynchronousCloseException
+import java.nio.channels.ServerSocketChannel
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.Duration
+import java.time.LocalTime
+import java.util.logging.Level
+import java.util.logging.Logger
+
+data class Response(
+    val result: Int,
+    val ts: LocalTime,
+    val requestId: String,
+)
+
+class Server(
+    socketPath: String,
+) {
+    private val logger = Logger.getLogger(Server::class.java.name)
+    private var serverChannel: ServerSocketChannel
+
+    val p: Path = Path.of(socketPath)
+    val address: UnixDomainSocketAddress? = UnixDomainSocketAddress.of(p)
+
+    val m = mutableMapOf<String, Response>()
+
+    val ttlExpiryMinutes = 5L
+    val ttlWaitSeconds = 30L
+
+    init {
+        Files.deleteIfExists(p)
+
+        serverChannel =
+            ServerSocketChannel.open(StandardProtocolFamily.UNIX).apply {
+                bind(address)
+            }
+
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                cleanup()
+            },
+        )
+    }
+
+    fun cleanup() {
+        if (serverChannel.isOpen) {
+            serverChannel.close()
+        }
+
+        Files.deleteIfExists(p)
+    }
+
+    fun startTtlTask() {
+        while (!Thread.interrupted()) {
+            val now = LocalTime.now()
+            m.entries.removeIf { Duration.between(now, it.value.ts) > Duration.ofMinutes(ttlExpiryMinutes) }
+            Thread.sleep(Duration.ofSeconds(ttlWaitSeconds))
+        }
+    }
+
+    fun start() {
+        try {
+            while (!Thread.interrupted()) {
+                println("Server listening on $this.socketPath")
+
+                val clientChannel = this.serverChannel.accept()
+                val (requestId, number) = Utils.readData(clientChannel)
+
+                var result: Response?
+                if (m.containsKey(requestId)) {
+                    result = m[requestId]
+                } else {
+                    result = Response(requestId = requestId, result = number * 2, ts = LocalTime.now())
+                    m[requestId] = result
+                }
+
+                assert(result != null) { "Could not process request" }
+                val response = "${result?.requestId}:${result?.result}"
+                clientChannel.write(ByteBuffer.wrap(response.toByteArray(Charsets.UTF_8)))
+                clientChannel.shutdownOutput()
+
+                clientChannel.close()
+            }
+        } catch (e: AsynchronousCloseException) {
+            logger.log(Level.SEVERE, "Server socket closed, shutting down server loop.", e)
+        } finally {
+            cleanup()
+        }
+    }
+}

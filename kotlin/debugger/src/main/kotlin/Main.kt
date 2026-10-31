@@ -1,4 +1,4 @@
-package com.github.k3karthic.debugger
+@file:Suppress("MagicNumber")
 
 import kotlin.math.roundToInt
 
@@ -43,21 +43,22 @@ fun generateInvoice(
             categories = mutableSetOf(),
         )
 
-    for (item in inventory) {
+    @Suppress("DestructuringDeclarationWithTooManyEntries")
+    for ((_, _, price, category) in inventory) {
         // conditional breakpoint here: item.category == 'Electronics'
-        if (item.category.equals("Electronics")) {
+        if (category == "Electronics") {
             // stop at com.github.k3karthic.debugger.MainKt:49
-            val dummy = true
+            println("Hello")
         }
 
         invoiceSummary.itemsProcessed += 1
-        invoiceSummary.subtotal += item.price
-        invoiceSummary.categories.add(item.category)
+        invoiceSummary.subtotal += price
+        invoiceSummary.categories.add(category)
 
         // Determine if a discount applies to this category
-        val rate = discountMapping.getOrElse(item.category, { 0.0 })
+        val rate = discountMapping.getOrElse(category) { 0.0 }
 
-        val itemFinalPrice = applyDiscount(item.price, rate)
+        val itemFinalPrice = applyDiscount(price, rate)
         invoiceSummary.finalTotal += itemFinalPrice
 
         invoiceSummary.subtotal = (invoiceSummary.subtotal * 100).roundToInt() / 100.0

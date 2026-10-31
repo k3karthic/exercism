@@ -86,7 +86,7 @@ tasks.withType<Test>().configureEach {
 ktlint {
     filter {
         exclude { element ->
-            element.file.path.contains("build/protoBuild") || element.file.path.contains("/generated/")
+            element.file.path.contains("/generated/")
         }
     }
 }
@@ -101,4 +101,7 @@ detekt {
 tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
     reports.sarif.required.set(true)
     finalizedBy(rootProject.tasks.named("detektReportMerge"))
+    setSource(source.filter {
+        !it.path.contains("/generated/")
+    })
 }
