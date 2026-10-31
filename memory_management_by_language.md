@@ -4,14 +4,14 @@
 
 | Language | Primary Strategy | Compaction | Fragmentation Solution |
 | :---- | :---- | :---- | :---- |
-| **Python** | Ref Counting \+ Gen GC | No | pymalloc size classes (≤512 B); OS allocator (\>512 B) |
-| **Go** | Concurrent Mark-Sweep | No | TCMalloc size classes |
+| **Python (CPython)** | Reference counting \+ cyclic GC | No | pymalloc size classes (≤512 B); platform allocator for larger blocks |
+| **Go** | Concurrent mark-and-sweep | No | Runtime size classes and spans |
 | **Java (JVM)** | Generational \+ Concurrent | Yes | Physical sliding / Relocation via Load Barriers |
-| **Erlang** | Per-Process Copying GC | Local Only | Process Copying \+ Global AOBF |
+| **Erlang** | Per-process copying GC | Local heaps | Process heaps \+ configurable carrier allocators |
 | **Zig** | Manual \+ Explicit | No | Explicit Arenas, DebugAllocator/GPA, Fixed Buffers |
-| **Rust** | Compile-Time Ownership | No | Slab allocators (jemalloc), Arenas (bumpalo), Pooling |
-| **Node** | Gen Semi-Space \+ Mark-Sweep | Yes | Copying (Young), Page Compaction (Old), Off-heap Buffers |
-| **Haskell (GHC)** | Generational Copying \+ ImMix | Yes | Copying Evacuation, Optional Old-Gen Compaction, Compact Regions |
+| **Rust** | Ownership and deterministic destruction | No | System allocator by default; optional allocators, arenas, and pooling |
+| **Node.js (V8)** | Generational, mostly concurrent/incremental GC | Selective | Young-generation copying; selective old-generation compaction; external Buffer backing stores |
+| **Haskell (GHC)** | Generational copying by default; optional collectors | Usually | Copying evacuation, optional old-generation compaction/non-moving GC, compact regions |
 
 ## **1\. Python: The Dual-System Manager**
 
@@ -19,20 +19,20 @@ Python provides automatic memory management without exposing pointers to the dev
 
 ### **The Primary System: Reference Counting**
 
-Every object in Python maintains a count of how many variables or data structures point to it.
+In conventional CPython builds, objects use reference counts to track references from variables and data structures. Details differ in free-threaded builds and across Python implementations.
 
 > * **Mechanics:** When x \= \[1, 2\], the list's count is 1\. If y \= x, the count becomes 2\. If del x is called, the count drops to 1\.  
-> * **Deallocation:** The exact instruction cycle a reference count hits 0, Python immediately destroys the object and frees the memory. This is highly deterministic and handles the vast majority of memory cleanup instantly.  
+> * **Deallocation:** When an object's reference count reaches zero, CPython usually deallocates it immediately. Finalizers, resurrection, and implementation details can affect when cleanup occurs, and the allocator may retain freed memory for reuse rather than returning it to the OS.
 > * **The Blind Spot:** It cannot handle circular references (e.g., Object A points to Object B, and Object B points to Object A). Their counts will never drop below 1\.
 
-### **The Backup System: Generational Garbage Collection**
+### **The Backup System: Cyclic Garbage Collection**
 
-To catch isolated circular references, Python periodically runs a background Generational GC. It categorizes objects into three generations (Gen 0, 1, 2\) based on survival time, running most frequently on Gen 0\. Because simple types (integers, strings) cannot form circular loops, the GC **only watches container objects** (lists, dicts, custom classes). It uses a "Trial Deletion" algorithm to find cyclic garbage:
+To catch isolated circular references, CPython periodically runs a cyclic garbage collector over tracked container objects (for example, lists, dictionaries, and instances that can participate in cycles). Integers and strings are not tracked as containers. Collection is triggered by allocation/deallocation thresholds; it is not a background thread. CPython 3.14 changed the generation scheme: older versions used three generations, while 3.14 and later use young and old generations. The collector uses reference-counting-based cycle detection, commonly described as a form of trial deletion:
 
-> 1. **Copy Counts:** The GC creates a temporary copy of the reference count for all tracked containers in a generation.  
+> 1. **Copy Counts:** The collector computes temporary reference counts for tracked containers in the collection set.
 > 2. **Subtract Internal Links:** It iterates through the objects. If Object A contains a pointer to Object B, it subtracts 1 from Object B's temporary count.  
 > 3. **The Rescue Phase:** Any object with a temporary count \> 0 is being kept alive by something outside the cycle (like an active variable). The GC flags these as "safe" and traces their references, rescuing anything they touch.  
-> 4. **The Purge:** Any object left with a count of 0 is mathematically proven to be an isolated island. The GC forcefully breaks their internal links, allowing their real reference counts to hit zero, destroying them.
+> 4. **The Purge:** Unreachable cycles are cleared, allowing reference counts to fall and objects to be deallocated. Finalizers and resurrection can affect when objects are actually reclaimed.
 
 ### **Memory Fragmentation**
 
@@ -40,7 +40,7 @@ Python suffers from memory fragmentation because its Garbage Collector cannot ph
 
 #### **The Root Cause: pymalloc Arenas**
 
-To speed up allocation for small objects (512 bytes or smaller), standard CPython uses an internal allocator called pymalloc (while experimental free-threaded builds in Python 3.13+ replace pymalloc with mimalloc for thread safety). pymalloc requests large blocks of memory from the OS called **Arenas** (256 KB on 32-bit systems and older Python versions, or **1 MB** on 64-bit platforms in Python 3.10+) and divides them into 4 KB pools of strict 8-byte size classes.  
+To speed up allocation for small objects (512 bytes or smaller), standard CPython uses an internal allocator called pymalloc. The free-threaded CPython build introduced in 3.13 uses mimalloc instead. pymalloc requests large blocks called **arenas** (commonly 256 KiB on 32-bit builds and 1 MiB on 64-bit builds) and subdivides them into pools and size classes; exact details can vary by version and platform.
 The trap: Python can only return an Arena to the OS if it is **100% empty**. If you create millions of objects during a traffic spike and then delete 99.9% of them, a single surviving 8-byte variable can hold an entire 256 KB or 1 MB Arena hostage.
 
 #### **The Symptom: "Phantom Leaks"**
@@ -51,25 +51,25 @@ After a large workload finishes, your OS-level memory usage (RSS) stays flat at 
 
 Because you cannot force Python to compact memory, developers rely on architectural workarounds:
 
-> * **Worker Recycling:** This is the industry standard for web servers (Gunicorn, Celery). You configure workers to automatically restart after handling *N* requests. Process death instantly forces the OS to reclaim all fragmented memory.  
-> * **Chunking (Generators):** Process large datasets line-by-line using yield instead of loading everything into memory at once. This prevents the massive initial Arena allocation spike.  
+> * **Worker Recycling:** Some web servers and task queues (including Gunicorn and Celery) can recycle workers after a configured number of requests or tasks. Exiting a worker lets the OS reclaim its address space.
+> * **Chunking (Generators):** Process large datasets incrementally with generators instead of loading everything at once. This can reduce peak live memory.
 > * **Use \_\_slots\_\_:** If instantiating millions of objects, using \_\_slots\_\_ prevents Python from creating a fragmented, memory-heavy dictionary (\_\_dict\_\_) for every single object.  
-> * **NumPy / Pandas:** These libraries allocate their massive contiguous arrays directly in C, entirely bypassing pymalloc and its fragmentation traps.
+> * **NumPy / Pandas:** Large numerical data buffers are generally allocated outside pymalloc by native code, although Python objects and library metadata still use Python's allocators.
 
 #### **Large Objects**
 
-Because Python doesn't compact memory and delegates objects larger than 512 bytes directly to C's malloc(), their fragmentation behavior depends entirely on the underlying C allocator. It trusts the operating system's C library to manage the physical RAM.
+Because CPython does not compact its object heap, allocations larger than pymalloc's 512-byte cutoff are handled by the platform allocator. Their fragmentation and return-to-OS behavior therefore depend on that allocator and the operating system; they are not guaranteed to use a dedicated mapping.
 
-> * **For Very Large Objects:** If you allocate a massive object (e.g., hundreds of kilobytes or megabytes), the C allocator typically uses an mmap syscall to get dedicated virtual memory directly from the OS. When the object's reference count hits zero, Python calls free(), and the C allocator uses munmap to hand that exact memory right back to the OS.  
-> * **For "Medium" Large Objects:** If you allocate objects that are larger than 512 bytes but not big enough to trigger an mmap (e.g., 2 KB or 10 KB), the C allocator puts them in the standard C heap. If you create and destroy millions of these rapidly, the C heap can become heavily fragmented. Because Python cannot move live objects to consolidate the gaps, your process's total memory footprint will bloat.
+> * **Large allocations:** Some platform allocators satisfy sufficiently large requests with dedicated mappings and may release those mappings when freed, but thresholds and behavior are allocator-dependent.
+> * **Other allocations:** Blocks above 512 bytes may be served from allocator-managed arenas or heaps. Repeatedly creating and freeing differently sized blocks can contribute to fragmentation, and freed memory is not necessarily returned to the OS immediately.
 
 ## **2\. Go (Golang): Concurrency & Low Latency**
 
-Go was designed for massive network concurrency. Its garbage collector prioritizes one thing above all else: **ultra-low latency**. It aims for sub-millisecond pauses, even on massive heaps.
+Go's garbage collector is designed to keep pauses short while maintaining throughput and controlling memory use. It performs most marking concurrently, but pause times and overall latency depend on workload, heap size, and runtime version; sub-millisecond pauses are not guaranteed.
 
 ### **Concurrent Tri-Color Mark-and-Sweep**
 
-Go minimizes "Stop-The-World" (STW) pauses to microsecond-level phases (only briefly pausing during **Mark Setup** and **Mark Termination** to toggle the write barrier) by running the core marking and sweeping phases concurrently alongside your application Goroutines using a Tri-Color abstraction:
+Go minimizes stop-the-world (STW) work by running most marking and sweeping concurrently with application goroutines, using a tri-color abstraction. Brief STW phases are still used for GC phase transitions:
 
 > * **White (Garbage):** Unchecked objects.  
 > * **Gray (Queued):** The GC starts at the "roots" (global variables, active stacks) and marks them Gray. This means the object is alive, but its children haven't been checked.  
@@ -78,18 +78,17 @@ Go minimizes "Stop-The-World" (STW) pauses to microsecond-level phases (only bri
 
 **The Write Barrier:** To prevent the application from moving a White object behind a Black object while the GC is actively scanning (which would cause live data to be deleted), Go injects a tiny snippet of code called a Write Barrier. It intercepts pointer modifications during a GC cycle, keeping the memory graph safe without freezing the app during the concurrent mark phase.
 
-### **TCMalloc-Style Allocation**
+### **Size-Class Allocation**
 
-Because Go doesn't physically move objects to compact memory, it prevents fragmentation by dividing the heap into strict size classes (around 67 size classes, such as a pool purely for 32-byte objects). When an object is freed, it leaves a perfect hole for the next object of that exact size.  
-If you notice your Go application's memory footprint growing indefinitely while the in-use heap remains low, you are likely experiencing severe external fragmentation. You can defend against this by:
+Go does not compact live objects. Its allocator uses size classes for small objects and spans of pages for larger allocations, which helps reuse free space but does not eliminate fragmentation. A high process footprint relative to live heap can also reflect retained free pages, allocator behavior, or runtime memory limits—not necessarily severe external fragmentation. To reduce allocation pressure:
 
-> * Using sync.Pool to reuse objects instead of constantly allocating new ones.  
+> * Use sync.Pool only for suitable temporary objects and when profiling shows a benefit; the pool may be cleared by the runtime and can retain memory between collections.
 > * Allocating large contiguous blocks (like a single large \[\]byte) rather than millions of tiny structs containing pointers.  
-> * Ensuring that long-lived objects are not allocated at the same time as short-lived objects, which prevents short-lived garbage from getting trapped in the same mspan as a permanent resident.
+> * Where practical, separate long-lived data from high-churn allocations to improve reuse; this does not guarantee that objects will occupy separate spans.
 
 ### **Large Objects**
 
-In Go, an object is officially classified as a "large object" if it is larger than **32 KB**.  
+In the Go runtime allocator, allocations larger than the small-object limit (currently 32 KiB) are handled as large allocations; implementation details can change between runtime versions.
 Because Go’s memory allocator is heavily optimized for millions of tiny, short-lived objects (like HTTP request structs or small strings), it treats large objects entirely differently. It bypasses the normal, highly-optimized caching mechanisms and goes straight to the central heap.
 
 #### **1\. Bypassing the Middleman (The mheap)**
@@ -100,11 +99,11 @@ When you request an object larger than 32 KB (like a large \[\]byte buffer for a
 
 #### **2\. The Custom mspan**
 
-Go manages memory in chunks called pages (in Go, one page is exactly **8 KB**).  
-When a large object goes to the mheap, the runtime calculates exactly how many 8 KB pages it needs and creates a custom, dynamically sized memory block (an mspan) just for that object.
+Go manages heap memory in runtime pages (8 KiB on common 64-bit platforms; page size is platform-dependent).
+When a large object goes to the mheap, the runtime allocates a page-aligned span (an mspan) sized to accommodate it.
 
-> * **The Math:** If you allocate a 100 KB object, Go divides this by 8 KB to get 12.5. It rounds up and allocates a custom mspan of exactly 13 contiguous pages (104 KB).  
-> * **The Rule:** Just like ZGC's large pages, **a large mspan in Go only ever contains exactly one object**.
+> * **Example:** With an 8 KiB runtime page size, a 100 KiB allocation needs at least 13 pages, though allocator details determine the actual span size.
+> * **The Rule:** Large spans are generally dedicated to a single large allocation, unlike size-class spans that hold multiple small objects.
 
 #### **3\. The Impact on Fragmentation**
 
@@ -117,10 +116,10 @@ This allocation strategy drastically changes the fragmentation dynamics:
 
 #### **4\. Coalescing and the Scavenger**
 
-To prevent large-object fragmentation from exhausting memory, Go relies on immediate span coalescing and its background **Scavenger** process:
+To manage free address ranges and return unused physical memory, Go uses page allocator coalescing and a background **Scavenger**:
 
-> * **Immediate Coalescing:** When a large object is garbage collected and its custom mspan is returned to the mheap, the runtime immediately checks if the adjacent virtual memory pages before or after it are also free. If they are, mheap synchronously merges (coalesces) them into a single larger contiguous free span.  
-> * **The Background Scavenger:** The Scavenger constantly scans the mheap for free pages that have been sitting idle. It issues OS system calls (madvise with MADV\_DONTNEED or MADV\_FREE) to release the underlying physical RAM back to the operating system while keeping the virtual address space reserved for future allocations.
+> * **Span reuse and coalescing:** The page allocator can merge adjacent free ranges when spans are released, subject to runtime allocator state and version.
+> * **The Background Scavenger:** The Scavenger periodically identifies free pages eligible for release. Depending on the operating system, it uses system calls such as `madvise` to release physical memory while retaining virtual address space for future allocations.
 
 ## **3\. Java (JVM): The Compaction Heavyweights**
 
@@ -136,16 +135,16 @@ The default collector since Java 9, G1GC focuses on predictable pauses and high 
 
 ### **ZGC (The Ultra-Low Latency Marvel)**
 
-Designed for heaps up to 16 Terabytes with pause times consistently under 1 millisecond. ZGC achieves this by compacting memory *concurrently* while the application continues to run.
+ZGC is designed for large heaps and low pause times. It relocates objects concurrently while application threads continue to run; its pause times and supported heap sizes depend on the JDK, platform, and workload.
 
 > * **Colored Pointers:** In 64-bit systems (which typically use 48-bit or 57-bit virtual addressing), ZGC utilizes unused upper bits—or multi-mapped/shifted metadata bits in Generational ZGC—to store GC state directly inside the 64-bit object reference.  
-> * **Load Barriers (Self-Healing):** When your application tries to read an object, a Load Barrier intercepts it. It checks the colored bits. If the object was recently moved by the GC, the barrier pauses that single thread briefly, looks up the new address in a forwarding table, updates the pointer on the fly, and returns the correct object. The application threads heal their own pointers as they naturally encounter them.
+> * **Load Barriers (Self-Healing):** Load barriers check references as the application accesses them. If an object has moved, the barrier resolves the reference through forwarding metadata and can update it, allowing stale references to be repaired as they are used.
 
 Introduced in Java 21, **Generational ZGC** became the default ZGC mode in Java 23 (with non-generational ZGC removed in Java 24), combining the ultra-low latency of colored pointers with the throughput efficiency of a young/old memory split.  
 If your application allocates a massive number of large objects (like giant byte buffers, large caches, or big arrays):
 
 > 1. **G1GC** can struggle with objects \\ge 50\\% of a region size ("humongous" objects). While modern G1GC can eagerly reclaim dead unreferenced humongous objects during young collections, it does not move them during normal evacuation pauses. This can lead to contiguous region fragmentation and eventual Full GC pauses unless you tune \-XX:G1HeapRegionSize so those objects fit inside standard regions.  
-> 2. **ZGC** handles them effortlessly. It isolates them in single-object Large Pages and drops them cleanly when they die, completely avoiding both fragmentation and pause-time penalties.
+> 2. **ZGC** relocates large objects as part of its concurrent relocation machinery, but large allocations still have memory-management costs; no collector completely avoids fragmentation or latency trade-offs.
 
 ## **4\. Erlang (BEAM): The Telecom Concurrency Model**
 
@@ -160,7 +159,7 @@ Millions of lightweight Erlang processes can run simultaneously, and they share 
 
 ### **The Global Pool & Its Traps**
 
-If processes need to share a massive 10 MB image, copying it to each isolated heap would be disastrous. Thus, binaries over 64 bytes (Refc Binaries) go to a global shared pool (binary\_alloc), managed by reference counting. Unlike per-process heaps, this global pool is **not** compacted. This introduces specific traps:
+If processes need to share a massive 10 MB image, copying it to each isolated heap would be disastrous. Thus, sufficiently large binaries are generally stored in reference-counted binary storage shared outside process heaps (the threshold and implementation are runtime-dependent). Unlike per-process heaps, this storage is not compacted by process garbage collection. This introduces specific retention traps:
 
 > * **The Router Leak:** A routing process receives a 10 MB binary and forwards it, keeping only a tiny pointer on its local heap. Because its local heap never fills, the router's GC never triggers to clean up the dead pointer, locking the 10 MB binary in global memory forever.  
 > * **The Sub-Binary Trap:** Extracting a 10-byte header from a 1 GB binary creates a sub-binary pointer. Keeping those 10 bytes alive prevents the entire 1 GB parent from being garbage collected.  
@@ -177,7 +176,7 @@ To avoid performance-killing OS memory requests (malloc/mmap) for every tiny all
 ### **The Traps: mmap Floods and AOBF**
 
 > * **mmap Floods:** If an application generates thousands of 600 KB payloads just above the 512 KB default threshold, the VM bypasses its standard MBC pools. If carrier pooling is overwhelmed, it triggers direct OS system calls (mmap and munmap) for these objects, flooding the OS kernel and spiking CPU. The fix is increasing \+MBsbct so these payloads are routed into the efficient, pre-allocated MBCs.  
-> * **Address Order Best Fit (AOBF):** To combat the "Swiss-cheese" fragmentation inside the global binary pool and MBCs, Erlang’s allocator uses AOBF. When placing a new block, it packs data into the best-fitting hole at the lowest available memory address. This helps drain carriers at higher addresses so completely empty MBCs can be returned to the carrier pool or OS.
+> * **Allocator strategies:** BEAM offers configurable allocator strategies, including address-order best-fit for some allocator instances. It is not a universal compaction mechanism for the binary pool and all MBCs, and it cannot eliminate fragmentation around live allocations.
 
 ## **5\. Zig: Explicit Control & Transparent Allocation**
 
@@ -185,45 +184,44 @@ Zig abandons the runtime garbage collector entirely, returning to manual memory 
 
 ### **Bring Your Own Allocator (BYOA)**
 
-Zig enforces a strict rule: **No hidden memory allocations**. If a function needs to use the heap, the developer must pass an allocator as an explicit argument.
+Zig's standard library commonly makes allocation explicit by accepting an allocator value. This is a programming convention and API design, not a language-wide guarantee that every allocation must be passed an allocator.
 
-> * **defer:** To ensure memory isn't leaked, Zig uses the defer keyword (defer allocator.free(memory)), guaranteeing cleanup exactly when the scope exits, regardless of error branches.
+> * **defer:** `defer allocator.free(memory)` schedules that free call when the current scope exits, including error paths. It only prevents a leak when the matching cleanup is actually registered and ownership is handled correctly.
 
 ### **Beating External Fragmentation**
 
 Because Zig exposes raw pointers directly to the developer without a managed runtime or load barriers to rewrite addresses, it cannot relocate live heap objects to compact gaps. Instead, it avoids fragmentation through explicit architectural patterns:
 
-> * **DebugAllocator / General Purpose Allocator (GPA):** Uses power-of-two size classes (buckets) inherently to reduce external fragmentation and includes built-in safety checks (double-free, use-after-free) and leak detection that prints a stack trace on exit (renamed from GeneralPurposeAllocator to DebugAllocator in Zig 0.14+).  
-> * **Arena Allocators (std.heap.ArenaAllocator):** A core standard library feature. Developers wrap a backing allocator in an Arena and pass it to a worker task (like parsing a file or handling an HTTP request). All memory is allocated sequentially via bump-pointer blocks, and the entire Arena is dropped instantly when the task finishes, leaving zero fragmented holes.  
-> * **Fixed Buffer Allocators (std.heap.FixedBufferAllocator):** For embedded systems or strict latency paths, developers can wrap a fixed byte array directly on the stack or in static memory. Functions allocate through the standard Allocator interface, but are merely slicing up the fixed buffer, resulting in zero heap fragmentation and deterministic OutOfMemory errors if limits are breached.
+> * **DebugAllocator:** Zig's debug allocator provides diagnostics such as leak detection and invalid-free checks. Its allocation strategy is an implementation detail, not a guarantee of power-of-two size classes or reduced fragmentation (the older `GeneralPurposeAllocator` name was replaced in newer standard-library versions).
+> * **Arena Allocators (std.heap.ArenaAllocator):** Developers can wrap a backing allocator in an arena and use it for a short-lived task. Individual allocations are released together when the arena is deinitialized, avoiding the need to free each allocation separately; alignment and unused capacity can still waste space.
+> * **Fixed Buffer Allocators (std.heap.FixedBufferAllocator):** For embedded systems or strict latency paths, developers can wrap a fixed byte array in the standard allocator interface. Allocations come from that buffer, so they do not grow the general heap; exhaustion is reported as an allocation failure, and alignment can leave unused space.
 
 ## **6\. Rust: Compile-Time Memory Safety**
 
-Rust guarantees memory safety without a GC, and without forcing the developer to write manual free() statements, via strict compiler rules.
+Rust's ownership and borrowing rules prevent many memory-safety errors without a tracing garbage collector. Values are dropped when ownership ends, while allocations themselves are managed by the selected allocator.
 
 ### **Ownership and the Borrow Checker**
 
-> * **The Rules:** Every piece of data has a single "owner" variable. When that variable goes out of scope, the compiler automatically inserts cleanup calls via the Drop trait.  
-> * **Borrowing:** If data must be shared, it is "borrowed" via references (\&T or \&mut T). The compiler mathematically proves via lifetime analysis that no reference will outlive the data it points to. If a data race or use-after-free is possible, the program simply refuses to compile.
+> * **The Rules:** Each value has one owner at a time (ownership can be transferred). When the owner is dropped, Rust runs its `Drop` implementation, if any, to release resources.
+> * **Borrowing:** If data must be shared, it is borrowed via references (\&T or \&mut T). The compiler checks lifetimes and borrowing rules to prevent dangling references and data races in safe code; unsafe code and some interior-mutability patterns require additional care.
 
 ### **Beating External Fragmentation**
 
 Like Zig, Rust exposes raw memory addresses and references without a relocating runtime, meaning it cannot physically slide allocated heap objects to close gaps. To combat fragmentation on long-running servers, Rust developers leverage its crate ecosystem and standard library features:
 
-> * **Slab Allocators (jemalloc / mimalloc):** Developers often swap the default OS allocator for jemalloc or mimalloc. These divide the heap into strict size classes (slabs), ensuring that freeing a 32-byte string leaves a reusable 32-byte slot for the next one. While slab pinning can still occur if a single surviving allocation keeps a slab page alive, size classes drastically reduce external fragmentation across long-running workloads.  
+> * **Alternative allocators:** Applications can select allocators such as jemalloc or mimalloc in place of the platform allocator. Their allocation strategies vary; size classes can improve reuse but do not prevent fragmentation.
 > * **Arena Allocation (bumpalo):** Similar to Zig, crates like bumpalo allow developers to pre-allocate large chunks of memory for short-lived phases, bump-allocating sequentially and dropping or resetting the entire block at once.  
 > * **Capacity Reuse & Object Pooling:** Rust heavily encourages capacity reuse. Instead of dropping a Vec or String and returning its memory to the heap, developers call vec.clear(). This drops the elements (setting the length to 0\) but keeps the underlying allocated capacity reserved for the next cycle.
 
 ## **7\. Node.js (V8): Generational Compaction and Off-Heap Buffers**
 
-Node.js does not have its own native garbage collector; instead, it delegates memory management entirely to **Google's V8 JavaScript Engine** (the same engine that powers Chrome).  
-V8 uses a highly optimized, multi-threaded **Generational Mark-Sweep-Compact** garbage collector. While originally designed for short-lived browser tabs, it has evolved significantly under the "Orinoco" project to handle massive, long-running Node.js server workloads.
+Node.js uses **V8** for JavaScript heap management, while native allocations and resources are also managed by Node.js and its libraries. V8 uses a generational collector with parallel, incremental, and concurrent phases; the exact algorithms vary by space and V8 version.
 
 ### **The Generational Heap Split**
 
 V8 strictly divides the JavaScript heap into two main segments (alongside a Large Object Space where large allocations live without moving):
 
-> * **The Young Generation (New Space):** A small block of memory (typically between 1 MB and 64 MB) where most new objects are allocated.  
+> * **The Young Generation (New Space):** A comparatively small area where most new JavaScript objects are allocated; its size is adaptive and version/platform-dependent.
 > * **The Old Generation (Old Space):** A much larger block of memory for objects that survive the Young Generation.
 
 ### **The Scavenger (Young Generation GC)**
@@ -231,30 +229,30 @@ V8 strictly divides the JavaScript heap into two main segments (alongside a Larg
 Because JavaScript creates and discards temporary objects rapidly, V8 cleans the Young Generation frequently using a blazing-fast, parallel "Stop-The-World" (STW) algorithm called the Scavenger.
 
 > * **Semi-Space Copying:** The Young Generation is split perfectly in half: the "From-Space" and the "To-Space".  
-> * Objects are allocated in the From-Space. When it fills up, the app pauses briefly and multiple worker threads copy all live objects tightly packed into the To-Space, instantly wiping the entire From-Space clean.  
-> * The two spaces then swap roles. If an object survives two Scavenger cycles, it is "tenured" and promoted to the Old Generation.
+> * During a young-generation collection, live objects are copied or promoted and dead objects are reclaimed. The collection can involve a brief pause, with parallel work reducing its duration.
+> * Promotion depends on survival and runtime heuristics; it is not governed by a universal fixed number of scavenges.
 
 ### **Mark-Sweep-Compact (Old Generation)**
 
-When the massive Old Generation fills up, a pure semi-space copying approach would double memory overhead and take too long. Instead, V8 uses a **Mark-Sweep-Compact** algorithm:
+Old-generation collection may use marking, sweeping, and selective compaction rather than a single fixed algorithm:
 
 > 1. **Concurrent Marking:** V8 traces object references on background helper threads while your Node.js JavaScript code continues to run, preventing massive marking pauses.  
 > 2. **Sweeping:** Background threads identify dead objects and add their memory addresses to page free-lists for future allocations.  
-> 3. **Parallel Compaction (Solving Fragmentation):** Because the Old Generation becomes fragmented over time, V8 physically slides surviving objects together to close the gaps. While evacuating live objects and updating pointers requires a brief STW pause, V8 minimizes this pause by **only compacting highly fragmented memory pages** rather than the entire heap at once, and executes the copying and pointer updates in parallel across multiple helper threads.
+> 3. **Selective Compaction:** V8 may evacuate selected pages to address fragmentation. Compaction is not necessarily performed on every old-generation collection, and its costs and pause behavior vary by V8 version and workload.
 
 ### **The Node.js Specific Feature: Off-Heap Buffer Objects**
 
 JavaScript was originally designed for web pages, not file systems or TCP streams. If a Node.js server allocated every 500 MB file payload directly inside V8's standard garbage-collected object graph, GC scanning and copying overhead would severely degrade throughput.  
 To solve this, Node.js uses the Buffer class (implemented as a subclass of Uint8Array):
 
-> * **External Backing Stores:** For large buffers (and standard Buffer.alloc() calls), the raw byte payload is allocated **outside of V8's standard JS object heap** as an external ArrayBuffer backing store managed via C++ (malloc/custom ArrayBuffer::Allocator). For small buffers under 4 KB created via Buffer.allocUnsafe() or internal stream reads, Node.js slices memory from a pre-allocated **8 KB shared slab pool** to avoid malloc syscall overhead.  
+> * **External Backing Stores:** Buffer bytes are generally held in an `ArrayBuffer` backing store outside V8's managed object heap, with the JavaScript wrapper tracked by V8. Node.js pools some small allocations made through APIs such as `Buffer.allocUnsafe()`; the pool size and eligibility are implementation details (the default pool size is commonly 8 KiB). `Buffer.alloc()` does not use this pool.
 > * **The V8 Wrapper:** V8 only stores a small JavaScript wrapper object (Uint8Array / ArrayBuffer) on its heap that points to that external backing store, informing V8 of the external memory pressure associated with the object.  
-> * **The Retention Trap:** When the small JS wrapper is eventually garbage collected by V8, its finalizer frees the underlying external memory block (or releases its reference to the shared 8 KB slab). However, if you accidentally keep that small JS wrapper alive (e.g., inside a closure, cache, or an uncopied sub-slice .subarray() pointing to a massive parent buffer), your V8 heap size will look tiny, while your process RSS balloons until the server crashes with an Out-Of-Memory error.
+> * **The Retention Trap:** A live wrapper or view can keep its backing store (or a pooled slab) alive. Consequently, external memory can make process RSS high even when the JavaScript heap is comparatively small.
 
 ## **8\. Haskell (GHC): Immutability, Thunks, and the Block-Structured Heap**
 
 Haskell (compiled via the Glasgow Haskell Compiler, **GHC**) has a unique memory profile dictated by two core language properties: **pure immutability** and **lazy evaluation (call-by-need)**.  
-Because values cannot be mutated in place, Haskell programs allocate new heap objects at an extraordinary rate (often gigabytes per second)—most of which die almost immediately. Furthermore, because expressions are evaluated lazily, the heap stores not just data, but suspended computations called **Thunks**.
+Because values are immutable by default, Haskell programs often allocate many short-lived heap objects. Lazy evaluation also means the heap can store suspended computations called **thunks**. Actual allocation rates vary widely by program.
 
 ### **The Block-Structured Heap (MBlocks and bdescr)**
 
@@ -268,10 +266,10 @@ Unlike runtimes that request contiguous virtual address ranges for each generati
 
 By default, GHC divides the heap into two generations (Gen 0 and Gen 1, configurable via \+RTS \-G):
 
-> * **Per-Core Nurseries (Gen 0):** Each Haskell Execution Context (Capability / OS worker thread) gets its own lock-free allocation **Nursery** (default 512 KB–4 MB). New objects and thunks are allocated via a single bump-pointer instruction. Because the nursery fits inside the CPU's L2/L3 cache and most short-lived allocations die before the nursery fills, minor GC only copies the tiny fraction of live data (\~1–5%), making allocation nearly as fast as stack allocation.  
-> * **Parallel Copying (Default Major GC):** By default, both Gen 0 and Gen 1 use a Stop-The-World, parallel **semi-space copying collector** (Cheney’s algorithm). Live objects are evacuated into fresh 4 KB blocks, completely compacting them and eliminating fragmentation. However, because copying the entire Old Generation requires 2x memory residency during GC and causes pause times proportional to live heap size, large in-memory caches can suffer 100ms+ pauses.  
+> * **Nurseries:** GHC allocates into nursery blocks associated with capabilities. Allocation is typically a bump-pointer operation. Nursery size and the fraction of surviving objects depend on runtime settings and workload; allocation is not generally equivalent to stack allocation.
+> * **Parallel Copying (Default Major GC):** By default, GHC uses a stop-the-world copying collector for generations. Live objects are evacuated into fresh blocks, compacting the copied data, but the collector may need extra memory while copying and pauses can grow with the amount of live data.
 > * **Optional Old-Gen Compaction (+RTS \-c):** To avoid the 2x memory spike of copying when residency is high, GHC can switch the Old Generation to an in-place **Mark-Compact** collector (threading pointers via the Jonkers algorithm), trading longer GC CPU time for a much smaller memory footprint.  
-> * **The Low-Latency Non-Moving GC (+RTS \-xn):** Introduced in GHC 8.10+, developers can enable a **concurrent Mark-and-Sweep collector** for the Old Generation inspired by **ImMix**, while keeping the fast copying collector for Gen 0\. It organizes the old heap into size-segregated segments filled with cache-line-sized blocks ("lines"), using a snapshot-at-the-beginning (SATB) write barrier so application threads continue running while the Old Generation is collected—keeping pause times consistently under a few milliseconds.
+> * **The Non-Moving GC (+RTS \-xn):** GHC 8.10 introduced an optional concurrent non-moving collector for the old generation, based on Immix-style organization, while retaining copying collection for the young generation. It reduces some pause costs but does not guarantee a particular pause-time bound.
 
 ### **Haskell-Specific Memory Traps: Space Leaks & Pinning**
 
@@ -286,16 +284,16 @@ When you write let x \= a \+ b in Haskell, the runtime does not add a and b imme
 
 Like Go and Erlang, GHC handles large objects and C-interop buffers specially:
 
-> * **Large Objects (\\ge 3.2\\text{ KB}):** Objects roughly 80% of a 4 KB block or larger are allocated in dedicated contiguous chains of blocks (BF\_LARGE). During GC, GHC does not copy their contents; it simply relinks their block descriptors into the surviving generation.  
-> * **Pinned Objects (ByteString / FFI):** When passing memory to C via the Foreign Function Interface (FFI) or allocating a standard ByteString, the memory must be **pinned** (BF\_PINNED) so GHC's copying collector never moves it while C code holds a pointer to it.  
-> * **The Trap:** Small pinned allocations are packed into 4 KB blocks. Because pinned objects cannot be evacuated by the copying collector, **a single surviving 64-byte pinned ByteString (such as a sliced substring) holds its entire 4 KB block hostage**, causing severe internal fragmentation exactly like Python's pymalloc arenas.  
-> * **The Fix:** Use ShortByteString (which uses unpinned ByteArray\# memory that the GC *can* move and compact) for small long-lived strings in memory, and explicitly copy substrings (ByteString.copy) when slicing small pieces out of massive network buffers.
+> * **Large Objects (\\ge 3.2\\text{ KB}):** Objects roughly 80% of a 4 KB block or larger are allocated in dedicated chains of blocks (BF\_LARGE). During GC, GHC does not copy their contents; it relinks their block descriptors into the surviving generation.
+> * **Pinned memory and FFI:** Some GHC byte arrays are pinned so their addresses remain stable for foreign code. A standard strict `ByteString`, however, is typically backed by foreign memory rather than a small pinned GHC-heap object; FFI APIs have different pinning and lifetime requirements.
+> * **Retention risk:** Slices can retain a much larger backing allocation than the visible slice, depending on the representation and library version. Small pinned GHC allocations can also contribute to block retention, but this should not be conflated with every `ByteString`.
+> * **Mitigation:** Use an unpinned representation such as `ShortByteString` where suitable, and copy small slices when retaining the parent allocation would waste significant memory.
 
 #### **3\. Explicit Zero-GC Escape Hatch: Compact Normal Form (ghc-compact)**
 
 For massive, long-lived, immutable in-memory structures (like a 20 GB lookup table or AST), scanning millions of pointers during every Major GC wastes enormous CPU time.  
 GHC provides **GHC.Compact** (Compact Regions), an explicit memory management feature:
 
-> * You append an arbitrary immutable data structure into a Compact region (which forces full evaluation, eliminating all thunks).  
-> * The data is copied contiguously into a series of large blocks that **the Garbage Collector completely ignores during tracing**.  
-> * The GC treats the entire multi-gigabyte region as a **single opaque object** with zero internal pointers to scan. When the reference to the Compact region is dropped, the entire multi-gigabyte block chain is freed at once in O(1) time.
+> * Values can be added to a compact region, but putting a value in a compact does not in general force all of its thunks; evaluate the structure explicitly when that is required.
+> * The region stores closures in blocks and is managed as a unit rather than tracing every closure as part of ordinary heap collection.
+> * When the compact region becomes unreachable, its blocks can be reclaimed as a unit. This is not a guarantee of O(1) release time, and compact regions can still contain pointers to ordinary-heap objects.
