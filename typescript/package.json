@@ -61,7 +61,7 @@
     "@temporalio/workflow": "^1.21.1",
     "@testcontainers/redis": "^12.0.0",
     "amqplib": "^2.0.1",
-    "body-parser": "^2.2.0",
+    "body-parser": "^2.4.0",
     "camelcase": "^5.3.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -76,7 +76,10 @@
     "winston": "^3.17.0"
   },
   "overrides": {
-    "qs": "^6.16.0",
+    "body-parser": "^2.4.0",
+    "qs": "^6.16.1",
+    "glob": "^14.0.2",
+    "minimatch": "^11.0.1",
     "js-yaml": "4.3.2"
   }
 }
