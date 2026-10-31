@@ -37,14 +37,26 @@ configurations.all {
             because("GHSA-mfg7-5gfp-c4w3, CVE-2026-44249, CVE-2026-45674, CVE-2026-47691, CVE-2026-45673, CVE-2026-75595, CVE-2026-75596")
         }
         if (requested.group == "at.yawk.lz4" && requested.name == "lz4-java") {
-            useVersion("1.11.1")
-            because("CVE-2026-59949: Native XXHash implementations can crash the JVM when passed invalid input")
+            useVersion("1.11.4")
+            because("CVE-2026-59949, CVE-2026-106449, CVE-2026-106450, CVE-2026-106451, CVE-2026-106452, CVE-2026-106453")
         }
         if (requested.group.startsWith("com.fasterxml.jackson")) {
-            useVersion("2.18.9")
+            useVersion("2.18.11")
             because(
-                "GHSA-r7wm-3cxj-wff9, GHSA-72hv-8253-57qq, CVE-2026-54512, CVE-2026-54513, CVE-2026-54514, CVE-2026-54515, CVE-2026-59888, CVE-2026-59889, GHSA-mhm7-754m-9p8w",
+                "GHSA-r7wm-3cxj-wff9, GHSA-72hv-8253-57qq, CVE-2026-54512, CVE-2026-54513, CVE-2026-54514, CVE-2026-54515, CVE-2026-59888, CVE-2026-59889, GHSA-mhm7-754m-9p8w, CVE-2026-89407, CVE-2026-89425, CVE-2026-68497, CVE-2026-91776, CVE-2026-91777, CVE-2026-19032, CVE-2026-83557",
             )
+        }
+        if (requested.group == "com.google.guava" && requested.name == "guava" && requested.version?.endsWith("-jre") == true) {
+            useVersion("33.7.2-jre")
+            because("CVE-2026-102554: Denial of Service via unthrottled memory allocation during deserialization")
+        }
+        if (requested.group == "com.google.guava" && requested.name == "guava" && requested.version?.endsWith("-android") == true) {
+            useVersion("33.7.2-android")
+            because("CVE-2026-102554: Denial of Service via unthrottled memory allocation during deserialization")
+        }
+        if (requested.group == "org.xerial.snappy" && requested.name == "snappy-java") {
+            useVersion("1.1.10.9")
+            because("CVE-2026-108106, CVE-2026-93451, CVE-2026-116590")
         }
         if (requested.group == "io.micrometer") {
             useVersion("1.16.6")
