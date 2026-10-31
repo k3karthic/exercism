@@ -33,7 +33,7 @@
   * Script Driven ([Tcl](https://www.tcl-lang.org/))
   * Plugin ([Extism](https://extism.org/))
 * GUI ([Tk](https://tkdocs.com/)) - TODO
-* [Vulkan](https://www.vulkan.org/) - TODO
+* GPGPU - TODO
   * [Slang](https://shader-slang.org/) Shaders
   * Rust Binding ([wgpu](https://wgpu.rs/))
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
