@@ -12,6 +12,7 @@
    * [Elixir](https://elixir-lang.org/) - TODO
    * [Zig](https://ziglang.org/) - TODO
    * [C++](https://isocpp.org/) - TODO
+   * [Haskell](https://www.haskell.org/) - TODO
    * Exercises,
        * CPU / Memory Visualization
        * Debugger
@@ -23,10 +24,10 @@
        * [gRPC](https://grpc.io/)
        * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
        * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
-       * Keycloak - Excluding Zig, C++
+       * Keycloak - Excluding Rust, Zig, C++
        * [OpenTelemetry](https://opentelemetry.io/)
        * NUMA Aware (hwloc) - Only Zig, Rust, C++
-       * [OpenAPI](https://www.openapis.org) - Excluding Zig, C++
+       * [OpenAPI](https://www.openapis.org) - Excluding Rust, Zig, C++
        * Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
 * Extensibility - TODO
   * Script Driven ([Tcl](https://www.tcl-lang.org/))
