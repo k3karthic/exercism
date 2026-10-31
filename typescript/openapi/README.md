@@ -40,6 +40,9 @@ npm run db:openapi:migrate
 npx tsx openapi/server.ts
 ```
 
+In development mode (default), Vite hot module replacement is enabled for instant
+feedback on code changes. Set `NODE_ENV=production` to disable HMR.
+
 The server listens on port 3000 by default. Set `PORT` to override it.
 Requests require the `api_key` header with the value `some-api-key`.
 Swagger UI is available at `/swagger`, `/docs`, and `/openapi`.
