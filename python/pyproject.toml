@@ -34,6 +34,7 @@ dependencies = [
     "temporalio==1.30.0",
     "alembic>=1.20.0",
     "setuptools>=84.1.0",
+    "jurigged>=0.6.1",
 ]
 
 [tool.ruff]

@@ -19,8 +19,12 @@ In another terminal run:
 DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres \
   uv run alembic -c openapi/alembic.ini upgrade head
 DATABASE_URL=postgresql+asyncpg://postgres:mysecretpassword@localhost:5432/postgres \
-  uv run uvicorn openapi.server:app --reload
+  watchexec --no-vcs --watch openapi/server.py -- uv run uvicorn openapi.server:app
 ```
+
+The server uses [jurigged](https://github.com/breuleux/jurigged) for hot-reloading
+all `openapi/` modules on save, while `watchexec` restarts the process when
+`server.py` itself changes.
 
 Alembic manages the schema; the server no longer auto-creates tables at
 startup (`create_all` is reserved for the test suite's ephemeral database).

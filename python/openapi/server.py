@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
+import jurigged
 import uvicorn
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
@@ -36,6 +38,24 @@ from openapi.service import (
     update_pet_with_form,
     upload_pet_image,
 )
+
+_OPENAPI_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _openapi_filter(filename: str) -> bool:
+    """Match all .py files under the openapi package directory except server.py."""
+    abs_file = os.path.abspath(filename)
+    if not abs_file.startswith(_OPENAPI_DIR + os.sep):
+        return False
+    if not abs_file.endswith(".py"):
+        return False
+    if abs_file == os.path.join(_OPENAPI_DIR, "server.py"):
+        return False
+    return True
+
+
+# Enable jurigged hot-reload for all openapi modules except server.py
+jurigged.watch(pattern=_openapi_filter, logger=jurigged.live.default_logger)
 
 __all__ = ["API_KEY", "app"]
 
