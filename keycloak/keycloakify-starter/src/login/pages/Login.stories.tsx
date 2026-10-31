@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect } from "storybook/test";
 import { createKcPageStory } from "../KcPageStory";
 
 const { KcPageStory } = createKcPageStory({ pageId: "login.ftl" });
@@ -13,7 +14,11 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-    render: () => <KcPageStory />
+    render: () => <KcPageStory />,
+    play: async ({ canvas }) => {
+        const signInButton = await canvas.findByRole("button", { name: "Sign In" });
+        await expect(signInButton).toBeVisible();
+    }
 };
 
 export const WithInvalidCredential: Story = {
@@ -39,7 +44,11 @@ export const WithInvalidCredential: Story = {
                 }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        const errorMessage = await canvas.findByText("Invalid username or password.");
+        await expect(errorMessage).toBeVisible();
+    }
 };
 
 export const WithoutRegistration: Story = {
@@ -49,7 +58,10 @@ export const WithoutRegistration: Story = {
                 realm: { registrationAllowed: false }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        await expect(canvas.queryByText("Create account")).toBeNull();
+    }
 };
 
 export const WithoutRememberMe: Story = {
@@ -59,7 +71,10 @@ export const WithoutRememberMe: Story = {
                 realm: { rememberMe: false }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        await expect(canvas.queryByLabelText("Remember me")).toBeNull();
+    }
 };
 
 export const WithoutPasswordReset: Story = {
@@ -69,7 +84,10 @@ export const WithoutPasswordReset: Story = {
                 realm: { resetPasswordAllowed: false }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        await expect(canvas.queryByText("Forgot password?")).toBeNull();
+    }
 };
 
 export const WithEmailAsUsername: Story = {
@@ -205,7 +223,13 @@ export const WithSocialProviders: Story = {
                 }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        const googleLink = await canvas.findByRole("link", { name: "Google" });
+        const microsoftLink = await canvas.findByRole("link", { name: "Microsoft" });
+        await expect(googleLink).toBeVisible();
+        await expect(microsoftLink).toBeVisible();
+    }
 };
 
 export const WithoutPasswordField: Story = {
@@ -228,7 +252,11 @@ export const WithErrorMessage: Story = {
                 }
             }}
         />
-    )
+    ),
+    play: async ({ canvas }) => {
+        const alert = await canvas.findByRole("alert");
+        await expect(alert).toBeVisible();
+    }
 };
 
 export const WithOneSocialProvider: Story = {

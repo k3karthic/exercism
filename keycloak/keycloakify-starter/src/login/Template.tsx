@@ -137,6 +137,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
                 <section className="kc-modern-content">
                     {displayMessage && message !== undefined && (message.type !== "warning" || !isAppInitiatedAction) && (
                         <div
+                            role={message.type === "error" ? "alert" : undefined}
                             className={clsx(
                                 `alert-${message.type}`,
                                 kcClsx("kcAlertClass"),
