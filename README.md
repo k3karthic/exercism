@@ -35,7 +35,7 @@
 * GUI ([Tk](https://tkdocs.com/)) - TODO
 * [Vulkan](https://www.vulkan.org/) - TODO
   * [Slang](https://shader-slang.org/) Shaders
-  * Bindings
+  * Rust Binding ([wgpu](https://wgpu.rs/))
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
     * [Tail Calls](https://github.com/WebAssembly/spec/blob/main/proposals/tail-call/Overview.md)
     * [Function References](https://github.com/WebAssembly/spec/blob/main/proposals/function-references/Overview.md)
