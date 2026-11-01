@@ -2,10 +2,10 @@ package com.github.k3karthic.opentelemetry
 
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.createOpenTelemetry
-import io.opentelemetry.kotlin.logging.export.batchLogRecordProcessor
 import io.opentelemetry.kotlin.logging.export.otlpHttpLogRecordExporter
-import io.opentelemetry.kotlin.tracing.export.batchSpanProcessor
+import io.opentelemetry.kotlin.logging.export.simpleLogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.otlpHttpSpanExporter
+import io.opentelemetry.kotlin.tracing.export.simpleSpanProcessor
 import kotlin.system.exitProcess
 
 object OtelConfig {
@@ -18,7 +18,8 @@ object OtelConfig {
             }
             tracerProvider {
                 export {
-                    batchSpanProcessor(
+                    // use batchSpanProcessor after sdk shutdown hook is available
+                    simpleSpanProcessor(
                         otlpHttpSpanExporter {
                             endpoint = url
                         },
@@ -27,7 +28,8 @@ object OtelConfig {
             }
             loggerProvider {
                 export {
-                    batchLogRecordProcessor(
+                    // use batchLogRecordProcessor after sdk shutdown hook is available
+                    simpleLogRecordProcessor(
                         otlpHttpLogRecordExporter {
                             endpoint = url
                         },
