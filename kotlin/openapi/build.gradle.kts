@@ -90,6 +90,8 @@ val openApiGenerateServer =
             outputDir.path,
             "-i",
             "../openapi/petstore.json",
+            "--additional-properties",
+            "delegatePattern=true"
         )
     }
 
