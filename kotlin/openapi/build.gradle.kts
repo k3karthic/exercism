@@ -23,6 +23,7 @@ dependencies {
     implementation(ktorLibs.server.resources)
     implementation(ktorLibs.server.hsts)
     implementation(ktorLibs.server.compression)
+    implementation(ktorLibs.server.swagger)
 
     implementation(ktorLibs.client.core)
     implementation(ktorLibs.client.apache)
@@ -47,6 +48,12 @@ val openApiGenerateClient =
         group = "openapi"
         description = "generate OpenAPI client stubs"
 
+        val toolsJson =
+            layout.projectDirectory
+                .dir("../..")
+                .file("openapitools.json")
+                .asFile
+
         val outputDir =
             layout.buildDirectory
                 .dir("openapi-gen/client")
@@ -56,7 +63,7 @@ val openApiGenerateClient =
         commandLine(
             "openapi-generator-cli",
             "--openapitools",
-            "openapitools.json",
+            toolsJson,
             "generate",
             "-g",
             "kotlin",
@@ -74,6 +81,12 @@ val openApiGenerateServer =
         group = "openapi"
         description = "generate OpenAPI server stubs"
 
+        val toolsJson =
+            layout.projectDirectory
+                .dir("../..")
+                .file("openapitools.json")
+                .asFile
+
         val outputDir =
             layout.buildDirectory
                 .dir("openapi-gen/server")
@@ -83,7 +96,7 @@ val openApiGenerateServer =
         commandLine(
             "openapi-generator-cli",
             "--openapitools",
-            "openapitools.json",
+            toolsJson,
             "generate",
             "-g",
             "kotlin-server",

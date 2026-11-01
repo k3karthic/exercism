@@ -5,6 +5,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.resources.Resources
 import io.ktor.server.routing.routing
 import org.openapitools.server.AllApis
@@ -35,6 +36,10 @@ fun Application.module() {
     )
 
     routing {
+        swaggerUI(
+            path = "docs",
+            swaggerFile = "../../openapi/petstore.json",
+        )
         AllApis()
     }
 }
