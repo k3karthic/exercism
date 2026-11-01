@@ -1,5 +1,7 @@
 @file:Suppress("MagicNumber")
 
+package com.github.k3karthic.debugger
+
 import kotlin.math.roundToInt
 
 data class Product(
