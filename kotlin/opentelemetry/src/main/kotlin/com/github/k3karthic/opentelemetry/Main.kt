@@ -6,6 +6,5 @@ fun main() {
 
     s1.run()
 
-    // Hack until the kotlin sdk releases a new version with shutdown methods
-    Thread.sleep(2000)
+    exitAfterExport()
 }

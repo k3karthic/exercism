@@ -55,7 +55,6 @@ object Service2 {
             s.end()
         }
 
-        // Hack until the kotlin sdk releases a new version with shutdown methods
-        Thread.sleep(2000)
+        exitAfterExport()
     }
 }
