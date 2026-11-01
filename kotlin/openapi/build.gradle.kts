@@ -24,8 +24,10 @@ dependencies {
     implementation(ktorLibs.server.hsts)
     implementation(ktorLibs.server.compression)
 
+    implementation(ktorLibs.client.core)
     implementation(ktorLibs.client.apache)
     implementation(ktorLibs.client.contentNegotiation)
+    implementation(libs.bundles.moshi)
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
