@@ -90,7 +90,7 @@ podman run --rm \
 ## Run the sample
 
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4318 \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 \
 ./gradlew :opentelemetry:run --no-configuration-cache --no-daemon
 ```
 

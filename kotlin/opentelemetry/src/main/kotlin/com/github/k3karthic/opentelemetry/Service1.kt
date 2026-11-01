@@ -42,7 +42,7 @@ class Service1(
         val command = mutableListOf(javaBin, "-cp", classpath, className)
         command.addAll(args)
 
-        val processBuilder = ProcessBuilder(command)
+        val processBuilder = ProcessBuilder(command).redirectErrorStream(true)
 
         val carrier = mutableMapOf<String, String>()
         injectContext(carrier)
@@ -61,11 +61,13 @@ class Service1(
     }
 
     fun run() {
-        val s = tracer.startSpan("run()")
+        val s = tracer.startSpanForCaller()
         val ctx = contextFactory.implicit().storeSpan(s)
 
         ctx.asImplicitContext {
             val result = runClassAsSubprocess<Service2>(listOf("param1", "param2"))
+            println("Service2 output:\n${result.output}")
+            check(result.exitCode == 0) { "Service2 exited with code ${result.exitCode}" }
             logger.emit("Subprocess finished with exit code: $result.exitCode")
 
             s.end()

@@ -46,7 +46,7 @@ object Service2 {
                     .mapKeys { it.key.substringAfter("OTEL_PROP_") },
             )
 
-        val s = tracer.startSpan("main()", extractedContext)
+        val s = tracer.startSpanForCaller(extractedContext)
         val ctx = contextFactory.implicit().storeSpan(s)
 
         ctx.asImplicitContext {
