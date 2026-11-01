@@ -19,6 +19,9 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("ktorLibs").from("io.ktor:ktor-version-catalog:3.4.0")
+        create("exposedLibs") {
+            from("org.jetbrains.exposed:exposed-version-catalog:1.6.0")
+        }
     }
 }
 

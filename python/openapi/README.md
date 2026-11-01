@@ -1,6 +1,6 @@
 # Petstore service
 
-The canonical OpenAPI document is `../openapi/petstore.json`. Generated server
+The canonical OpenAPI document is `../../openapi/petstore.json`. Generated server
 and client packages live under `openapi/generated/`. The generated server
 handles routes and API schemas; `server.py` adapts those interfaces to the
 handwritten SQLAlchemy persistence and service layers.

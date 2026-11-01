@@ -30,7 +30,21 @@ dependencies {
     implementation(ktorLibs.client.contentNegotiation)
     implementation(libs.bundles.moshi)
 
+    implementation(exposedLibs.core)
+    implementation(exposedLibs.r2dbc)
+    implementation(exposedLibs.migration.core)
+    implementation(exposedLibs.migration.r2dbc)
+    implementation(libs.postgresql)
+    implementation(libs.flyway)
+    implementation(libs.flywayPostgresql)
+    // JDBC is only used by Flyway to apply migrations, the application itself uses R2DBC
+    runtimeOnly(libs.postgresqlJdbc)
+
     testImplementation(kotlin("test"))
+    testImplementation(platform(libs.testcontainersBom))
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.testcontainersJunitJupiter)
+    testImplementation(libs.testcontainersPostgresql)
     testImplementation(ktorLibs.server.testHost)
 }
 
@@ -157,4 +171,23 @@ tasks.named("compileKotlin") {
 
 tasks.matching { it.name == "runKtlintCheckOverMainSourceSet" || it.name == "runKtlintFormatOverMainSourceSet" }.configureEach {
     dependsOn(generateOpenApiStubs)
+}
+
+// Database migrations
+
+tasks.register<JavaExec>("generateMigrationScript") {
+    group = "database"
+    description =
+        "generate a Flyway migration script by diffing the Exposed tables against the configured database " +
+        "(pass -PmigrationName=<description>)"
+
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.github.k3karthic.openapi.db.GenerateMigrationScriptKt"
+    workingDir = projectDir
+    args(
+        layout.projectDirectory
+            .dir("src/main/resources/db/migration")
+            .asFile.path,
+        providers.gradleProperty("migrationName").getOrElse("migration"),
+    )
 }

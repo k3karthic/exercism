@@ -4,8 +4,8 @@
 * CPU Topology - [cpu_topology/architectural_mapping_and_hwloc_concepts.md](/cpu_topology/architectural_mapping_and_hwloc_concepts.md)
 * [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - [keycloak/keycloak_overview.md](/keycloak/keycloak_overview.md)
 * Languages (`cheatsheets` subdirectory within each language contains quick references):
-   * [Python](https://www.python.org/) (LLM-assisted)
-   * [TypeScript](https://www.typescriptlang.org/) (LLM-assisted)
+   * [Python](https://www.python.org/)
+   * [TypeScript](https://www.typescriptlang.org/)
    * [Go](https://go.dev/) - TODO
    * [Kotlin](https://kotlinlang.org/) - WIP
    * [Rust](https://rust-lang.org/) - TODO

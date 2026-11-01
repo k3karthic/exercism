@@ -1,5 +1,7 @@
 package com.github.k3karthic.openapi
 
+import com.github.k3karthic.openapi.db.DatabaseConfig
+import com.github.k3karthic.openapi.db.runMigrations
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -17,6 +19,8 @@ import org.openapitools.server.infrastructure.apiKeyAuth
 import org.openapitools.server.infrastructure.delegates
 
 fun Application.module() {
+    runMigrations(DatabaseConfig.from(environment.config))
+
     install(Resources)
     install(ContentNegotiation) {
         json()
