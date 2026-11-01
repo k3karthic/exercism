@@ -23,3 +23,7 @@ application {
 kotlin.compilerOptions {
     optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
 }
+
+tasks.named<JavaExec>("run") {
+    environment("OTEL_EXPORTER_OTLP_ENDPOINT", System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "")
+}

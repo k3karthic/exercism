@@ -4,10 +4,10 @@ This sample shows manual OpenTelemetry traces, metrics, and logs, plus manual tr
 
 ## What it does
 
-- `Service1` spawns `service_2_process.py` as a **subprocess** for each
+- `Service1` spawns `Service2` as a **subprocess** for each
   message and hands it trace context through `TRACEPARENT`/`TRACESTATE`
   environment variables
-- `service_2_process.py` contains the `Service2` implementation and process
+- `Service2` contains the `Service2` implementation and process
   entry point; it doubles numeric values and rejects an invalid message
 - common telemetry setup and helpers live in `utils.py`
 - both processes emit traces, metrics, and logs, and the subprocess's span
@@ -47,8 +47,8 @@ OpenObserve ingests OTLP data through a collector. Save this as
 receivers:
   otlp:
     protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
 
 exporters:
   otlp_grpc/openobserve:
@@ -74,14 +74,14 @@ service:
 ```
 
 Then start the collector with your preferred image or binary and point the app
-at it with `OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317`. The app itself only
+at it with `OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4318`. The app itself only
 needs the collector endpoint; the OpenObserve credentials stay in the collector
 config.
 
 ```bash
 podman run --rm \
   --add-host host.docker.internal:host-gateway \
-  -p 4317:4317 \
+  -p 4318:4318 \
   -v "$PWD/collector.yaml:/etc/otelcol-contrib/config.yaml" \
   otel/opentelemetry-collector-contrib:latest \
   --config /etc/otelcol-contrib/config.yaml
@@ -90,23 +90,22 @@ podman run --rm \
 ## Run the sample
 
 ```bash
-OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4317 \
-uv run python app.py
+OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:4318 \
+./gradlew :opentelemetry:run --no-configuration-cache --no-daemon
 ```
 
 `Service1` sends `1`, `2`, `oops`, `3`, and `4` to `Service2` by spawning
-`service_2_process.py` as a subprocess once per message (`python -m
-opentelemetry_exercise.service_2_process <value>`). Each process exports
+`Service2` as a subprocess once per message. Each process exports
 telemetry with its own service name, so the trace graph shows both
-`service_1` and `service_2`, nested under the same trace despite running in
+`Service1` and `Service2`, nested under the same trace despite running in
 separate OS processes.
 
 ## Manual context propagation across the subprocess boundary
 
-`Service1._call_service_2` builds a carrier dict with
+`Service1.run` builds a carrier dict with
 `opentelemetry.propagate.inject(carrier)`, then copies its
 `traceparent`/`tracestate` values into the subprocess's environment as
-`TRACEPARENT`/`TRACESTATE`. `service_2_process.py` reads those env vars back
+`TRACEPARENT`/`TRACESTATE`. `Service2.main` reads those env vars back
 into a carrier and calls `opentelemetry.propagate.extract(carrier)` to
 recover a context holding the remote parent span, attaches it, and starts its
 own span inside that context — so it nests under `Service1`'s trace.
