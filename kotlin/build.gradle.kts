@@ -22,7 +22,7 @@ kover {
     reports {
         filters {
             excludes {
-                packages("com.github.k3karthic.app", "com.github.k3karthic.debugger", "com.github.k3karthic.utils")
+                packages("com.github.k3karthic.app", "com.github.k3karthic.debugger", "com.github.k3karthic.utils", "org.openapitools")
                 if (generatedPackages.isNotEmpty()) {
                     packages(*generatedPackages.toTypedArray())
                 }

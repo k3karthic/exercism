@@ -1,0 +1,4 @@
+_commit: efbea43
+_src_path: ../..
+language: kotlin_subproject
+module_name: openapi

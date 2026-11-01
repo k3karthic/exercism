@@ -17,6 +17,9 @@ dependencyResolutionManagement {
         mavenCentral()
         maven("https://redirector.kotlinlang.org/maven/kxrpc-grpc")
     }
+    versionCatalogs {
+        create("ktorLibs").from("io.ktor:ktor-version-catalog:3.4.0")
+    }
 }
 
 plugins {
@@ -38,5 +41,6 @@ include(":debugger")
 include(":unixdomainsockets")
 include(":grpc")
 include(":opentelemetry")
+include(":openapi")
 
 rootProject.name = "kotlin"
