@@ -4,6 +4,7 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.asImplicitContext
+import kotlinx.serialization.json.Json
 import java.io.File
 
 data class ProcessResult(
@@ -14,6 +15,8 @@ data class ProcessResult(
 class Service1(
     otel: OpenTelemetry = NoopOpenTelemetry,
 ) {
+    // TODO: add metrics after support added to sdk
+    @Suppress("ForbiddenComment")
     val logger = otel.loggerProvider.getLogger(Service1::class.java.name)
     val tracer = otel.tracerProvider.getTracer(Service1::class.java.name)
 
@@ -42,7 +45,8 @@ class Service1(
         val command = mutableListOf(javaBin, "-cp", classpath, className)
         command.addAll(args)
 
-        val processBuilder = ProcessBuilder(command).redirectErrorStream(true)
+        val processBuilder = ProcessBuilder(command)
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
 
         val carrier = mutableMapOf<String, String>()
         injectContext(carrier)
@@ -60,17 +64,35 @@ class Service1(
         return ProcessResult(exitCode, output)
     }
 
+    fun doubleNumber(num: String): ServiceResult {
+        val result = runClassAsSubprocess<Service2>(listOf(num))
+        println("Service2 output:\n${result.output}")
+        check(result.exitCode == 0) { "Service2 exited with code ${result.exitCode}" }
+
+        return Json.decodeFromString<ServiceResult>(result.output.trim())
+    }
+
+    private fun runInternal(nums: List<String>): MutableList<ServiceResult> {
+        val resultList: MutableList<ServiceResult> = mutableListOf()
+
+        nums.forEach {
+            val s = tracer.startSpanForCaller()
+            val ctx = contextFactory.implicit().storeSpan(s)
+
+            ctx.asImplicitContext {
+                val result = doubleNumber(it)
+                resultList.addLast(result)
+
+                s.end()
+            }
+        }
+
+        return resultList
+    }
+
     fun run() {
-        val s = tracer.startSpanForCaller()
-        val ctx = contextFactory.implicit().storeSpan(s)
-
-        ctx.asImplicitContext {
-            val result = runClassAsSubprocess<Service2>(listOf("param1", "param2"))
-            println("Service2 output:\n${result.output}")
-            check(result.exitCode == 0) { "Service2 exited with code ${result.exitCode}" }
-            logger.emit("Subprocess finished with exit code: $result.exitCode")
-
-            s.end()
+        runInternal(listOf("3.0", "2a", "1.0")).forEach {
+            logger.emit(it)
         }
     }
 }

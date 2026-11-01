@@ -9,7 +9,7 @@ import io.opentelemetry.kotlin.tracing.export.simpleSpanProcessor
 import kotlin.system.exitProcess
 
 object OtelConfig {
-    val url: String = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+    val url: String = System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "http://localhost:4318"
 
     fun getConfig(serviceName: String): OpenTelemetry =
         createOpenTelemetry {

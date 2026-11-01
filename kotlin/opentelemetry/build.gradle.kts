@@ -2,6 +2,7 @@ plugins {
     // Apply the shared build logic from a convention plugin.
     // The shared code is located in `buildSrc/src/main/kotlin/kotlin-jvm.gradle.kts`.
     id("buildsrc.convention.kotlin-jvm")
+    alias(libs.plugins.kotlinPluginSerialization)
 
     // Apply the Application plugin to add support for building an executable JVM application.
     application
@@ -10,6 +11,7 @@ plugins {
 dependencies {
     implementation(libs.bundles.otelInit)
     implementation(libs.bundles.otelInstrument)
+    implementation(libs.kotlinxSerialization)
 
     testImplementation(kotlin("test"))
 }
@@ -26,4 +28,8 @@ kotlin.compilerOptions {
 
 tasks.named<JavaExec>("run") {
     environment("OTEL_EXPORTER_OTLP_ENDPOINT", System.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") ?: "")
+}
+
+tasks.named<Test>("test") {
+    environment("OTEL_NOOP", "true")
 }

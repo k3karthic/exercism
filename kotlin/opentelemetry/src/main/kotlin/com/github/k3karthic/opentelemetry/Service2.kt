@@ -1,19 +1,30 @@
 package com.github.k3karthic.opentelemetry
 
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.asImplicitContext
 import io.opentelemetry.kotlin.propagation.TextMapGetter
+import kotlinx.serialization.json.Json
 
 object Service2 {
-    val otel = OtelConfig.getConfig(Service2::class.simpleName!!)
+    @Suppress("UnsafeCallOnNullableType")
+    val otel: OpenTelemetry =
+        if (System.getenv("OTEL_NOOP") == "true") {
+            NoopOpenTelemetry
+        } else {
+            OtelConfig.getConfig(Service2::class.simpleName!!)
+        }
 
+    // TODO: add metrics after support added to sdk
+    @Suppress("ForbiddenComment")
     val logger = otel.loggerProvider.getLogger(Service2::class.java.name)
     val tracer = otel.tracerProvider.getTracer(Service2::class.java.name)
 
     val propagator = otel.propagator
     val contextFactory = otel.context
 
-    fun extractContext(carrier: Map<String, String>): Context {
+    fun extractContext(c: Map<String, String>): Context {
         val getter =
             object : TextMapGetter<Map<String, String>> {
                 override fun keys(carrier: Map<String, String>): Collection<String> = carrier.keys
@@ -33,7 +44,7 @@ object Service2 {
                 }
             }
 
-        return propagator.extract(contextFactory.implicit(), carrier, getter)
+        return propagator.extract(contextFactory.implicit(), c, getter)
     }
 
     @JvmStatic
@@ -50,11 +61,19 @@ object Service2 {
         val ctx = contextFactory.implicit().storeSpan(s)
 
         ctx.asImplicitContext {
-            logger.emit("yo")
+            try {
+                val num = args[0].toDouble()
+                logger.emit("Got num $num")
+                println(Json.encodeToString(ServiceResult(error = null, output = num * num)))
+            } catch (e: NumberFormatException) {
+                println(Json.encodeToString(ServiceResult(error = "Invalid double: ${args[0]}", output = null)))
+            }
 
             s.end()
         }
 
-        exitAfterExport()
+        if (System.getenv("OTEL_NOOP") != "true") {
+            exitAfterExport()
+        }
     }
 }
