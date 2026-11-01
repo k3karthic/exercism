@@ -34,9 +34,10 @@ dependencies {
 }
 
 application {
-    // Define the Fully Qualified Name for the application main class
-    // (Note that Kotlin compiles `App.kt` to a class with FQN `com.example.app.AppKt`.)
-    mainClass = "com.github.k3karthic.openapi.MainKt"
+    mainClass = "io.ktor.server.netty.EngineMain"
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 // OpenAPI Code Generation
@@ -64,7 +65,7 @@ val openApiGenerateClient =
             "-i",
             "../openapi/petstore.json",
             "--additional-properties",
-            "library=jvm-ktor",
+            "library=jvm-ktor,enumPropertyNaming=UPPERCASE",
         )
     }
 
@@ -86,12 +87,18 @@ val openApiGenerateServer =
             "generate",
             "-g",
             "kotlin-server",
+            "-t",
+            projectDir.resolve("templates").path,
             "-o",
             outputDir.path,
             "-i",
             "../openapi/petstore.json",
             "--additional-properties",
-            "delegatePattern=true"
+            "delegatePattern=true,enumPropertyNaming=UPPERCASE",
+            "--type-mappings",
+            "AnyType=JsonElement,object=JsonElement",
+            "--import-mappings",
+            "JsonElement=kotlinx.serialization.json.JsonElement",
         )
     }
 
@@ -117,15 +124,24 @@ val copyServerStubs =
         into(layout.buildDirectory.dir("generated-src/kotlin"))
     }
 
-tasks.register("generateOpenApiStubs") {
-    group = "openapi"
-    description = "generate and copy both client and server OpenAPI stubs"
+val generateOpenApiStubs =
+    tasks.register("generateOpenApiStubs") {
+        group = "openapi"
+        description = "generate and copy both client and server OpenAPI stubs"
 
-    dependsOn(copyClientStubs, copyServerStubs)
-}
+        dependsOn(copyClientStubs, copyServerStubs)
+    }
 
 sourceSets {
     main {
         kotlin.srcDir(layout.buildDirectory.dir("generated-src/kotlin"))
     }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn(generateOpenApiStubs)
+}
+
+tasks.matching { it.name == "runKtlintCheckOverMainSourceSet" || it.name == "runKtlintFormatOverMainSourceSet" }.configureEach {
+    dependsOn(generateOpenApiStubs)
 }
