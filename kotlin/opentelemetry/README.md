@@ -116,5 +116,4 @@ hand-roll `inject`/`extract` like this when propagating across a transport
 with no existing instrumentation.
 
 ![logs](../media/opentelemetry/logs.png)
-![metrics](../media/opentelemetry/metrics.png)
 ![traces](../media/opentelemetry/traces.png)
