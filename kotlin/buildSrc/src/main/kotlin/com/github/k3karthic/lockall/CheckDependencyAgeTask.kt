@@ -1,3 +1,5 @@
+package com.github.k3karthic.lockall
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection

@@ -23,7 +23,7 @@ gradlePlugin {
 	plugins {
 		register("lockAllPlugin") {
 			id = "com.github.k3karthic.lockall"
-			implementationClass = "com.github.k3karthic.lockall.DependencyLockAllPlugin"
+			implementationClass = "com.github.k3karthic.lockall.DependencyLockAndAgePlugin"
 		}
 	}
 }

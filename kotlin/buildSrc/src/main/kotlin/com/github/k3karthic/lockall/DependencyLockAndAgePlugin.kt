@@ -5,7 +5,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExternalModuleDependency
 
-class DependencyLockAllPlugin : Plugin<Project> {
+class DependencyLockAndAgePlugin : Plugin<Project> {
     override fun apply(project: Project) {
         require(project == project.rootProject) {
             "dependency-lock-all plugin must be applied to the root project only, " + "but was applied to '${project.path}'"
