@@ -46,10 +46,7 @@ class LockedPackage:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Flag dependencies in pyproject.toml that have not had a release "
-            "within the last N days."
-        )
+        description=("Flag dependencies in pyproject.toml that have not had a release within the last N days.")
     )
     parser.add_argument(
         "--pyproject",
@@ -124,28 +121,18 @@ def collect_dependencies(pyproject: dict[str, Any]) -> list[Dependency]:
     for requirement in project.get("dependencies", []):
         dependencies.append(Dependency("project.dependencies", requirement))
 
-    for group_name, group_requirements in project.get(
-        "optional-dependencies", {}
-    ).items():
+    for group_name, group_requirements in project.get("optional-dependencies", {}).items():
         for requirement in group_requirements:
-            dependencies.append(
-                Dependency(f"project.optional-dependencies.{group_name}", requirement)
-            )
+            dependencies.append(Dependency(f"project.optional-dependencies.{group_name}", requirement))
 
-    for group_name, group_requirements in pyproject.get(
-        "dependency-groups", {}
-    ).items():
+    for group_name, group_requirements in pyproject.get("dependency-groups", {}).items():
         for requirement in group_requirements:
-            dependencies.append(
-                Dependency(f"dependency-groups.{group_name}", requirement)
-            )
+            dependencies.append(Dependency(f"dependency-groups.{group_name}", requirement))
 
     return dependencies
 
 
-def lookup_locked_package(
-    lock_packages: dict[str, LockedPackage], requirement_name: str
-) -> LockedPackage | None:
+def lookup_locked_package(lock_packages: dict[str, LockedPackage], requirement_name: str) -> LockedPackage | None:
     return lock_packages.get(normalize_name(requirement_name))
 
 
@@ -196,11 +183,7 @@ def check_dependency(
             status=status,
         )
 
-    status = (
-        "ok"
-        if locked_package.latest_release is not None
-        else "missing release timestamp in uv.lock"
-    )
+    status = "ok" if locked_package.latest_release is not None else "missing release timestamp in uv.lock"
     cache[normalized_name] = (
         locked_package.version,
         locked_package.latest_release,
@@ -242,10 +225,7 @@ def format_result(result: CheckResult) -> str:
     age_days = result.age_days
     release_date = result.latest_release.date().isoformat()
     version = result.latest_version or "unknown"
-    return (
-        f"{result.name} ({result.source}): latest release {version} on "
-        f"{release_date} ({age_days} days ago)"
-    )
+    return f"{result.name} ({result.source}): latest release {version} on {release_date} ({age_days} days ago)"
 
 
 def main() -> int:
@@ -265,18 +245,12 @@ def main() -> int:
             print(f"- {format_result(result)}")
 
     if stale:
-        print(
-            f"Found {len(stale)} dependency(s) without a release in the last "
-            f"{args.max_age_days} days:"
-        )
+        print(f"Found {len(stale)} dependency(s) without a release in the last {args.max_age_days} days:")
         for result in stale:
             print(f"- {format_result(result)}")
 
     if not missing and not stale:
-        print(
-            f"All {len(results)} dependencies have a release within the last "
-            f"{args.max_age_days} days."
-        )
+        print(f"All {len(results)} dependencies have a release within the last {args.max_age_days} days.")
 
     return 1 if missing or stale else 0
 

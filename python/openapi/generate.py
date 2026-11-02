@@ -57,9 +57,7 @@ def _generate_package(
 
         generated_package = generator_output / package_path
         if not generated_package.is_dir():
-            raise FileNotFoundError(
-                f"Generator did not produce the expected package: {generated_package}"
-            )
+            raise FileNotFoundError(f"Generator did not produce the expected package: {generated_package}")
 
         staged_package = temporary_root / "staged-package"
         shutil.copytree(generated_package, staged_package)
@@ -128,9 +126,7 @@ def _normalize_python_client(package: Path) -> None:
 
 
 def generate() -> None:
-    _run_generator(
-        ["openapi-generator-cli", "validate", "--input-spec", str(SPEC_PATH)]
-    )
+    _run_generator(["openapi-generator-cli", "validate", "--input-spec", str(SPEC_PATH)])
     GENERATED_ROOT.mkdir(parents=True, exist_ok=True)
 
     _generate_package(

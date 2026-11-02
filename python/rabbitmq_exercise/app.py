@@ -47,9 +47,7 @@ def build_connection_parameters(
 
 
 class RabbitMQProducer:
-    def __init__(
-        self, connection_parameters: pika.ConnectionParameters, queue: str
-    ) -> None:
+    def __init__(self, connection_parameters: pika.ConnectionParameters, queue: str) -> None:
         self._connection_parameters = connection_parameters
         self.queue = queue
 
@@ -81,9 +79,7 @@ def ensure_queue(connection_parameters: pika.ConnectionParameters, queue: str) -
 
 
 class RabbitMQConsumer:
-    def __init__(
-        self, connection_parameters: pika.ConnectionParameters, queue: str
-    ) -> None:
+    def __init__(self, connection_parameters: pika.ConnectionParameters, queue: str) -> None:
         self._connection_parameters = connection_parameters
         self.queue = queue
 

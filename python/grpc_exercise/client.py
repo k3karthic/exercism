@@ -40,13 +40,10 @@ def send_request_with_retry(target, number, req_id=None):
 
         if response.request_id != req_id:
             raise ValueError(
-                f"Security/Integrity Fault! Request ID mismatch. "
-                f"Expected '{req_id}', received '{response.request_id}'"
+                f"Security/Integrity Fault! Request ID mismatch. Expected '{req_id}', received '{response.request_id}'"
             )
 
-        print(
-            f"Success! [Validated ID: {response.request_id}] Result: {response.result}"
-        )
+        print(f"Success! [Validated ID: {response.request_id}] Result: {response.result}")
         return response.result
 
 

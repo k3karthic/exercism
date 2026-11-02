@@ -12,9 +12,7 @@ def worker(start_idx, end_idx, shm_name):
 
     for i in range(start_idx, end_idx):
         num = buf[i]
-        print(
-            f"Worker {multiprocessing.current_process().name} processing index {i}: {num}"
-        )
+        print(f"Worker {multiprocessing.current_process().name} processing index {i}: {num}")
         time.sleep(1)  # simulate work
         buf[i] = num * 2  # update shared memory
 

@@ -57,16 +57,10 @@ class Settings:
             keycloak_realm=_env("KEYCLOAK_REALM", DEFAULT_KEYCLOAK_REALM),
             keycloak_client_id=_env("KEYCLOAK_CLIENT_ID", DEFAULT_KEYCLOAK_CLIENT_ID),
             keycloak_client_secret=_env("KEYCLOAK_CLIENT_SECRET", ""),
-            keycloak_audience_scope=_env(
-                "KEYCLOAK_AUDIENCE_SCOPE", DEFAULT_KEYCLOAK_AUDIENCE_SCOPE
-            ),
-            keycloak_api_audience=_env(
-                "KEYCLOAK_API_AUDIENCE", DEFAULT_KEYCLOAK_API_AUDIENCE
-            ),
+            keycloak_audience_scope=_env("KEYCLOAK_AUDIENCE_SCOPE", DEFAULT_KEYCLOAK_AUDIENCE_SCOPE),
+            keycloak_api_audience=_env("KEYCLOAK_API_AUDIENCE", DEFAULT_KEYCLOAK_API_AUDIENCE),
             redirect_uri=_env("KEYCLOAK_REDIRECT_URI", DEFAULT_REDIRECT_URI),
-            post_logout_redirect_uri=_env(
-                "POST_LOGOUT_REDIRECT_URI", DEFAULT_POST_LOGOUT_REDIRECT_URI
-            ),
+            post_logout_redirect_uri=_env("POST_LOGOUT_REDIRECT_URI", DEFAULT_POST_LOGOUT_REDIRECT_URI),
             redis_url=_env("REDIS_URL", "redis://localhost:6379/0"),
         )
 
@@ -133,9 +127,7 @@ class SessionRecord:
         return cls(
             session_id=str(payload["session_id"]),
             user_name=str(payload["user_name"]),
-            email=(
-                None if payload.get("email") in {None, ""} else str(payload["email"])
-            ),
+            email=(None if payload.get("email") in {None, ""} else str(payload["email"])),
             subject=str(payload["subject"]),
             id_token=str(payload["id_token"]),
             created_at=str(payload["created_at"]),
@@ -199,17 +191,10 @@ class RedisSessionStore:
     ) -> SessionRecord:
         now = _iso_now()
         session_id = secrets.token_urlsafe(32)
-        expires_at = (
-            _now() + timedelta(seconds=self.settings.session_ttl_seconds)
-        ).isoformat()
+        expires_at = (_now() + timedelta(seconds=self.settings.session_ttl_seconds)).isoformat()
         session = SessionRecord(
             session_id=session_id,
-            user_name=str(
-                claims.get("preferred_username")
-                or claims.get("name")
-                or claims.get("email")
-                or "Developer"
-            ),
+            user_name=str(claims.get("preferred_username") or claims.get("name") or claims.get("email") or "Developer"),
             email=(None if claims.get("email") in {None, ""} else str(claims["email"])),
             subject=str(claims["sub"]),
             id_token=id_token,
@@ -250,9 +235,7 @@ class RedisSessionStore:
             id_token=session.id_token,
             created_at=session.created_at,
             updated_at=_iso_now(),
-            expires_at=(
-                _now() + timedelta(seconds=self.settings.session_ttl_seconds)
-            ).isoformat(),
+            expires_at=(_now() + timedelta(seconds=self.settings.session_ttl_seconds)).isoformat(),
         )
         redis = self._redis()
         try:
@@ -276,9 +259,7 @@ class RedisSessionStore:
         redis = self._redis()
         sessions: list[SessionRecord] = []
         try:
-            async for key in redis.scan_iter(
-                match=f"{self.settings.session_prefix}:session:*"
-            ):
+            async for key in redis.scan_iter(match=f"{self.settings.session_prefix}:session:*"):
                 raw = await redis.get(key)
                 if raw is None:
                     continue
@@ -305,9 +286,7 @@ class KeycloakService:
         if self._configuration is not None:
             return self._configuration
 
-        async with httpx.AsyncClient(
-            timeout=self.settings.http_timeout_seconds
-        ) as client:
+        async with httpx.AsyncClient(timeout=self.settings.http_timeout_seconds) as client:
             response = await client.get(self.discovery_url)
             response.raise_for_status()
             payload = response.json()
@@ -346,9 +325,7 @@ class KeycloakService:
         if self.settings.keycloak_client_secret:
             data["client_secret"] = self.settings.keycloak_client_secret
 
-        async with httpx.AsyncClient(
-            timeout=self.settings.http_timeout_seconds
-        ) as client:
+        async with httpx.AsyncClient(timeout=self.settings.http_timeout_seconds) as client:
             response = await client.post(configuration.token_endpoint, data=data)
             response.raise_for_status()
             return response.json()
@@ -356,9 +333,7 @@ class KeycloakService:
     async def validate_id_token(self, id_token: str, nonce: str) -> dict[str, Any]:
         configuration = await self.configuration()
         jwk_client = jwt.PyJWKClient(configuration.jwks_uri)
-        signing_key = await asyncio.to_thread(
-            jwk_client.get_signing_key_from_jwt, id_token
-        )
+        signing_key = await asyncio.to_thread(jwk_client.get_signing_key_from_jwt, id_token)
         claims = jwt.decode(
             id_token,
             signing_key.key,
@@ -373,9 +348,7 @@ class KeycloakService:
     async def validate_access_token(self, access_token: str) -> dict[str, Any]:
         configuration = await self.configuration()
         jwk_client = jwt.PyJWKClient(configuration.jwks_uri)
-        signing_key = await asyncio.to_thread(
-            jwk_client.get_signing_key_from_jwt, access_token
-        )
+        signing_key = await asyncio.to_thread(jwk_client.get_signing_key_from_jwt, access_token)
         return jwt.decode(
             access_token,
             signing_key.key,
@@ -426,9 +399,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return session
 
     application = FastAPI(title="Keycloak FastAPI exercise")
-    application.mount(
-        "/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static"
-    )
+    application.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
     @application.get("/", response_class=HTMLResponse)
     async def home(
@@ -476,9 +447,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         await keycloak.validate_access_token(access_token)
         session = await session_store.create_session(id_token=id_token, claims=claims)
 
-        response = RedirectResponse(
-            url=_normalize_next_path(pending.next_path), status_code=303
-        )
+        response = RedirectResponse(url=_normalize_next_path(pending.next_path), status_code=303)
         response.set_cookie(
             key=resolved_settings.session_cookie_name,
             value=session.session_id,

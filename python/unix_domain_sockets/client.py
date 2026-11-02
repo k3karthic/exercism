@@ -12,15 +12,11 @@ def verify_socket_permissions(socket_path):
 
     file_stat = os.stat(socket_path)
     if file_stat.st_uid != os.getuid():
-        raise PermissionError(
-            "Security Violation: Socket file is owned by another user."
-        )
+        raise PermissionError("Security Violation: Socket file is owned by another user.")
 
     unwanted_permissions = file_stat.st_mode & (stat.S_IRWXG | stat.S_IRWXO)
     if unwanted_permissions != 0:
-        raise PermissionError(
-            "Security Violation: Socket permissions are too open (must be 0600)."
-        )
+        raise PermissionError("Security Violation: Socket permissions are too open (must be 0600).")
 
 
 def _receive_response(client, req_id):
@@ -38,8 +34,7 @@ def _receive_response(client, req_id):
     received_id, result_str = response_data.split(":", 1)
     if received_id != req_id:
         raise ValueError(
-            f"Security/Integrity Fault! Request ID mismatch. "
-            f"Expected '{req_id}', received '{received_id}'"
+            f"Security/Integrity Fault! Request ID mismatch. Expected '{req_id}', received '{received_id}'"
         )
 
     print(f"Success! [Validated ID: {received_id}] Result: {result_str}")
@@ -65,9 +60,7 @@ def _execute_request(socket_path, payload, req_id, attempt):
         client.close()
 
 
-def send_request_with_retry(
-    socket_path, number, req_id=None, max_retries=5, initial_backoff=0.5
-):
+def send_request_with_retry(socket_path, number, req_id=None, max_retries=5, initial_backoff=0.5):
     if max_retries < 1:
         raise ValueError("max_retries must be greater than zero")
 

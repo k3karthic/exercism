@@ -32,9 +32,7 @@ def test_fetch_inventory_configures_and_calls_generated_client(
     monkeypatch.setattr(client_driver, "ApiClient", FakeApiClient)
     monkeypatch.setattr(client_driver, "StoreApi", FakeStoreApi)
 
-    assert client_driver.fetch_inventory("http://localhost:8000", "some-api-key") == {
-        "available": 3
-    }
+    assert client_driver.fetch_inventory("http://localhost:8000", "some-api-key") == {"available": 3}
     configuration = captured["configuration"]
     assert configuration.host == "http://localhost:8000"
     assert configuration.api_key == {"api_key": "some-api-key"}

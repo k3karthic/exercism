@@ -158,9 +158,7 @@ def test_send_request_with_retry_returns_int_result(
         )
         monkeypatch.setattr(client.time, "sleep", lambda _: None)
 
-        result = client.send_request_with_retry(
-            str(socket_path), 7, req_id="req-7", max_retries=1
-        )
+        result = client.send_request_with_retry(str(socket_path), 7, req_id="req-7", max_retries=1)
 
     assert result == 14
     assert fake_socket.connected_to == str(socket_path)
@@ -208,8 +206,6 @@ def test_send_request_with_retry_reads_all_chunks(
         )
         monkeypatch.setattr(client.time, "sleep", lambda _: None)
 
-        result = client.send_request_with_retry(
-            str(socket_path), 7, req_id="req-7", max_retries=1
-        )
+        result = client.send_request_with_retry(str(socket_path), 7, req_id="req-7", max_retries=1)
 
     assert result == 14

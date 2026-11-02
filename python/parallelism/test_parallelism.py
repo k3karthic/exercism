@@ -24,12 +24,8 @@ def load_module(name: str, path: Path) -> Any:
     return module
 
 
-queue_module: Any = load_module(
-    "parallelism_queue_test", PARALLELISM_DIR / "queue_worker.py"
-)
-shared_memory_module: Any = load_module(
-    "parallelism_shared_memory_test", PARALLELISM_DIR / "shared_memory_worker.py"
-)
+queue_module: Any = load_module("parallelism_queue_test", PARALLELISM_DIR / "queue_worker.py")
+shared_memory_module: Any = load_module("parallelism_shared_memory_test", PARALLELISM_DIR / "shared_memory_worker.py")
 
 
 class FakeQueue:

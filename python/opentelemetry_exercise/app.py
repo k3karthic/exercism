@@ -10,7 +10,7 @@ import time
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from opentelemetry import metrics, trace
 from opentelemetry.propagate import inject
@@ -88,7 +88,7 @@ class Service1:
         result: dict[str, Any] = json.loads(completed.stdout)
         if "error" in result:
             raise ValueError(result["error"])
-        return result
+        return cast(DoubleResult, result)
 
     async def send_numbers_to_service_2(
         self,

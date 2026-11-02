@@ -6,6 +6,7 @@ import pytest
 from httpx2 import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
+from typing import cast
 
 from openapi.database import Base, get_session
 from openapi.server import app
@@ -38,9 +39,7 @@ async def client(pg_url: str):
 
     app.dependency_overrides[get_session] = override_session
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
 
     app.dependency_overrides.pop(get_session, None)
@@ -57,7 +56,7 @@ async def create_pet(
     name: str = "Rex",
     status: str = "available",
     pet_id: int | None = None,
-) -> dict:
+) -> dict[str, object]:
     payload: dict[str, object] = {
         "name": name,
         "photoUrls": ["https://example.com/photo.jpg"],
@@ -71,7 +70,7 @@ async def create_pet(
         headers=HEADERS,
     )
     assert resp.status_code == 200
-    return resp.json()
+    return cast(dict[str, object], resp.json())
 
 
 # ── Pet tests ─────────────────────────────────────────────────────────────────
@@ -134,9 +133,7 @@ async def test_find_by_status(client: AsyncClient):
     await create_pet(client, "AvailPet", status="available")
     await create_pet(client, "SoldPet", status="sold")
 
-    resp = await client.get(
-        "/pet/findByStatus", params={"status": "available"}, headers=HEADERS
-    )
+    resp = await client.get("/pet/findByStatus", params={"status": "available"}, headers=HEADERS)
     assert resp.status_code == 200
     names = [p["name"] for p in resp.json()]
     assert "AvailPet" in names
@@ -156,9 +153,7 @@ async def test_find_by_tags(client: AsyncClient):
     )
     assert resp.status_code == 200
 
-    resp = await client.get(
-        "/pet/findByTags", params={"tags": ["fluffy"]}, headers=HEADERS
-    )
+    resp = await client.get("/pet/findByTags", params={"tags": ["fluffy"]}, headers=HEADERS)
     assert resp.status_code == 200
     names = [p["name"] for p in resp.json()]
     assert "TaggedPet" in names

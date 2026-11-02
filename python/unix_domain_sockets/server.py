@@ -18,9 +18,7 @@ class AsyncIdempotentServer:
         if os.path.exists(self.socket_path):
             file_stat = os.stat(self.socket_path)
             if file_stat.st_uid != os.getuid():
-                raise PermissionError(
-                    f"Security Alert: Socket path '{self.socket_path}' is owned by another user."
-                )
+                raise PermissionError(f"Security Alert: Socket path '{self.socket_path}' is owned by another user.")
             os.remove(self.socket_path)
 
     async def start(self):
@@ -32,9 +30,7 @@ class AsyncIdempotentServer:
 
         # Start the UDS server using asyncio
         try:
-            server = await asyncio.start_unix_server(
-                self._handle_client, path=self.socket_path
-            )
+            server = await asyncio.start_unix_server(self._handle_client, path=self.socket_path)
             # Restrict permissions to the owner immediately after creation
             os.chmod(self.socket_path, 0o600)
             print(f"[SECURITY] Set safe permissions (0600) on {self.socket_path}")
@@ -103,22 +99,16 @@ class AsyncIdempotentServer:
         """Asynchronous background loop to purge expired cache tokens."""
         while self.is_running:
             try:
-                await asyncio.sleep(
-                    30
-                )  # Non-blocking sleep shifts control back to event loop
+                await asyncio.sleep(30)  # Non-blocking sleep shifts control back to event loop
                 now = time.time()
 
                 expired = [
-                    req_id
-                    for req_id, (_, ts) in self.processed_requests.items()
-                    if now - ts > REQUEST_TTL_SECONDS
+                    req_id for req_id, (_, ts) in self.processed_requests.items() if now - ts > REQUEST_TTL_SECONDS
                 ]
                 for req_id in expired:
                     del self.processed_requests[req_id]
                 if expired:
-                    print(
-                        f"[CLEANUP] Purged {len(expired)} expired requests from memory."
-                    )
+                    print(f"[CLEANUP] Purged {len(expired)} expired requests from memory.")
             except asyncio.CancelledError:
                 break
 

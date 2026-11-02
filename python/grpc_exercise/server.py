@@ -1,4 +1,4 @@
-# ty: ignore[unresolved-attribute]
+# ty: ignore[unresolved-attribute, possibly-missing-attribute]
 import argparse
 import asyncio
 import time
@@ -6,6 +6,7 @@ import time
 import doubler_service_pb2 as pb2
 import doubler_service_pb2_grpc as pb2_grpc
 import grpc
+from typing import override
 
 
 class DoublerService(pb2_grpc.DoublerServicer):
@@ -13,28 +14,25 @@ class DoublerService(pb2_grpc.DoublerServicer):
         self._processed_requests = {}
         self._lock = asyncio.Lock()
 
+    @override
     async def Double(  # noqa: N802
-        self, request, context  # noqa: ARG002
+        self,
+        request,
+        context,  # noqa: ARG002
     ):
         async with self._lock:
             cached = self._processed_requests.get(request.request_id)
             if cached is not None:
                 result = cached[0]
-                print(
-                    f"[CACHE HIT] Returning cached result for Request {request.request_id}"
-                )
+                print(f"[CACHE HIT] Returning cached result for Request {request.request_id}")
             else:
                 result = request.number * 2
                 self._processed_requests[request.request_id] = (result, time.time())
-                print(
-                    f"[NEW REQ] Processing Request {request.request_id}: Double {request.number}"
-                )
+                print(f"[NEW REQ] Processing Request {request.request_id}: Double {request.number}")
 
         return pb2.DoubleResponse(request_id=request.request_id, result=result)
 
-    async def cleanup_expired_requests(
-        self, stop_event, ttl_seconds=300, interval_seconds=30
-    ):
+    async def cleanup_expired_requests(self, stop_event, ttl_seconds=300, interval_seconds=30):
         while not stop_event.is_set():
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=interval_seconds)

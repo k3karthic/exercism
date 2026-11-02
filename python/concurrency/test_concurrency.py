@@ -61,7 +61,8 @@ async def test_async_worker_doubles_items(monkeypatch: pytest.MonkeyPatch) -> No
     await input_queue.put(7)
 
     async def fake_wait_for(
-        awaitable: Coroutine[Any, Any, int], timeout: int  # noqa: ARG001
+        awaitable: Coroutine[Any, Any, int],
+        timeout: int,  # noqa: ARG001
     ) -> int:
         if input_queue.empty():
             awaitable.close()

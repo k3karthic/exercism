@@ -24,13 +24,9 @@ def apply_discount(price: float, discount_rate: float) -> float:
     return round(final_price, 2)
 
 
-def generate_invoice(
-    inventory: list[Product], discount_mapping: dict[str, float]
-) -> InvoiceSummary:
+def generate_invoice(inventory: list[Product], discount_mapping: dict[str, float]) -> InvoiceSummary:
     """Processes products and aggregates totals. Good for testing loops and local variables."""
-    invoice_summary = InvoiceSummary(
-        items_processed=0, subtotal=0.0, final_total=0.0, categories=set()
-    )
+    invoice_summary = InvoiceSummary(items_processed=0, subtotal=0.0, final_total=0.0, categories=set())
 
     for item in inventory:
         # 💡 Try setting a conditional breakpoint here: b 31, item.category == 'Electronics'
@@ -57,9 +53,7 @@ if __name__ == "__main__":
     # Sample catalog data
     catalog = [
         Product(id=101, name="Wireless Mouse", price=29.99, category="Electronics"),
-        Product(
-            id=102, name="Mechanical Keyboard", price=89.99, category="Electronics"
-        ),
+        Product(id=102, name="Mechanical Keyboard", price=89.99, category="Electronics"),
         Product(id=103, name="Running Shoes", price=120.00, category="Apparel"),
         Product(id=104, name="Coffee Mug", price=15.50, category="Kitchen"),
     ]

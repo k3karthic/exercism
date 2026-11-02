@@ -21,9 +21,7 @@ def test_spec_uses_descriptive_schemas_for_records_and_empty_responses() -> None
 
     responses = spec["paths"]
     assert (
-        responses["/store/inventory"]["get"]["responses"]["200"]["content"][
-            "application/json"
-        ]["schema"]["$ref"]
+        responses["/store/inventory"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
         == "#/components/schemas/Inventory"
     )
     for operation in (
@@ -32,25 +30,19 @@ def test_spec_uses_descriptive_schemas_for_records_and_empty_responses() -> None
         responses["/store/order/{orderId}"]["delete"],
     ):
         assert (
-            operation["responses"]["200"]["content"]["application/json"]["schema"][
-                "$ref"
-            ]
+            operation["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
             == "#/components/schemas/EmptyResponse"
         )
 
 
-def test_generate_package_replaces_only_generated_target(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_generate_package_replaces_only_generated_target(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     target = tmp_path / "generated" / "server"
     target.mkdir(parents=True)
     (target / "old.py").write_text("old generated output", encoding="utf-8")
     handwritten = tmp_path / "client.py"
     handwritten.write_text("keep me", encoding="utf-8")
 
-    def fake_run(
-        command: list[str], check: bool, cwd: Path, env: dict[str, str]
-    ) -> None:
+    def fake_run(command: list[str], check: bool, cwd: Path, env: dict[str, str]) -> None:
         assert check
         assert cwd == generate.REPOSITORY_ROOT
         assert env["PWD"] == str(generate.REPOSITORY_ROOT)
@@ -121,9 +113,7 @@ def test_normalize_fastapi_query_types_preserves_path_validation(
     )
 
 
-def test_generate_validates_spec_and_configures_both_outputs(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_generate_validates_spec_and_configures_both_outputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls: list[list[str]] = []
     packages: list[dict[str, object]] = []
     monkeypatch.setattr(generate, "SPEC_PATH", tmp_path / "petstore.json")

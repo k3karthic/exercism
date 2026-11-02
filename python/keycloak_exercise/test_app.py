@@ -4,6 +4,7 @@ import time
 from collections.abc import AsyncGenerator, Generator
 from dataclasses import dataclass
 from html.parser import HTMLParser
+from typing import override
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx2 as httpx
@@ -45,6 +46,7 @@ class KeycloakRuntime:
 
 
 class _RetryingKeycloakContainer(KeycloakContainer):
+    @override
     def _readiness_probe(self) -> None:
         started_at = time.monotonic()
         while True:
@@ -55,9 +57,7 @@ class _RetryingKeycloakContainer(KeycloakContainer):
                 if error.response is None or error.response.status_code != 404:
                     raise
                 if time.monotonic() - started_at >= testcontainers_config.timeout:
-                    raise TimeoutError(
-                        "Keycloak did not become ready before the startup timeout"
-                    ) from error
+                    raise TimeoutError("Keycloak did not become ready before the startup timeout") from error
                 time.sleep(testcontainers_config.sleep_time)
 
 
@@ -68,6 +68,7 @@ class _FormParser(HTMLParser):
         self.action = ""
         self.fields: dict[str, str] = {}
 
+    @override
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = {key: value or "" for key, value in attrs}
         if tag == "form" and not self._in_form:
@@ -80,6 +81,7 @@ class _FormParser(HTMLParser):
             if name:
                 self.fields[name] = attributes.get("value", "")
 
+    @override
     def handle_endtag(self, tag: str) -> None:
         if tag == "form" and self._in_form:
             self._in_form = False
@@ -168,9 +170,7 @@ def _redis_url(container: RedisContainer) -> str:
 
 
 @pytest.fixture
-def settings(
-    redis_container: RedisContainer, keycloak_runtime: KeycloakRuntime
-) -> Settings:
+def settings(redis_container: RedisContainer, keycloak_runtime: KeycloakRuntime) -> Settings:
     return Settings(
         keycloak_base_url=keycloak_runtime.container.get_url(),
         keycloak_realm=REALM,
@@ -234,9 +234,7 @@ async def _authenticate_with_next(
         assert parser.action
         post_url = urljoin(auth_url, parser.action)
         base_form = dict(parser.fields)
-        cookie_header = "; ".join(
-            f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar
-        )
+        cookie_header = "; ".join(f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar)
         payload_variants = [
             {**base_form, "username": USERNAME, "password": PASSWORD},
             {
@@ -332,9 +330,7 @@ async def test_access_token_includes_optional_audience(
             "username": USERNAME,
             "password": PASSWORD,
         }
-        cookie_header = "; ".join(
-            f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar
-        )
+        cookie_header = "; ".join(f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar)
         response = await kc.post(
             post_url,
             data=payload,
@@ -391,9 +387,7 @@ async def test_logout_clears_session(
     assert redirected.headers["location"] == "/api/auth/login?next=/"
 
 
-async def test_login_rejects_open_redirect(
-    client: httpx.AsyncClient, keycloak_runtime: KeycloakRuntime
-) -> None:
+async def test_login_rejects_open_redirect(client: httpx.AsyncClient, keycloak_runtime: KeycloakRuntime) -> None:
     final_location = await _authenticate_with_next(
         client,
         keycloak_runtime.container.get_url(),

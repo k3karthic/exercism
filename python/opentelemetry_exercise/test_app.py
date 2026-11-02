@@ -46,16 +46,12 @@ async def test_subprocess_span_nests_under_caller_trace(
     produces a child span sharing the parent's trace id."""
     exporter = InMemorySpanExporter()
     assert service_1.telemetry.tracer_provider is not None
-    service_1.telemetry.tracer_provider.add_span_processor(
-        SimpleSpanProcessor(exporter)
-    )
+    service_1.telemetry.tracer_provider.add_span_processor(SimpleSpanProcessor(exporter))
 
     payload = await service_1.send_numbers_to_service_2(["3"])
 
     doubled_result = payload["results"][0]
-    parent_spans = [
-        span for span in exporter.get_finished_spans() if span.context is not None
-    ]
+    parent_spans = [span for span in exporter.get_finished_spans() if span.context is not None]
     assert parent_spans, "expected service_1 to emit at least one span"
     span_context = parent_spans[0].context
     assert span_context is not None

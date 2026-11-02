@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncGenerator, AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, override
 
 import jurigged
 import uvicorn
@@ -81,9 +81,7 @@ async def _session_scope() -> AsyncIterator[AsyncSession]:
     try:
         session = await anext(session_generator)
     except StopAsyncIteration as error:
-        raise RuntimeError(
-            "Session dependency did not yield a database session"
-        ) from error
+        raise RuntimeError("Session dependency did not yield a database session") from error
     try:
         yield session
     finally:
@@ -95,27 +93,28 @@ def _criteria_dict(criteria: PetSearchCriteria | OrderSearchCriteria) -> dict[st
 
 
 class PetstoreApi(BasePetApi, BaseStoreApi):
+    @override
     async def add_pet(self, pet: Pet) -> Pet:
         async with _session_scope() as session:
             return await add_pet(session, pet)
 
+    @override
     async def update_pet(self, pet: Pet) -> Pet:
         async with _session_scope() as session:
             return await update_pet(session, pet)
 
+    @override
     async def find_pets_by_status(self, status: PetStatus | None) -> list[Pet]:
         async with _session_scope() as session:
-            return await find_pets_by_status(
-                session, status.value if status is not None else "available"
-            )
+            return await find_pets_by_status(session, status.value if status is not None else "available")
 
+    @override
     async def find_pets_by_tags(self, tags: list[str] | None) -> list[Pet]:
         async with _session_scope() as session:
             return await find_pets_by_tags(session, tags or [])
 
-    async def search_pets(
-        self, pet_search_criteria: PetSearchCriteria, limit: Any, offset: Any
-    ) -> Any:
+    @override
+    async def search_pets(self, pet_search_criteria: PetSearchCriteria, limit: Any, offset: Any) -> Any:
         async with _session_scope() as session:
             return await search_pets(
                 session,
@@ -124,12 +123,17 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 offset=int(offset if offset is not None else 0),
             )
 
+    @override
     async def get_pet_by_id(self, petId: float) -> Pet:  # noqa: N803
         async with _session_scope() as session:
             return await get_pet_by_id(session, int(petId))
 
+    @override
     async def update_pet_with_form(
-        self, petId: float, name: str | None, status: PetStatus | None  # noqa: N803
+        self,
+        petId: float,
+        name: str | None,
+        status: PetStatus | None,  # noqa: N803
     ) -> object:
         async with _session_scope() as session:
             return await update_pet_with_form(
@@ -139,10 +143,12 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 status.value if status is not None else None,
             )
 
+    @override
     async def delete_pet(self, petId: float) -> object:  # noqa: N803
         async with _session_scope() as session:
             return await delete_pet(session, int(petId))
 
+    @override
     async def upload_pet_image(
         self,
         petId: float,  # noqa: N803
@@ -158,21 +164,20 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
         else:
             data = body[1]
         async with _session_scope() as session:
-            return await upload_pet_image(
-                session, int(petId), data, additional_metadata
-            )
+            return await upload_pet_image(session, int(petId), data, additional_metadata)
 
+    @override
     async def get_inventory(self) -> dict[str, int]:
         async with _session_scope() as session:
             return await get_inventory(session)
 
+    @override
     async def place_order(self, order: Order) -> Order:
         async with _session_scope() as session:
             return await place_order(session, order)
 
-    async def search_orders(
-        self, order_search_criteria: OrderSearchCriteria, page: Any, page_size: Any
-    ) -> Any:
+    @override
+    async def search_orders(self, order_search_criteria: OrderSearchCriteria, page: Any, page_size: Any) -> Any:
         async with _session_scope() as session:
             return await search_orders(
                 session,
@@ -181,10 +186,12 @@ class PetstoreApi(BasePetApi, BaseStoreApi):
                 page_size=int(page_size if page_size is not None else 20),
             )
 
+    @override
     async def get_order_by_id(self, orderId: float) -> Order:  # noqa: N803
         async with _session_scope() as session:
             return await get_order_by_id(session, int(orderId))
 
+    @override
     async def delete_order(self, orderId: float) -> object:  # noqa: N803
         async with _session_scope() as session:
             return await delete_order(session, int(orderId))

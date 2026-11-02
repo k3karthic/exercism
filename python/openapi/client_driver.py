@@ -22,9 +22,7 @@ def fetch_inventory(base_url: str, api_key: str) -> dict[str, int]:
 
 
 def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Call the Petstore server with the generated OpenAPI client."
-    )
+    parser = argparse.ArgumentParser(description="Call the Petstore server with the generated OpenAPI client.")
     parser.add_argument(
         "--base-url",
         default="http://127.0.0.1:8000",

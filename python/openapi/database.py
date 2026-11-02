@@ -32,16 +32,12 @@ class Base(DeclarativeBase):
 class Pet(Base):
     __tablename__ = "pet"
 
-    id: Mapped[int | None] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(nullable=False)
-    photo_urls: Mapped[Any] = mapped_column(
-        "photo_urls", JSON, nullable=False, default=list
-    )
+    id: Mapped[int | None] = mapped_column(primary_key=True)  # ty: ignore[unsound-assignment]
+    name: Mapped[str] = mapped_column(nullable=False)  # ty: ignore[unsound-assignment]
+    photo_urls: Mapped[Any] = mapped_column("photo_urls", JSON, nullable=False, default=list)
     category: Mapped[Any | None] = mapped_column(JSON, nullable=True)
-    tags: Mapped[list[dict[str, Any]]] = mapped_column(
-        JSONB, nullable=False, default=list
-    )
-    status: Mapped[str | None] = mapped_column(nullable=True)
+    tags: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    status: Mapped[str | None] = mapped_column(nullable=True)  # ty: ignore[unsound-assignment]
 
     @classmethod
     async def get(cls, session: AsyncSession, pet_id: int) -> Pet | None:
@@ -65,42 +61,32 @@ class Pet(Base):
         return list(result.scalars().all())
 
     @classmethod
-    async def find_by_tags(
-        cls, session: AsyncSession, tag_names: list[str]
-    ) -> list[Pet]:
+    async def find_by_tags(cls, session: AsyncSession, tag_names: list[str]) -> list[Pet]:
         result = await session.execute(select(cls))
         return [
             pet
             for pet in result.scalars().all()
-            if set(tag_names).issubset(
-                {
-                    tag["name"]
-                    for tag in pet.tags or []
-                    if isinstance(tag, dict) and isinstance(tag.get("name"), str)
-                }
-            )
+            if set(tag_names).issubset({tag["name"] for tag in pet.tags or [] if isinstance(tag.get("name"), str)})
         ]
 
     @classmethod
     async def inventory(cls, session: AsyncSession) -> dict[str, int]:
         table = cast(Any, cls).__table__
-        rows = await session.execute(
-            select(table.c.status, func.count(table.c.id)).group_by(table.c.status)
-        )
+        rows = await session.execute(select(table.c.status, func.count(table.c.id)).group_by(table.c.status))
         return {row[0]: row[1] for row in rows.all() if row[0] is not None}
 
 
 class Order(Base):
     __tablename__ = "order"
 
-    id: Mapped[int | None] = mapped_column(primary_key=True)
-    pet_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    ship_date: Mapped[datetime | None] = mapped_column(
+    id: Mapped[int | None] = mapped_column(primary_key=True)  # ty: ignore[unsound-assignment]
+    pet_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)  # ty: ignore[unsound-assignment]
+    quantity: Mapped[int | None] = mapped_column(Integer, nullable=True)  # ty: ignore[unsound-assignment]
+    ship_date: Mapped[datetime | None] = mapped_column(  # ty: ignore[unsound-assignment]
         DateTime(timezone=True), nullable=True
     )
-    status: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    status: Mapped[str | None] = mapped_column(String(20), nullable=True)  # ty: ignore[unsound-assignment]
+    complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)  # ty: ignore[unsound-assignment]
 
     @classmethod
     async def get(cls, session: AsyncSession, order_id: int) -> Order | None:

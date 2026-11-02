@@ -32,9 +32,7 @@ def _order_schema(row: Order) -> OrderSchema:
             "id": row.id,
             "pet_id": row.pet_id,
             "quantity": row.quantity,
-            "ship_date": row.ship_date.isoformat()
-            if row.ship_date is not None
-            else None,
+            "ship_date": row.ship_date.isoformat() if row.ship_date is not None else None,
             "status": row.status,
             "complete": row.complete,
         }
@@ -61,11 +59,7 @@ def _pet_matches_search(row: Pet, criteria: dict[str, Any]) -> bool:
         return False
 
     tags = criteria.get("tags") or []
-    tag_names = {
-        tag["name"]
-        for tag in row.tags or []
-        if isinstance(tag, dict) and isinstance(tag.get("name"), str)
-    }
+    tag_names = {tag["name"] for tag in row.tags or [] if isinstance(tag.get("name"), str)}
     if tags and not set(tags).issubset(tag_names):
         return False
 
@@ -89,9 +83,7 @@ def _order_matches_date_range(row: Order, date_range: dict[str, Any]) -> bool:
     return True
 
 
-def _order_matches_quantity_range(
-    row: Order, quantity_range: dict[str, Any]
-) -> bool:
+def _order_matches_quantity_range(row: Order, quantity_range: dict[str, Any]) -> bool:
     quantity = row.quantity or 0
     minimum = quantity_range.get("min")
     if minimum is not None and quantity < minimum:
@@ -125,9 +117,7 @@ def _order_matches_search(  # noqa: PLR0911
 
     if not _order_matches_date_range(row, criteria.get("dateRange") or {}):
         return False
-    if not _order_matches_quantity_range(
-        row, criteria.get("quantityRange") or {}
-    ):
+    if not _order_matches_quantity_range(row, criteria.get("quantityRange") or {}):
         return False
 
     return True
@@ -144,9 +134,7 @@ async def add_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
         name=pet.name,
         status=pet.status,
         photo_urls=pet.photo_urls or [],
-        category=pet.category.model_dump(mode="json", exclude_none=True)
-        if pet.category is not None
-        else None,
+        category=pet.category.model_dump(mode="json", exclude_none=True) if pet.category is not None else None,
         tags=[tag.model_dump(mode="json", exclude_none=True) for tag in pet.tags or []],
     )
     session.add(row)
@@ -164,14 +152,8 @@ async def update_pet(session: AsyncSession, pet: PetSchema) -> PetSchema:
     row.name = pet.name
     row.status = pet.status
     row.photo_urls = pet.photo_urls or []
-    row.category = (
-        pet.category.model_dump(mode="json", exclude_none=True)
-        if pet.category is not None
-        else None
-    )
-    row.tags = [
-        tag.model_dump(mode="json", exclude_none=True) for tag in pet.tags or []
-    ]
+    row.category = pet.category.model_dump(mode="json", exclude_none=True) if pet.category is not None else None
+    row.tags = [tag.model_dump(mode="json", exclude_none=True) for tag in pet.tags or []]
     await session.commit()
     await session.refresh(row)
     return _pet_schema(row)
@@ -201,9 +183,7 @@ async def search_pets(
     total = len(rows)
     page = rows[offset : offset + limit]
     return {
-        "results": [
-            _pet_schema(row).model_dump(mode="json", by_alias=True) for row in page
-        ],
+        "results": [_pet_schema(row).model_dump(mode="json", by_alias=True) for row in page],
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -249,10 +229,7 @@ async def upload_pet_image(
     return ApiResponse(
         code=200,
         type="unknown",
-        message=(
-            f"Uploaded {len(data)} bytes for pet {pet_id}; "
-            f"metadata={additional_metadata}"
-        ),
+        message=(f"Uploaded {len(data)} bytes for pet {pet_id}; metadata={additional_metadata}"),
     )
 
 
@@ -265,9 +242,7 @@ async def place_order(session: AsyncSession, order: OrderSchema) -> OrderSchema:
         id=int(order.id) if order.id is not None else None,
         pet_id=int(order.pet_id) if order.pet_id is not None else None,
         quantity=int(order.quantity) if order.quantity is not None else None,
-        ship_date=_parse_datetime(order.ship_date)
-        if order.ship_date is not None
-        else datetime.now(UTC),
+        ship_date=_parse_datetime(order.ship_date) if order.ship_date is not None else datetime.now(UTC),
         status=order.status.value if order.status is not None else None,
         complete=order.complete or False,
     )
@@ -284,9 +259,7 @@ async def search_orders(
     page_size: int,
 ) -> dict[str, Any]:
     result = await session.execute(select(Order))
-    rows = [
-        row for row in result.scalars().all() if _order_matches_search(row, criteria)
-    ]
+    rows = [row for row in result.scalars().all() if _order_matches_search(row, criteria)]
     sort_field = str(criteria.get("sortBy") or "shipDate")
     sort_field = {
         "shipDate": "ship_date",
@@ -301,10 +274,7 @@ async def search_orders(
     page_rows = rows[start : start + page_size]
     total_pages = (total + page_size - 1) // page_size if total else 0
     return {
-        "orders": [
-            _order_schema(row).model_dump(mode="json", by_alias=True)
-            for row in page_rows
-        ],
+        "orders": [_order_schema(row).model_dump(mode="json", by_alias=True) for row in page_rows],
         "pagination": {
             "page": page,
             "pageSize": page_size,

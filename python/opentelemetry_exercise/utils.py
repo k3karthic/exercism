@@ -68,26 +68,16 @@ def configure_telemetry(service_name: str) -> TelemetryBundle:
     # try to dial 127.0.0.1:4317 by default.
     if raw_endpoint:
         endpoint = _normalize_endpoint(raw_endpoint)
-        tracer_provider.add_span_processor(
-            BatchSpanProcessor(trace_exporter_class(endpoint))
-        )
-        meter_readers.append(
-            PeriodicExportingMetricReader(metric_exporter_class(endpoint))
-        )
-        logger_provider.add_log_record_processor(
-            BatchLogRecordProcessor(log_exporter_class(endpoint))
-        )
+        tracer_provider.add_span_processor(BatchSpanProcessor(trace_exporter_class(endpoint)))
+        meter_readers.append(PeriodicExportingMetricReader(metric_exporter_class(endpoint)))
+        logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter_class(endpoint)))
 
     meter_provider = MeterProvider(resource=resource, metric_readers=meter_readers)
 
     service_log = logging.getLogger(service_name)
     service_log.setLevel(logging.INFO)
-    if not any(
-        isinstance(handler, LoggingHandler) for handler in service_log.handlers
-    ):
-        service_log.addHandler(
-            LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
-        )
+    if not any(isinstance(handler, LoggingHandler) for handler in service_log.handlers):
+        service_log.addHandler(LoggingHandler(level=logging.INFO, logger_provider=logger_provider))
     return TelemetryBundle(
         logger_provider=logger_provider,
         meter_provider=meter_provider,
@@ -125,9 +115,7 @@ def service_logger(service_name: str) -> logging.Logger:
     logger.setLevel(logging.INFO)
     if not logger.handlers:
         handler = logging.StreamHandler()
-        handler.setFormatter(
-            logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
-        )
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
         logger.addHandler(handler)
     logger.propagate = False
     return logger

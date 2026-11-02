@@ -58,7 +58,8 @@ async def test_cleanup_expired_requests_removes_old_entries(
     calls = 0
 
     async def fake_wait_for(
-        awaitable: Coroutine[Any, Any, bool], timeout: int  # noqa: ARG001
+        awaitable: Coroutine[Any, Any, bool],
+        timeout: int,  # noqa: ARG001
     ) -> bool:
         nonlocal calls
         calls += 1
@@ -71,9 +72,7 @@ async def test_cleanup_expired_requests_removes_old_entries(
 
     monkeypatch.setattr(server.asyncio, "wait_for", fake_wait_for)
 
-    cleanup_task = asyncio.create_task(
-        service.cleanup_expired_requests(stop_event, ttl_seconds=10, interval_seconds=1)
-    )
+    cleanup_task = asyncio.create_task(service.cleanup_expired_requests(stop_event, ttl_seconds=10, interval_seconds=1))
 
     await cleanup_task
 
@@ -89,7 +88,8 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
             self.calls = 0
 
         def Double(  # noqa: N802
-            self, request: pb2.DoubleRequest  # ty: ignore[unresolved-attribute]
+            self,
+            request: pb2.DoubleRequest,  # ty: ignore[unresolved-attribute]
         ) -> pb2.DoubleResponse:  # ty: ignore[unresolved-attribute]
             self.calls += 1
             return pb2.DoubleResponse(  # ty: ignore[unresolved-attribute]
@@ -97,9 +97,7 @@ def test_send_request_with_retry_rejects_mismatched_request_id(
             )
 
     stub = Stub()
-    monkeypatch.setattr(
-        client.grpc, "insecure_channel", lambda _target, **_: DummyChannel()
-    )
+    monkeypatch.setattr(client.grpc, "insecure_channel", lambda _target, **_: DummyChannel())
     monkeypatch.setattr(client.pb2_grpc, "DoublerStub", lambda _channel: stub)
 
     with pytest.raises(ValueError, match="Request ID mismatch"):
