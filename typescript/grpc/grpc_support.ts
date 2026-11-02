@@ -45,6 +45,13 @@ const channelOptions = {
 } satisfies grpc.ChannelOptions;
 
 function resolveProtoPath(): string {
+  // From dist/grpc/, go up to parent project's grpc/ (../grpc from project root)
+  const parentProtoPath = join(__dirname, "../../../grpc/doubler_service.proto");
+  if (existsSync(parentProtoPath)) {
+    return parentProtoPath;
+  }
+
+  // From source grpc/, go up to parent project's grpc/
   const sharedProtoPath = join(__dirname, "../../grpc/doubler_service.proto");
   if (existsSync(sharedProtoPath)) {
     return sharedProtoPath;

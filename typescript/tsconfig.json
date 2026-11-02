@@ -45,5 +45,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "exclude": ["openapi/generated/**"]
+  "exclude": ["dist/**", "openapi/generated/**"]
 }

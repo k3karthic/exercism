@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { context, propagation, SpanStatusCode } from "@opentelemetry/api";
@@ -56,7 +57,10 @@ export class Service1 {
     }
 
     const tsxCliPath = fileURLToPath(import.meta.resolve("tsx/cli"));
-    const scriptPath = fileURLToPath(new URL("./service-2-process.ts", import.meta.url));
+    const scriptBase = fileURLToPath(new URL("./service-2-process", import.meta.url));
+    const tsPath = scriptBase + ".ts";
+    const jsPath = scriptBase + ".js";
+    const scriptPath = existsSync(tsPath) ? tsPath : jsPath;
     const stdout = execFileSync(process.execPath, [tsxCliPath, scriptPath, value], { env, encoding: "utf-8" });
     const result = JSON.parse(stdout) as DoubleResponse | { value: string; error: string };
     if ("error" in result) {
