@@ -11,7 +11,6 @@
 | **Zig** | Manual \+ Explicit | No | Explicit Arenas, DebugAllocator/GPA, Fixed Buffers |
 | **Rust** | Ownership and deterministic destruction | No | System allocator by default; optional allocators, arenas, and pooling |
 | **Node.js (V8)** | Generational, mostly concurrent/incremental GC | Selective | Young-generation copying; selective old-generation compaction; external Buffer backing stores |
-| **Haskell (GHC)** | Generational copying by default; optional collectors | Usually | Copying evacuation, optional old-generation compaction/non-moving GC, compact regions |
 
 ## **1\. Python: The Dual-System Manager**
 
@@ -249,51 +248,3 @@ To solve this, Node.js uses the Buffer class (implemented as a subclass of Uint8
 > * **The V8 Wrapper:** V8 only stores a small JavaScript wrapper object (Uint8Array / ArrayBuffer) on its heap that points to that external backing store, informing V8 of the external memory pressure associated with the object.  
 > * **The Retention Trap:** A live wrapper or view can keep its backing store (or a pooled slab) alive. Consequently, external memory can make process RSS high even when the JavaScript heap is comparatively small.
 
-## **8\. Haskell (GHC): Immutability, Thunks, and the Block-Structured Heap**
-
-Haskell (compiled via the Glasgow Haskell Compiler, **GHC**) has a unique memory profile dictated by two core language properties: **pure immutability** and **lazy evaluation (call-by-need)**.  
-Because values are immutable by default, Haskell programs often allocate many short-lived heap objects. Lazy evaluation also means the heap can store suspended computations called **thunks**. Actual allocation rates vary widely by program.
-
-### **The Block-Structured Heap (MBlocks and bdescr)**
-
-Unlike runtimes that request contiguous virtual address ranges for each generation, GHC manages memory through a custom **Block Allocator** layered over the OS:
-
-> * **Megablocks (MBlocks):** GHC requests memory from the OS in aligned **1 MB chunks** called Megablocks.  
-> * **Blocks (4 KB):** Each Megablock is sliced into **4 KB blocks**, tracked by block descriptors (bdescr).  
-> * **Linked Block Lists:** Generations, nurseries, and large objects are not required to be physically contiguous in virtual memory; they are simply linked lists of 4 KB blocks. This allows GHC to grow or shrink generations dynamically and transfer blocks between phases simply by updating block descriptor pointers.
-
-### **Generational Copying & The Non-Moving (ImMix) Collector**
-
-By default, GHC divides the heap into two generations (Gen 0 and Gen 1, configurable via \+RTS \-G):
-
-> * **Nurseries:** GHC allocates into nursery blocks associated with capabilities. Allocation is typically a bump-pointer operation. Nursery size and the fraction of surviving objects depend on runtime settings and workload; allocation is not generally equivalent to stack allocation.
-> * **Parallel Copying (Default Major GC):** By default, GHC uses a stop-the-world copying collector for generations. Live objects are evacuated into fresh blocks, compacting the copied data, but the collector may need extra memory while copying and pauses can grow with the amount of live data.
-> * **Optional Old-Gen Compaction (+RTS \-c):** To avoid the 2x memory spike of copying when residency is high, GHC can switch the Old Generation to an in-place **Mark-Compact** collector (threading pointers via the Jonkers algorithm), trading longer GC CPU time for a much smaller memory footprint.  
-> * **The Non-Moving GC (+RTS \-xn):** GHC 8.10 introduced an optional concurrent non-moving collector for the old generation, based on Immix-style organization, while retaining copying collection for the young generation. It reduces some pause costs but does not guarantee a particular pause-time bound.
-
-### **Haskell-Specific Memory Traps: Space Leaks & Pinning**
-
-#### **1\. Thunks and Lazy Space Leaks**
-
-When you write let x \= a \+ b in Haskell, the runtime does not add a and b immediately. Instead, it allocates a **Thunk** on the heap—a closure containing a code pointer and pointers to a and b.
-
-> * **Graph Reduction (Indirections):** When the program finally needs x, it evaluates the thunk and overwrites it in place with an **Indirection** pointing to the computed result. The next time the GC runs, it short-circuits the indirection so all references point directly to the value, and frees the thunk. Note: Evaluating a thunk is a rare case of under-the-hood "mutation," requiring GHC's generational GC to track mutated old-generation thunks in a **Remembered Set** (mut\_list) because an old thunk might now point to a newly allocated Gen 0 result.  
-> * **The Space Leak Trap:** If a long-running loop accumulates millions of unevaluated thunks (e.g., using lazy foldl instead of strict foldl' to sum a list: (((0 \+ 1\) \+ 2\) \+ 3)...), the heap explodes with a chain of thunks that keeps all intermediate inputs alive. The fix is enforcing strictness at accumulation boundaries via BangPatterns (\!x), strict data fields, or seq/deepseq.
-
-#### **2\. Pinned ByteArrays and Block Fragmentation**
-
-Like Go and Erlang, GHC handles large objects and C-interop buffers specially:
-
-> * **Large Objects (\\ge 3.2\\text{ KB}):** Objects roughly 80% of a 4 KB block or larger are allocated in dedicated chains of blocks (BF\_LARGE). During GC, GHC does not copy their contents; it relinks their block descriptors into the surviving generation.
-> * **Pinned memory and FFI:** Some GHC byte arrays are pinned so their addresses remain stable for foreign code. A standard strict `ByteString`, however, is typically backed by foreign memory rather than a small pinned GHC-heap object; FFI APIs have different pinning and lifetime requirements.
-> * **Retention risk:** Slices can retain a much larger backing allocation than the visible slice, depending on the representation and library version. Small pinned GHC allocations can also contribute to block retention, but this should not be conflated with every `ByteString`.
-> * **Mitigation:** Use an unpinned representation such as `ShortByteString` where suitable, and copy small slices when retaining the parent allocation would waste significant memory.
-
-#### **3\. Explicit Zero-GC Escape Hatch: Compact Normal Form (ghc-compact)**
-
-For massive, long-lived, immutable in-memory structures (like a 20 GB lookup table or AST), scanning millions of pointers during every Major GC wastes enormous CPU time.  
-GHC provides **GHC.Compact** (Compact Regions), an explicit memory management feature:
-
-> * Values can be added to a compact region, but putting a value in a compact does not in general force all of its thunks; evaluate the structure explicitly when that is required.
-> * The region stores closures in blocks and is managed as a unit rather than tracing every closure as part of ordinary heap collection.
-> * When the compact region becomes unreachable, its blocks can be reclaimed as a unit. This is not a guarantee of O(1) release time, and compact regions can still contain pointers to ordinary-heap objects.

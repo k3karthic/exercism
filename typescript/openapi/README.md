@@ -1,6 +1,6 @@
 # Petstore API
 
-The shared contract is `../openapi/petstore.json`. OpenAPI Generator CLI
+The shared contract is `../../openapi/petstore.json`. OpenAPI Generator CLI
 produces the Express server scaffold and TypeScript fetch client in
 `typescript/openapi/generated/`. Regeneration only replaces those generated
 directories. Express startup and API-key enforcement remain in handwritten
