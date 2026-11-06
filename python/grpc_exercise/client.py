@@ -28,9 +28,8 @@ CHANNEL_OPTIONS = (
 )
 
 
-def send_request_with_retry(target, number, req_id=None):
-    if req_id is None:
-        req_id = str(uuid.uuid4())[:8]
+def send_request_with_retry(target, number):
+    req_id = str(uuid.uuid4())[:8]
 
     request = pb2.DoubleRequest(request_id=req_id, number=number)
 

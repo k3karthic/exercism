@@ -6,12 +6,25 @@ import shutil
 import subprocess
 import tempfile
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).parent
 REPOSITORY_ROOT = PACKAGE_ROOT.parents[1]
 SPEC_PATH = REPOSITORY_ROOT / "openapi" / "petstore.json"
+OPENAPITOOLS_FILE = REPOSITORY_ROOT / "openapitools.json"
 GENERATED_ROOT = PACKAGE_ROOT / "generated"
+SERVER_TEMPLATES = PACKAGE_ROOT / "templates" / "server"
+
+
+@dataclass
+class GeneratorConfig:
+    generator: str
+    package_name: str
+    target: Path
+    additional_properties: dict[str, str]
+    templates: Path | None = None
+    postprocess: Callable[[Path], None] | None = None
 
 
 def _run_generator(command: list[str]) -> None:
@@ -20,65 +33,68 @@ def _run_generator(command: list[str]) -> None:
     subprocess.run(command, check=True, cwd=REPOSITORY_ROOT, env=environment)
 
 
-def _generate_package(
-    *,
-    generator: str,
-    package_name: str,
-    target: Path,
-    additional_properties: dict[str, str],
-    postprocess: Callable[[Path], None] | None = None,
-) -> None:
-    package_path = Path(*package_name.split("."))
+def _generate_package(config: GeneratorConfig) -> None:
+    package_path = Path(*config.package_name.split("."))
     properties = ",".join(
         f"{key}={value}"
         for key, value in {
-            "packageName": package_name,
-            **additional_properties,
+            "packageName": config.package_name,
+            **config.additional_properties,
         }.items()
     )
 
-    with tempfile.TemporaryDirectory(dir=target.parent) as temporary_directory:
+    with tempfile.TemporaryDirectory(dir=config.target.parent) as temporary_directory:
         temporary_root = Path(temporary_directory)
         generator_output = temporary_root / "generator-output"
-        _run_generator(
-            [
-                "openapi-generator-cli",
-                "generate",
-                "--generator-name",
-                generator,
-                "--input-spec",
-                str(SPEC_PATH),
-                "--output",
-                str(generator_output),
-                "--additional-properties",
-                properties,
-            ]
-        )
 
+        command = [
+            "openapi-generator-cli",
+            "--openapitools",
+            str(OPENAPITOOLS_FILE),
+            "generate",
+            "--generator-name",
+            config.generator,
+            "--input-spec",
+            str(SPEC_PATH),
+            "--output",
+            str(generator_output),
+            "--additional-properties",
+            properties,
+        ]
+        if config.templates is not None:
+            command.extend(["--template-dir", str(config.templates)])
+
+        _run_generator(command)
         generated_package = generator_output / package_path
         if not generated_package.is_dir():
             raise FileNotFoundError(f"Generator did not produce the expected package: {generated_package}")
 
         staged_package = temporary_root / "staged-package"
         shutil.copytree(generated_package, staged_package)
-        if postprocess is not None:
-            postprocess(staged_package)
+        if config.postprocess is not None:
+            config.postprocess(staged_package)
         backup = temporary_root / "previous-package"
-        if target.exists():
-            os.replace(target, backup)
+        if config.target.exists():
+            os.replace(config.target, backup)
         try:
-            os.replace(staged_package, target)
+            os.replace(staged_package, config.target)
         except OSError:
             if backup.exists():
-                os.replace(backup, target)
+                os.replace(backup, config.target)
             raise
 
 
 def _normalize_fastapi_query_types(package: Path) -> None:
+    """Replace StrictInt/StrictFloat with int/float in Query parameters.
+
+    HTTP query parameters arrive as strings, so pydantic's StrictInt rejects
+    valid inputs like "5". The python-fastapi generator uses StrictInt for
+    integer/float query params, which causes 422 validation errors.
+    Upstream fix: OpenAPITools/openapi-generator#24793 (remove when generator upgraded).
+    """
     api_directory = package / "apis"
     for api_file in api_directory.glob("*_api.py"):
         lines = api_file.read_text(encoding="utf-8").splitlines(keepends=True)
-        # HTTP query parameters arrive as strings, so generated strict ints reject valid inputs.
         normalized_lines = [
             line.replace("strict=True, ", "")
             .replace(", strict=True", "")
@@ -92,59 +108,52 @@ def _normalize_fastapi_query_types(package: Path) -> None:
         api_file.write_text("".join(normalized_lines), encoding="utf-8")
 
 
-def _remove_generated_import_conflicts(package: Path) -> None:
+def _remove_client_api_response_import(package: Path) -> None:
+    """Remove the model ApiResponse import that shadows the framework ApiResponse class."""
     for api_file in package.rglob("*_api.py"):
         source = api_file.read_text(encoding="utf-8")
-        if api_file.parent.name == "api":
-            source = source.replace(
-                "from openapi.generated.client.models.api_response import ApiResponse\n",
-                "",
-            )
-        elif api_file.parent.name == "apis":
-            source = source.replace("    status,\n", "")
-        api_file.write_text(source, encoding="utf-8")
-
-
-def _normalize_generated_whitespace(package: Path) -> None:
-    for generated_file in package.rglob("*.py"):
-        lines = generated_file.read_text(encoding="utf-8").splitlines()
-        generated_file.write_text(
-            "\n".join(line.rstrip() for line in lines).rstrip() + "\n",
-            encoding="utf-8",
+        source = source.replace(
+            "from openapi.generated.client.models.api_response import ApiResponse\n",
+            "",
         )
+        api_file.write_text(source, encoding="utf-8")
 
 
 def _normalize_fastapi_server(package: Path) -> None:
     _normalize_fastapi_query_types(package)
-    _remove_generated_import_conflicts(package)
-    _normalize_generated_whitespace(package)
 
 
 def _normalize_python_client(package: Path) -> None:
-    _remove_generated_import_conflicts(package)
-    _normalize_generated_whitespace(package)
+    _remove_client_api_response_import(package)
 
 
 def generate() -> None:
-    _run_generator(["openapi-generator-cli", "validate", "--input-spec", str(SPEC_PATH)])
+    _run_generator(
+        ["openapi-generator-cli", "--openapitools", str(OPENAPITOOLS_FILE), "validate", "--input-spec", str(SPEC_PATH)]
+    )
     GENERATED_ROOT.mkdir(parents=True, exist_ok=True)
 
     _generate_package(
-        generator="python-fastapi",
-        package_name="openapi.generated.server",
-        target=GENERATED_ROOT / "server",
-        additional_properties={
-            "sourceFolder": ".",
-            "fastapiImplementationPackage": "impl",
-        },
-        postprocess=_normalize_fastapi_server,
+        GeneratorConfig(
+            generator="python-fastapi",
+            package_name="openapi.generated.server",
+            target=GENERATED_ROOT / "server",
+            additional_properties={
+                "sourceFolder": ".",
+                "fastapiImplementationPackage": "impl",
+            },
+            templates=SERVER_TEMPLATES,
+            postprocess=_normalize_fastapi_server,
+        )
     )
     _generate_package(
-        generator="python",
-        package_name="openapi.generated.client",
-        target=GENERATED_ROOT / "client",
-        additional_properties={},
-        postprocess=_normalize_python_client,
+        GeneratorConfig(
+            generator="python",
+            package_name="openapi.generated.client",
+            target=GENERATED_ROOT / "client",
+            additional_properties={},
+            postprocess=_normalize_python_client,
+        )
     )
 
 

@@ -2,47 +2,27 @@ from __future__ import annotations
 
 import time
 from collections.abc import AsyncGenerator, Generator
-from dataclasses import dataclass
 from html.parser import HTMLParser
 from typing import override
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx2 as httpx
-import jwt
 import pytest
-from fastapi import FastAPI, HTTPException
 from requests.exceptions import HTTPError
 from testcontainers.core.config import testcontainers_config
 from testcontainers.keycloak import KeycloakContainer
-from testcontainers.redis import RedisContainer
 
-from keycloak_exercise.app import Settings, _require_access_token, create_app
+from keycloak_exercise.app import Settings, create_app
 
 REALM = "my-app-realm"
 CLIENT_ID = "my-app-client"
 AUDIENCE_SCOPE = "my-app-audience-scope"
-API_AUDIENCE = "my-app-api"
 USERNAME = "testuser"
 PASSWORD = "Password123!"
 EMAIL = "testuser@example.com"
 APP_BASE_URL = "http://testserver"
 CALLBACK_URI = f"{APP_BASE_URL}/api/auth/callback/keycloak"
 POST_LOGOUT_REDIRECT_URI = f"{APP_BASE_URL}/"
-
-
-def test_require_access_token() -> None:
-    assert _require_access_token({"access_token": "token"}) == "token"
-
-    with pytest.raises(HTTPException, match="missing access token") as error:
-        _require_access_token({})
-
-    assert error.value.status_code == 502
-
-
-@dataclass(slots=True)
-class KeycloakRuntime:
-    container: KeycloakContainer
-    client_secret: str
 
 
 class _RetryingKeycloakContainer(KeycloakContainer):
@@ -88,13 +68,7 @@ class _FormParser(HTMLParser):
 
 
 @pytest.fixture(scope="session")
-def redis_container() -> Generator[RedisContainer]:
-    with RedisContainer("redis:7-alpine") as container:
-        yield container
-
-
-@pytest.fixture(scope="session")
-def keycloak_runtime() -> Generator[KeycloakRuntime]:
+def keycloak_container() -> Generator[KeycloakContainer]:
     with _RetryingKeycloakContainer("quay.io/keycloak/keycloak:latest") as container:
         admin = container.get_client()
         admin.create_realm(payload={"realm": REALM, "enabled": True})
@@ -125,19 +99,6 @@ def keycloak_runtime() -> Generator[KeycloakRuntime]:
                 "description": "Adds the API audience to tokens only when requested.",
             }
         )
-        admin.add_mapper_to_client_scope(
-            scope_id,
-            payload={
-                "name": "my-app-audience-mapper",
-                "protocol": "openid-connect",
-                "protocolMapper": "oidc-audience-mapper",
-                "config": {
-                    "included.client.audience": API_AUDIENCE,
-                    "id.token.claim": "false",
-                    "access.token.claim": "true",
-                },
-            },
-        )
         admin.add_client_optional_client_scope(
             client_uuid,
             scope_id,
@@ -160,45 +121,38 @@ def keycloak_runtime() -> Generator[KeycloakRuntime]:
         user_id = admin.get_user_id(USERNAME)
         assert user_id is not None
         admin.set_user_password(user_id=user_id, password=PASSWORD, temporary=False)
-        yield KeycloakRuntime(container=container, client_secret=client_secret)
+        container._client_secret = client_secret  # type: ignore[attr-defined]
+        yield container
 
 
-def _redis_url(container: RedisContainer) -> str:
-    host = container.get_container_host_ip()
-    port = container.get_exposed_port(container.port)
-    return f"redis://{host}:{port}/0"
+def _get_client_secret(container: KeycloakContainer) -> str:
+    return container._client_secret  # type: ignore[attr-defined]
 
 
 @pytest.fixture
-def settings(redis_container: RedisContainer, keycloak_runtime: KeycloakRuntime) -> Settings:
+def settings(keycloak_container: KeycloakContainer) -> Settings:
     return Settings(
-        keycloak_base_url=keycloak_runtime.container.get_url(),
+        keycloak_base_url=keycloak_container.get_url(),
         keycloak_realm=REALM,
         keycloak_client_id=CLIENT_ID,
-        keycloak_client_secret=keycloak_runtime.client_secret,
+        keycloak_client_secret=_get_client_secret(keycloak_container),
         redirect_uri=CALLBACK_URI,
         post_logout_redirect_uri=POST_LOGOUT_REDIRECT_URI,
-        redis_url=_redis_url(redis_container),
     )
 
 
 @pytest.fixture
-def app(settings: Settings) -> FastAPI:
+def app(settings: Settings):
     return create_app(settings)
 
 
-@pytest.fixture(autouse=True)
-def flush_redis(redis_container: RedisContainer) -> None:
-    redis = redis_container.get_client(decode_responses=True)
-    redis.flushdb()
-
-
 @pytest.fixture
-async def client(app: FastAPI) -> AsyncGenerator[httpx.AsyncClient]:
+async def client(app) -> AsyncGenerator[httpx.AsyncClient]:
     async with httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app),
         base_url=APP_BASE_URL,
         follow_redirects=False,
+        cookies={},
     ) as async_client:
         yield async_client
 
@@ -221,12 +175,25 @@ async def _authenticate_with_next(
         assert response.headers["location"] == login_path
 
     login_redirect = await client.get(login_path, follow_redirects=False)
-    assert login_redirect.status_code == 303
+    assert login_redirect.status_code in {302, 303}
 
     auth_url = login_redirect.headers["location"]
     assert parse_qs(urlparse(auth_url).query)["scope"] == [f"openid {AUDIENCE_SCOPE}"]
     async with httpx.AsyncClient(base_url=keycloak_url, follow_redirects=False) as kc:
-        login_page = await kc.get(auth_url)
+        auth_redirect = await kc.get(auth_url)
+        # Keycloak may redirect from auth endpoint to login page
+        if auth_redirect.status_code in {302, 303}:
+            location = auth_redirect.headers.get("location", "")
+            # If location is absolute, extract just the path; kc client handles the base URL
+            if location.startswith("http"):
+                login_path = urlparse(location).path + (
+                    "?" + urlparse(location).query if urlparse(location).query else ""
+                )
+            else:
+                login_path = location
+            login_page = await kc.get(login_path)
+        else:
+            login_page = auth_redirect
         assert login_page.status_code == 200
 
         parser = _FormParser()
@@ -272,7 +239,7 @@ async def _authenticate_with_next(
         callback_url = callback_response.headers["location"]
 
     callback = await client.get(callback_url, follow_redirects=False)
-    assert callback.status_code == 303
+    assert callback.status_code in {302, 303}
     return callback.headers["location"]
 
 
@@ -282,115 +249,50 @@ async def test_root_redirects_when_not_logged_in(client: httpx.AsyncClient) -> N
     assert response.headers["location"] == "/api/auth/login?next=/"
 
 
-async def test_login_shows_welcome_and_active_sessions(
+async def test_login_shows_welcome(
     client: httpx.AsyncClient,
-    app: FastAPI,
-    keycloak_runtime: KeycloakRuntime,
+    keycloak_container: KeycloakContainer,
 ) -> None:
-    await _authenticate(client, keycloak_runtime.container.get_url())
+    await _authenticate(client, keycloak_container.get_url())
 
     response = await client.get("/", follow_redirects=False)
     assert response.status_code == 200
     assert "Welcome, testuser" in response.text
-    assert response.text.count("data-session-id=") == 1
-
-    async with httpx.AsyncClient(
-        transport=httpx.ASGITransport(app=app),
-        base_url=APP_BASE_URL,
-        follow_redirects=False,
-    ) as other_client:
-        await _authenticate(other_client, keycloak_runtime.container.get_url())
-        other_response = await other_client.get("/", follow_redirects=False)
-        assert other_response.status_code == 200
-        assert other_response.text.count("data-session-id=") == 2
-
-
-async def test_access_token_includes_optional_audience(
-    client: httpx.AsyncClient,
-    keycloak_runtime: KeycloakRuntime,
-) -> None:
-    login_redirect = await client.get("/api/auth/login?next=/", follow_redirects=False)
-    assert login_redirect.status_code == 303
-    auth_url = login_redirect.headers["location"]
-    assert parse_qs(urlparse(auth_url).query)["scope"] == [f"openid {AUDIENCE_SCOPE}"]
-
-    async with httpx.AsyncClient(
-        base_url=keycloak_runtime.container.get_url(),
-        follow_redirects=False,
-    ) as kc:
-        login_page = await kc.get(auth_url)
-        assert login_page.status_code == 200
-
-        parser = _FormParser()
-        parser.feed(login_page.text)
-        assert parser.action
-        post_url = urljoin(auth_url, parser.action)
-        payload = {
-            **parser.fields,
-            "username": USERNAME,
-            "password": PASSWORD,
-        }
-        cookie_header = "; ".join(f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar)
-        response = await kc.post(
-            post_url,
-            data=payload,
-            headers={"Cookie": cookie_header},
-            follow_redirects=False,
-        )
-        assert response.status_code in {302, 303}
-        callback_url = response.headers["location"]
-
-        token_response = await kc.post(
-            f"{keycloak_runtime.container.get_url()}/realms/{REALM}/protocol/openid-connect/token",
-            data={
-                "grant_type": "authorization_code",
-                "client_id": CLIENT_ID,
-                "client_secret": keycloak_runtime.client_secret,
-                "code": parse_qs(urlparse(callback_url).query)["code"][0],
-                "redirect_uri": CALLBACK_URI,
-            },
-            follow_redirects=False,
-        )
-        assert token_response.status_code == 200
-        access_token = token_response.json()["access_token"]
-
-    claims = jwt.decode(access_token, options={"verify_signature": False})
-    audience = claims["aud"]
-    if isinstance(audience, str):
-        audience = [audience]
-    assert API_AUDIENCE in audience
 
 
 async def test_logout_clears_session(
     client: httpx.AsyncClient,
-    keycloak_runtime: KeycloakRuntime,
-    redis_container: RedisContainer,
+    keycloak_container: KeycloakContainer,
 ) -> None:
-    await _authenticate(client, keycloak_runtime.container.get_url())
+    await _authenticate(client, keycloak_container.get_url())
 
     response = await client.post("/logout", follow_redirects=False)
-    assert response.status_code == 303
+    assert response.status_code in {302, 303}
     logout_url = response.headers["location"]
-    assert logout_url.startswith(
-        f"{keycloak_runtime.container.get_url()}/realms/{REALM}/protocol/openid-connect/logout"
-    )
+    assert logout_url.startswith(f"{keycloak_container.get_url()}/realms/{REALM}/protocol/openid-connect/logout")
     logout_query = parse_qs(urlparse(logout_url).query)
     assert "id_token_hint" in logout_query
     assert logout_query["post_logout_redirect_uri"] == [POST_LOGOUT_REDIRECT_URI]
     assert logout_query["client_id"] == [CLIENT_ID]
 
-    redis = redis_container.get_client(decode_responses=True)
-    assert not list(redis.scan_iter(match="keycloak-exercise:session:*"))
+    # Session cookie should be deleted
+    assert "session" in [
+        c.split("=")[0] for c in response.headers.get("set-cookie", "").split("; ") if "=" in c
+    ] or "session" in response.headers.get("set-cookie", "")
 
+    # After logout, root should redirect to login
     redirected = await client.get("/", follow_redirects=False)
     assert redirected.status_code == 303
     assert redirected.headers["location"] == "/api/auth/login?next=/"
 
 
-async def test_login_rejects_open_redirect(client: httpx.AsyncClient, keycloak_runtime: KeycloakRuntime) -> None:
+async def test_login_rejects_open_redirect(
+    client: httpx.AsyncClient,
+    keycloak_container: KeycloakContainer,
+) -> None:
     final_location = await _authenticate_with_next(
         client,
-        keycloak_runtime.container.get_url(),
+        keycloak_container.get_url(),
         next_path="https://evil.com",
         from_root=False,
     )

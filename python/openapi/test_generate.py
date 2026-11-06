@@ -54,10 +54,12 @@ def test_generate_package_replaces_only_generated_target(monkeypatch: pytest.Mon
     monkeypatch.setattr(generate.subprocess, "run", fake_run)
 
     generate._generate_package(
-        generator="python-fastapi",
-        package_name="openapi.generated.server",
-        target=target,
-        additional_properties={"sourceFolder": "."},
+        generate.GeneratorConfig(
+            generator="python-fastapi",
+            package_name="openapi.generated.server",
+            target=target,
+            additional_properties={"sourceFolder": "."},
+        )
     )
 
     assert not (target / "old.py").exists()
@@ -80,10 +82,12 @@ def test_generate_package_keeps_previous_output_on_generator_failure(
 
     with pytest.raises(subprocess.CalledProcessError):
         generate._generate_package(
-            generator="python",
-            package_name="openapi.generated.client",
-            target=target,
-            additional_properties={},
+            generate.GeneratorConfig(
+                generator="python",
+                package_name="openapi.generated.client",
+                target=target,
+                additional_properties={},
+            )
         )
 
     assert sentinel.read_text(encoding="utf-8") == "existing output"
@@ -115,7 +119,7 @@ def test_normalize_fastapi_query_types_preserves_path_validation(
 
 def test_generate_validates_spec_and_configures_both_outputs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     calls: list[list[str]] = []
-    packages: list[dict[str, object]] = []
+    packages: list[generate.GeneratorConfig] = []
     monkeypatch.setattr(generate, "SPEC_PATH", tmp_path / "petstore.json")
     monkeypatch.setattr(generate, "GENERATED_ROOT", tmp_path / "generated")
     monkeypatch.setattr(
@@ -126,7 +130,7 @@ def test_generate_validates_spec_and_configures_both_outputs(monkeypatch: pytest
     monkeypatch.setattr(
         generate,
         "_generate_package",
-        lambda **kwargs: packages.append(kwargs),
+        packages.append,
     )
 
     generate.generate()
@@ -134,16 +138,20 @@ def test_generate_validates_spec_and_configures_both_outputs(monkeypatch: pytest
     assert calls == [
         [
             "openapi-generator-cli",
+            "--openapitools",
+            str(generate.OPENAPITOOLS_FILE),
             "validate",
             "--input-spec",
             str(tmp_path / "petstore.json"),
         ]
     ]
-    assert [package["generator"] for package in packages] == [
+    assert [package.generator for package in packages] == [
         "python-fastapi",
         "python",
     ]
-    assert [package["target"] for package in packages] == [
+    assert [package.target for package in packages] == [
         tmp_path / "generated" / "server",
         tmp_path / "generated" / "client",
     ]
+    assert packages[0].templates == generate.SERVER_TEMPLATES
+    assert packages[1].templates is None

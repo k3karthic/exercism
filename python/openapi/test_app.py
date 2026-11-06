@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from httpx2 import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
-from typing import cast
 
 from openapi.database import Base, get_session
 from openapi.server import app

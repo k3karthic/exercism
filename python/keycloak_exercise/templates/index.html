@@ -15,23 +15,6 @@
       <form action="/logout" method="post">
         <button type="submit">Logout</button>
       </form>
-
-      <section class="sessions">
-        <h2>Active sessions</h2>
-        {% if active_sessions %}
-          <ul>
-            {% for active_session in active_sessions %}
-              <li data-session-id="{{ active_session.session_id }}">
-                <strong>{{ active_session.user_name }}</strong>
-                <span>{{ active_session.email or "No email" }}</span>
-                <small>Updated {{ active_session.updated_at }}</small>
-              </li>
-            {% endfor %}
-          </ul>
-        {% else %}
-          <p>No sessions found.</p>
-        {% endif %}
-      </section>
     </main>
   </body>
 </html>

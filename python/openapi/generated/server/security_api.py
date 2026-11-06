@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from typing import List
 
 from fastapi import Depends, Security  # noqa: F401
 from fastapi.openapi.models import OAuthFlowImplicit, OAuthFlows  # noqa: F401
@@ -27,11 +28,12 @@ def get_token_api_key(
     Check and retrieve authentication information from api_key.
 
     :param token_api_key_header API key provided by Authorization[api_key] header
-
-
+    
+    
     :type token_api_key_header: str
     :return: Information attached to provided api_key or None if api_key is invalid or does not allow access to called API
     :rtype: TokenModel | None
     """
 
     ...
+

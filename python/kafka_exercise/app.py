@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from argparse import ArgumentParser
 from collections.abc import Iterable
 from pathlib import Path
@@ -43,19 +41,10 @@ class KafkaProducer:
         try:
             for message in messages:
                 self._producer.send(self.topic, value=message)
+
             self._producer.flush()
         finally:
             self._producer.close()
-
-
-def ensure_topic(bootstrap_servers: str, topic: str) -> None:
-    admin = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
-    try:
-        admin.create_topics([NewTopic(topic, num_partitions=1, replication_factor=1)])
-    except TopicAlreadyExistsError:
-        pass
-    finally:
-        admin.close()
 
 
 class KafkaConsumer:
@@ -93,14 +82,15 @@ class KafkaConsumer:
                         offset=message.offset,
                     )
 
-                offsets_dict = {
-                    TopicPartition(message.topic, message.partition): OffsetAndMetadata(
-                        message.offset + 1,
-                        None,
-                        -1,
-                    )
-                }
-                self._consumer.commit(offsets=offsets_dict)
+                self._consumer.commit(
+                    offsets={
+                        TopicPartition(message.topic, message.partition): OffsetAndMetadata(
+                            message.offset + 1,
+                            None,
+                            -1,
+                        )
+                    }
+                )
 
                 if seen_messages >= expected_messages:
                     break
@@ -123,6 +113,16 @@ class KafkaConsumer:
             file.write(line)
 
 
+def ensure_topic(bootstrap_servers: str, topic: str) -> None:
+    admin = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+    try:
+        admin.create_topics([NewTopic(topic, num_partitions=1, replication_factor=1)])
+    except TopicAlreadyExistsError:
+        pass
+    finally:
+        admin.close()
+
+
 def run_demo(
     bootstrap_servers: str,
     *,
@@ -130,8 +130,10 @@ def run_demo(
     failed_messages_path: Path = DEFAULT_FAILED_MESSAGES_FILE,
 ) -> list[int]:
     ensure_topic(bootstrap_servers, topic)
+
     producer = KafkaProducer(bootstrap_servers, topic)
     producer.send_messages(DEFAULT_MESSAGES)
+
     consumer = KafkaConsumer(bootstrap_servers, topic)
     return consumer.consume_and_double_messages(
         failed_messages_path=failed_messages_path,

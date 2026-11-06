@@ -23,19 +23,15 @@ def main():
     input_queue = manager.Queue()
     output_queue = manager.Queue()
 
-    # Fill input queue
     for i in range(10):
         input_queue.put(i)
 
-    # Start 3 worker processes
     with ProcessPoolExecutor(max_workers=3) as executor:
         for _ in range(3):
             executor.submit(worker, input_queue, output_queue)
 
-    # Wait for all tasks to finish
     input_queue.join()
 
-    # Collect results
     results = []
     while not output_queue.empty():
         results.append(output_queue.get())

@@ -30,6 +30,7 @@ class DoublerWorkflow:
             get_random_number_activity,
             start_to_close_timeout=timedelta(seconds=5),
         )
+
         return await workflow.execute_activity(
             double_number_activity,
             number,

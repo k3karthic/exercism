@@ -18,14 +18,12 @@ class InvoiceSummary:
 
 
 def apply_discount(price: float, discount_rate: float) -> float:
-    """Calculates the discounted price. Good for testing 'step' (s) and 'return' (r)."""
     reduction = price * discount_rate
     final_price = price - reduction
     return round(final_price, 2)
 
 
 def generate_invoice(inventory: list[Product], discount_mapping: dict[str, float]) -> InvoiceSummary:
-    """Processes products and aggregates totals. Good for testing loops and local variables."""
     invoice_summary = InvoiceSummary(items_processed=0, subtotal=0.0, final_total=0.0, categories=set())
 
     for item in inventory:
@@ -34,7 +32,6 @@ def generate_invoice(inventory: list[Product], discount_mapping: dict[str, float
         invoice_summary.subtotal += item.price
         invoice_summary.categories.add(item.category)
 
-        # Determine if a discount applies to this category
         rate = discount_mapping.get(item.category, 0.0)
 
         # 💡 Step 'into' this function using 's', or step 'over' it using 'n'
@@ -50,7 +47,6 @@ def generate_invoice(inventory: list[Product], discount_mapping: dict[str, float
 if __name__ == "__main__":
     breakpoint()  # noqa: T100
 
-    # Sample catalog data
     catalog = [
         Product(id=101, name="Wireless Mouse", price=29.99, category="Electronics"),
         Product(id=102, name="Mechanical Keyboard", price=89.99, category="Electronics"),
@@ -58,12 +54,10 @@ if __name__ == "__main__":
         Product(id=104, name="Coffee Mug", price=15.50, category="Kitchen"),
     ]
 
-    # Category discount rates (e.g., 10% off electronics, 20% off apparel)
     discounts = {"Electronics": 0.10, "Apparel": 0.20}
 
     print("Initializing invoice generation...")
 
-    # 💡 Execution stops here if you set a breakpoint at the start of main
     report = generate_invoice(catalog, discounts)
 
     print("\n--- Final Invoice Report ---")

@@ -52,9 +52,9 @@ class RabbitMQProducer:
         self.queue = queue
 
     def send_messages(self, messages: Iterable[str]) -> None:
-        connection: pika.BlockingConnection | None = None
         try:
             connection = pika.BlockingConnection(self._connection_parameters)
+
             channel = connection.channel()
             channel.queue_declare(queue=self.queue, durable=True)
 
@@ -69,9 +69,9 @@ class RabbitMQProducer:
 
 
 def ensure_queue(connection_parameters: pika.ConnectionParameters, queue: str) -> None:
-    connection: pika.BlockingConnection | None = None
     try:
         connection = pika.BlockingConnection(connection_parameters)
+
         channel = connection.channel()
         channel.queue_declare(queue=queue, durable=True)
     finally:
@@ -91,10 +91,10 @@ class RabbitMQConsumer:
     ) -> list[int]:
         doubled_numbers: list[int] = []
         seen_messages = 0
-        connection: pika.BlockingConnection | None = None
 
         try:
             connection = pika.BlockingConnection(self._connection_parameters)
+
             channel = connection.channel()
             channel.queue_declare(queue=self.queue, durable=True)
             channel.basic_qos(prefetch_count=1)

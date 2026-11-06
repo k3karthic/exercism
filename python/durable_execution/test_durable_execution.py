@@ -13,7 +13,7 @@ DURABLE_EXECUTION_DIR = Path(__file__).resolve().parent
 if str(DURABLE_EXECUTION_DIR) not in sys.path:
     sys.path.insert(0, str(DURABLE_EXECUTION_DIR))
 
-import exercise as durable_execution  # noqa: E402
+from durable_execution import exercise as durable_execution  # noqa: E402
 
 
 @pytest.mark.asyncio

@@ -1,12 +1,12 @@
-# ty: ignore[unresolved-attribute, possibly-missing-attribute]
+# ty: ignore[unresolved-attribute]
 import argparse
 import asyncio
 import time
+from typing import override
 
 import doubler_service_pb2 as pb2
 import doubler_service_pb2_grpc as pb2_grpc
 import grpc
-from typing import override
 
 
 class DoublerService(pb2_grpc.DoublerServicer):
@@ -56,6 +56,7 @@ class DoublerService(pb2_grpc.DoublerServicer):
 
 async def serve(address):
     server = grpc.aio.server()
+
     service = DoublerService()
     pb2_grpc.add_DoublerServicer_to_server(service, server)
     server.add_insecure_port(address)
@@ -67,8 +68,6 @@ async def serve(address):
 
     try:
         await server.wait_for_termination()
-    except KeyboardInterrupt:
-        print("\nExiting via KeyboardInterrupt...")
     finally:
         stop_event.set()
         await server.stop(grace=2)
