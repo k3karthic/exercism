@@ -13,13 +13,11 @@ This sample shows manual OpenTelemetry traces, metrics, and logs, plus manual tr
 - both processes emit traces, metrics, and logs, and the subprocess's span
   nests under the same trace as the caller's, even though nothing but an
   env var crossed the process boundary
-- context is propagated with `opentelemetry.propagate.inject`/`extract` (the
+- context is propagated with `inject`/`extract` (the
   same API a real HTTP/gRPC client and server instrumentation library would
   call for you automatically); it's called by hand here only because there's
   no such library for "subprocess + env var" as a transport. In production,
-  prefer an existing instrumentation (e.g.
-  `opentelemetry-instrumentation-requests`, a gRPC client/server
-  interceptor) over wiring this up yourself.
+  prefer an existing instrumentation over wiring this up yourself.
 
 ## Run OpenObserve locally
 
@@ -38,7 +36,7 @@ podman run --rm --name openobserve \
 
 OpenObserve listens on `http://localhost:5080`.
 
-## Run the OTLP gRPC collector
+## Run the OTLP HTTP collector
 
 OpenObserve ingests OTLP data through a collector. Save this as
 `collector.yaml`:
