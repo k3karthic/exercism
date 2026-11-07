@@ -24,6 +24,7 @@ Run the following Podman command to start Keycloak in development mode.
 * The `--rm` flag ensures the container is automatically removed when stopped.
 * We map port `8080` to the host.
 * We set default admin credentials (`admin` / `admin`).
+* The default username is `testuser` and the password is `Password123!`
 
 ```bash
 podman run --rm -p 8080:8080 \

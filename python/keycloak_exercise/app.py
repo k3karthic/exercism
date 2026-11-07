@@ -9,7 +9,6 @@ from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.config import Config as StarletteConfig
 from starlette.middleware.sessions import SessionMiddleware
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -65,15 +64,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.add_middleware(SessionMiddleware, secret_key=resolved_settings.session_secret_key)
     application.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
-    config = StarletteConfig(
-        environ={
-            "KEYCLOAK_CLIENT_ID": resolved_settings.keycloak_client_id,
-            "KEYCLOAK_CLIENT_SECRET": resolved_settings.keycloak_client_secret,
-        }
-    )
-    oauth = OAuth(config)
+    oauth = OAuth()
     oauth.register(
         "keycloak",
+        client_id=resolved_settings.keycloak_client_id,
+        client_secret=resolved_settings.keycloak_client_secret,
         server_metadata_url=(
             f"{resolved_settings.keycloak_base_url.rstrip('/')}/realms/"
             f"{resolved_settings.keycloak_realm}/.well-known/openid-configuration"
@@ -81,6 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         client_kwargs={
             "scope": f"openid {resolved_settings.keycloak_audience_scope}",
         },
+        token_endpoint_auth_method="client_secret_post",
     )
 
     @application.get("/", response_class=HTMLResponse)
@@ -103,7 +99,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.get("/api/auth/callback/keycloak")
     async def callback(request: Request):
-        token = await oauth.keycloak.authorize_access_token(request)
+        claims_options = {"aud": {"values": [resolved_settings.keycloak_client_id]}}
+        token = await oauth.keycloak.authorize_access_token(request, claims_options=claims_options)
         id_token = token.get("id_token")
         userinfo = token.get("userinfo", {})
         request.session["user"] = userinfo

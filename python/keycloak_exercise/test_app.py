@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import AsyncGenerator, Generator
-from html.parser import HTMLParser
+from re import finditer
 from typing import override
 from urllib.parse import parse_qs, urljoin, urlparse
 
@@ -26,6 +26,8 @@ POST_LOGOUT_REDIRECT_URI = f"{APP_BASE_URL}/"
 
 
 class _RetryingKeycloakContainer(KeycloakContainer):
+    _client_secret: str
+
     @override
     def _readiness_probe(self) -> None:
         started_at = time.monotonic()
@@ -41,34 +43,8 @@ class _RetryingKeycloakContainer(KeycloakContainer):
                 time.sleep(testcontainers_config.sleep_time)
 
 
-class _FormParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self._in_form = False
-        self.action = ""
-        self.fields: dict[str, str] = {}
-
-    @override
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        attributes = {key: value or "" for key, value in attrs}
-        if tag == "form" and not self._in_form:
-            self._in_form = True
-            self.action = attributes.get("action", "")
-            return
-
-        if self._in_form and tag == "input":
-            name = attributes.get("name")
-            if name:
-                self.fields[name] = attributes.get("value", "")
-
-    @override
-    def handle_endtag(self, tag: str) -> None:
-        if tag == "form" and self._in_form:
-            self._in_form = False
-
-
 @pytest.fixture(scope="session")
-def keycloak_container() -> Generator[KeycloakContainer]:
+def keycloak_container() -> Generator[_RetryingKeycloakContainer]:
     with _RetryingKeycloakContainer("quay.io/keycloak/keycloak:latest") as container:
         admin = container.get_client()
         admin.create_realm(payload={"realm": REALM, "enabled": True})
@@ -121,16 +97,16 @@ def keycloak_container() -> Generator[KeycloakContainer]:
         user_id = admin.get_user_id(USERNAME)
         assert user_id is not None
         admin.set_user_password(user_id=user_id, password=PASSWORD, temporary=False)
-        container._client_secret = client_secret  # type: ignore[attr-defined]
+        container._client_secret = client_secret
         yield container
 
 
-def _get_client_secret(container: KeycloakContainer) -> str:
-    return container._client_secret  # type: ignore[attr-defined]
+def _get_client_secret(container: _RetryingKeycloakContainer) -> str:
+    return container._client_secret
 
 
 @pytest.fixture
-def settings(keycloak_container: KeycloakContainer) -> Settings:
+def settings(keycloak_container: _RetryingKeycloakContainer) -> Settings:
     return Settings(
         keycloak_base_url=keycloak_container.get_url(),
         keycloak_realm=REALM,
@@ -157,15 +133,11 @@ async def client(app) -> AsyncGenerator[httpx.AsyncClient]:
         yield async_client
 
 
-async def _authenticate(client: httpx.AsyncClient, keycloak_url: str) -> None:
-    await _authenticate_with_next(client, keycloak_url, next_path="/")
-
-
-async def _authenticate_with_next(
+async def _authenticate(
     client: httpx.AsyncClient,
     keycloak_url: str,
     *,
-    next_path: str,
+    next_path: str = "/",
     from_root: bool = True,
 ) -> str:
     login_path = f"/api/auth/login?next={next_path}"
@@ -183,60 +155,36 @@ async def _authenticate_with_next(
         auth_redirect = await kc.get(auth_url)
         # Keycloak may redirect from auth endpoint to login page
         if auth_redirect.status_code in {302, 303}:
-            location = auth_redirect.headers.get("location", "")
             # If location is absolute, extract just the path; kc client handles the base URL
-            if location.startswith("http"):
-                login_path = urlparse(location).path + (
-                    "?" + urlparse(location).query if urlparse(location).query else ""
-                )
+            parsed_location = urlparse(auth_redirect.headers.get("location", ""))
+            if parsed_location.scheme and parsed_location.netloc:
+                login_page_path = parsed_location.path
+                if parsed_location.query:
+                    login_page_path += f"?{parsed_location.query}"
             else:
-                login_path = location
-            login_page = await kc.get(login_path)
+                login_page_path = auth_redirect.headers.get("location", "")
+            login_page = await kc.get(login_page_path)
         else:
+            login_page_path = auth_url
             login_page = auth_redirect
         assert login_page.status_code == 200
 
-        parser = _FormParser()
-        parser.feed(login_page.text)
-        assert parser.action
-        post_url = urljoin(auth_url, parser.action)
-        base_form = dict(parser.fields)
+        # Extract the form action URL from Keycloak's login page
+        action_match = finditer(r'<form[^>]*action=["\']([^"\']+)["\']', login_page.text)
+        action = next(action_match).group(1)
+        post_url = urljoin(login_page_path, action)
+
+        # Keycloak's login form only needs username, password, and credentialId
+        # Manually passing cookies here as httpx does not do the same when follow_redirects=False
         cookie_header = "; ".join(f"{cookie.name}={cookie.value}" for cookie in kc.cookies.jar)
-        payload_variants = [
-            {**base_form, "username": USERNAME, "password": PASSWORD},
-            {
-                **base_form,
-                "username": USERNAME,
-                "password": PASSWORD,
-                "credentialId": "",
-            },
-            {
-                **base_form,
-                "username": USERNAME,
-                "password": PASSWORD,
-                "credentialId": "",
-                "login": "Sign In",
-            },
-            {
-                **base_form,
-                "username": USERNAME,
-                "password": PASSWORD,
-                "login": "Sign In",
-            },
-        ]
-        callback_response = None
-        for payload in payload_variants:
-            response = await kc.post(
-                post_url,
-                data=payload,
-                headers={"Cookie": cookie_header},
-                follow_redirects=False,
-            )
-            if response.status_code in {302, 303}:
-                callback_response = response
-                break
-        assert callback_response is not None
-        callback_url = callback_response.headers["location"]
+        response = await kc.post(
+            post_url,
+            data={"username": USERNAME, "password": PASSWORD, "credentialId": ""},
+            headers={"Cookie": cookie_header},
+            follow_redirects=False,
+        )
+        assert response.status_code in {302, 303}
+        callback_url = response.headers["location"]
 
     callback = await client.get(callback_url, follow_redirects=False)
     assert callback.status_code in {302, 303}
@@ -276,9 +224,7 @@ async def test_logout_clears_session(
     assert logout_query["client_id"] == [CLIENT_ID]
 
     # Session cookie should be deleted
-    assert "session" in [
-        c.split("=")[0] for c in response.headers.get("set-cookie", "").split("; ") if "=" in c
-    ] or "session" in response.headers.get("set-cookie", "")
+    assert "session=" in response.headers.get("set-cookie", "")
 
     # After logout, root should redirect to login
     redirected = await client.get("/", follow_redirects=False)
@@ -290,7 +236,7 @@ async def test_login_rejects_open_redirect(
     client: httpx.AsyncClient,
     keycloak_container: KeycloakContainer,
 ) -> None:
-    final_location = await _authenticate_with_next(
+    final_location = await _authenticate(
         client,
         keycloak_container.get_url(),
         next_path="https://evil.com",
