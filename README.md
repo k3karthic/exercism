@@ -1,56 +1,102 @@
 ## Software Engineering Exercises
 
-* Memory Management - [memory_management_by_language.md](/memory_management_by_language.md)
-* CPU Topology - [cpu_topology/architectural_mapping_and_hwloc_concepts.md](/cpu_topology/architectural_mapping_and_hwloc_concepts.md)
-* [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - [keycloak/keycloak_overview.md](/keycloak/keycloak_overview.md)
-* Languages (`cheatsheets` subdirectory within each language contains quick references):
-   * [Python](https://www.python.org/)
-   * [TypeScript](https://www.typescriptlang.org/)
-   * [Go](https://go.dev/) - TODO
-   * [Kotlin](https://kotlinlang.org/) - WIP
-   * [Rust](https://rust-lang.org/) - TODO
-   * [Elixir](https://elixir-lang.org/) - TODO
-   * [Zig](https://ziglang.org/) - TODO
-   * [C++](https://isocpp.org/) - TODO
-   * Exercises,
-       * CPU / Memory Visualization
-       * Debugger
-       * Testing
-       * [Testcontainers](https://testcontainers.com/)
-       * Concurrency
-       * Parallelism
-       * UNIX Domain Sockets
-       * [gRPC](https://grpc.io/)
-       * Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
-       * Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
-       * Keycloak - Excluding Rust, Zig, C++
-       * [OpenTelemetry](https://opentelemetry.io/)
-       * NUMA Aware (hwloc) - Only Zig, Rust, C++
-       * [OpenAPI](https://www.openapis.org) - Excluding Rust, Zig, C++
-       * Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
-* Extensibility - TODO
-  * Script Driven ([Tcl](https://www.tcl-lang.org/))
-  * Plugin ([Extism](https://extism.org/))
-* GUI ([Tk](https://tkdocs.com/)) - TODO
-* GPGPU - TODO
-  * [Slang](https://shader-slang.org/) Shaders
-  * Rust Binding ([wgpu](https://wgpu.rs/))
-* WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
-    * [Tail Calls](https://github.com/WebAssembly/spec/blob/main/proposals/tail-call/Overview.md)
-    * [Function References](https://github.com/WebAssembly/spec/blob/main/proposals/function-references/Overview.md)
-    * [SIMD](https://github.com/WebAssembly/spec/tree/main/proposals/simd)
-    * [Threads](https://github.com/webassembly/threads)
-    * [Component Model](https://github.com/WebAssembly/component-model)
-    * [Shared Everything Threads](https://github.com/WebAssembly/shared-everything-threads) - WIP
- * HPC ([Chapel](https://chapel-lang.org/)) - TODO
-    * Parallel Programming
-       * [Data Parallelism](https://chapel-lang.org/docs/language/spec/data-parallelism.html)
-       * [Task Parallelism](https://chapel-lang.org/docs/language/spec/task-parallelism-and-synchronization.html)
-    * Distributed Programming
-       * [Locales](https://chapel-lang.org/docs/language/spec/locales.html)
-       * [Distributions](https://chapel-lang.org/docs/language/spec/domain-maps.html)
+- Memory Management - [memory_management_by_language.md](/memory_management_by_language.md)
+- CPU Topology - [cpu_topology/architectural_mapping_and_hwloc_concepts.md](/cpu_topology/architectural_mapping_and_hwloc_concepts.md)
+- [Keycloak](https://www.keycloak.org/) (Authentication & Authorization) - [keycloak/keycloak_overview.md](/keycloak/keycloak_overview.md)
+- Languages (`cheatsheets` subdirectory within each language contains quick references):
+  - [Python](https://www.python.org/)
+  - [TypeScript](https://www.typescriptlang.org/)
+  - [Go](https://go.dev/) - TODO
+  - [Kotlin](https://kotlinlang.org/) - WIP
+  - [Rust](https://rust-lang.org/) - TODO
+  - [Elixir](https://elixir-lang.org/) - TODO
+  - [Zig](https://ziglang.org/) - TODO
+  - [C++](https://isocpp.org/) - TODO
+  - Exercises,
+    - CPU / Memory Visualization
+    - Debugger
+    - Testing
+    - [Testcontainers](https://testcontainers.com/)
+    - Concurrency
+    - Parallelism
+    - UNIX Domain Sockets
+    - [gRPC](https://grpc.io/)
+    - Event Streaming ([Kafka](https://kafka.apache.org/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
+    - Message Queue ([RabbitMQ](https://www.rabbitmq.com/), [Dapr Pub/Sub](https://docs.dapr.io/developing-applications/building-blocks/pubsub/pubsub-overview/))
+    - Keycloak - Excluding Rust, Zig, C++
+    - [OpenTelemetry](https://opentelemetry.io/)
+    - NUMA Aware (hwloc) - Only Zig, Rust, C++
+    - [OpenAPI](https://www.openapis.org) - Excluding Rust, Zig, C++
+    - Durable Execution ([Temporal](https://temporal.io/), [Dapr Workflow](https://docs.dapr.io/developing-applications/building-blocks/workflow/))
+- Extensibility - TODO
+  - Script Driven ([Tcl](https://www.tcl-lang.org/))
+  - Plugin ([Extism](https://extism.org/))
+- GUI ([Tk](https://tkdocs.com/)) - TODO
+- GPGPU - TODO
+  - [Slang](https://shader-slang.org/) Shaders
+  - Rust Binding ([wgpu](https://wgpu.rs/))
+- WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
+  - [Tail Calls](https://github.com/WebAssembly/spec/blob/main/proposals/tail-call/Overview.md)
+  - [Function References](https://github.com/WebAssembly/spec/blob/main/proposals/function-references/Overview.md)
+  - [SIMD](https://github.com/WebAssembly/spec/tree/main/proposals/simd)
+  - [Threads](https://github.com/webassembly/threads)
+  - [Component Model](https://github.com/WebAssembly/component-model)
+  - [Shared Everything Threads](https://github.com/WebAssembly/shared-everything-threads) - WIP
+- HPC ([Chapel](https://chapel-lang.org/)) - TODO
+  - Parallel Programming
+    - [Data Parallelism](https://chapel-lang.org/docs/language/spec/data-parallelism.html)
+    - [Task Parallelism](https://chapel-lang.org/docs/language/spec/task-parallelism-and-synchronization.html)
+  - Distributed Programming
+    - [Locales](https://chapel-lang.org/docs/language/spec/locales.html)
+    - [Distributions](https://chapel-lang.org/docs/language/spec/domain-maps.html)
+- Relational Databases ([PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/)) - TODO
+  - Advanced SQL (Window Functions, CTEs, Recursive CTEs, LATERAL Joins, Upserts)
+  - Query Plans (`EXPLAIN ANALYZE`)
+  - Indexing (B-tree, Composite, Partial, Covering)
+  - Index Types (GIN, GiST, BRIN) - Only PostgreSQL
+  - Clustered Index vs Heap Storage
+  - Transactions & Isolation Levels (Anomalies, MVCC)
+  - Locking (Row Locks, Advisory Locks, Deadlocks)
+  - Job Queue (`SELECT ... FOR UPDATE SKIP LOCKED`)
+  - Bloat & Vacuum (HOT Updates, `fillfactor`, XID Wraparound) - Only PostgreSQL
+  - Partitioning
+  - Temporal Tables - Only PostgreSQL
+  - JSON (JSONB, JSON Duality)
+  - Full-Text Search (`tsvector`, [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html), MySQL `FULLTEXT`)
+- Search ([Elasticsearch](https://www.elastic.co/elasticsearch)) - TODO
+  - Mappings
+  - Text Analysis (Analyzers, Tokenizers, Stemming)
+  - Full-Text Queries
+  - Relevance Tuning (BM25, Function Score)
+  - Fuzzy Matching
+  - Synonyms
+  - Autocomplete
+  - Highlighting
+  - Pagination (`search_after`, Point in Time)
+  - Facets & Aggregations
+- Distributed Systems Patterns
+  - Data Consistency,
+    - [Saga](https://microservices.io/patterns/data/saga.html)
+    - [Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html)
+    - [Event Sourcing](https://microservices.io/patterns/data/event-sourcing.html)
+    - [Two-Phase Commit](https://martinfowler.com/articles/patterns-of-distributed-systems/two-phase-commit.html)
+  - Resilience,
+    - [Timeout & Deadline Propagation](https://grpc.io/docs/guides/deadlines/)
+    - [Circuit Breaker](https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker)
+    - [Bulkhead](https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead)
+    - [Rate Limiting](https://learn.microsoft.com/en-us/azure/architecture/patterns/rate-limiting-pattern)
+      - [Redis](https://redis.io/docs/latest/develop/use-cases/rate-limiter/redis-py/)
+  - Integration,
+    - [Anti-Corruption Layer](https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer)
+  - Coordination,
+    - [Leader Election](https://learn.microsoft.com/en-us/azure/architecture/patterns/leader-election)
+    - [Lease](https://martinfowler.com/articles/patterns-of-distributed-systems/lease.html)
+    - [Fencing Token](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html)
+    - [Write-Ahead Log](https://martinfowler.com/articles/patterns-of-distributed-systems/write-ahead-log.html)
+    - [High-Water Mark](https://martinfowler.com/articles/patterns-of-distributed-systems/high-watermark.html)
+    - [Quorum](https://martinfowler.com/articles/patterns-of-distributed-systems/quorum.html)
 
 ## Code Mirrors
 
-* GitHub: [github.com/k3karthic/exercism](https://github.com/k3karthic/exercism/)
-* Codeberg: [codeberg.org/k3karthic/exercism](https://codeberg.org/k3karthic/exercism/)
+- GitHub: [github.com/k3karthic/exercism](https://github.com/k3karthic/exercism/)
+- Codeberg: [codeberg.org/k3karthic/exercism](https://codeberg.org/k3karthic/exercism/)
