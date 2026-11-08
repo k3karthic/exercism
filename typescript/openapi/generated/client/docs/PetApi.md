@@ -1,6 +1,6 @@
 # PetApi
 
-All URIs are relative to _http://localhost_
+All URIs are relative to *http://localhost*
 
 | Method                                               | HTTP request                      | Description |
 | ---------------------------------------------------- | --------------------------------- | ----------- |
