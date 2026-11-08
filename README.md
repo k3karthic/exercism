@@ -38,7 +38,6 @@
 * WebAssembly ([Wasmtime](https://wasmtime.dev/), [WasmEdge](https://wasmedge.org/)) - TODO
     * [Tail Calls](https://github.com/WebAssembly/spec/blob/main/proposals/tail-call/Overview.md)
     * [Function References](https://github.com/WebAssembly/spec/blob/main/proposals/function-references/Overview.md)
-    * [Multi Value](https://github.com/WebAssembly/spec/blob/main/proposals/multi-value/Overview.md)
     * [SIMD](https://github.com/WebAssembly/spec/tree/main/proposals/simd)
     * [Threads](https://github.com/webassembly/threads)
     * [Component Model](https://github.com/WebAssembly/component-model)
