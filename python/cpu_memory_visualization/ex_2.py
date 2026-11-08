@@ -1,45 +1,84 @@
-# From the Memray "holding onto memory" exercise:
-# https://github.com/bloomberg/memray/blob/main/docs/tutorials/exercise_2/holding_onto_memory.py
-import numpy as np
+# From the Memray "LRU Cache" exercise:
+# https://github.com/bloomberg/memray/blob/main/docs/tutorials/exercise_3/lru_cache.py
+#
+# This exercise demonstrates how to use memray to identify unexpected memory
+# consumption caused by caching strategies.
+#
+# There are three code paths below. Run memray to see which one dominates:
+#
+#   uv run memray run -o ex_2_memray.bin ex_2.py
+#   uv run memray flamegraph ex_2_memray.bin
+#   uv run memray table ex_2_memray.bin
+#
+# The flamegraph and table reports will show all three paths, with the
+# largest memory consumer standing out clearly.
+#
+#   compute_hashed    —  Path A: uses a bounded dictionary cache
+#   compute_cached    —  Path B: uses an unbounded cache that grows with every unique call
+#   compute_streaming —  Path C: computes values iteratively, storing results in a list
+#
+# For CPU profiling, use viztracer to see which path dominates execution time:
+#
+#   uv run viztracer ex_2.py
+#   uv run vizviewer result.json
 
-# DO NOT CHANGE
-MB_CONVERSION = 1000 * 1000
-DUPLICATE_CONST = 2
-
-SIZE_OF_DATA_IN_MB = 100
-SUBTRACT_AMOUNT = 3
-POWER_AMOUNT = 2
-ADD_AMOUNT = 10
-# DO NOT CHANGE
-
-
-def load_x_mb_of_data(mb: int) -> np.ndarray:
-    size = MB_CONVERSION * mb  # DO NOT CHANGE
-    return np.ones(size, dtype=np.uint8)
-
-
-def duplicate_data(data: np.ndarray) -> np.ndarray:
-    return data * DUPLICATE_CONST
-
-
-def add_scalar(data: np.ndarray, scalar: int) -> np.ndarray:
-    return data + scalar
-
-
-def subtract_scalar(data: np.ndarray, scalar: int) -> np.ndarray:
-    return data - scalar
+import functools
 
 
-def raise_to_power(data: np.ndarray, power: int) -> np.ndarray:
-    return np.power(data, power)
+def compute_hashed():
+    """Path A — uses a bounded dictionary cache, memory stays under control."""
+    cache = {}
+    max_size = 100
+
+    def fib(n):
+        if n in cache:
+            return cache[n]
+        if n < 2:
+            return n
+        result = fib(n - 1) + fib(n - 2)
+        if len(cache) < max_size:
+            cache[n] = result
+        return result
+
+    # Store results in a list so they contribute to peak memory
+    results = []
+    for i in range(40):
+        results.append(fib(i))
+    return results
 
 
-def process_data() -> np.ndarray:
-    data = load_x_mb_of_data(SIZE_OF_DATA_IN_MB)
-    data = subtract_scalar(data, SUBTRACT_AMOUNT)
-    data_pow = raise_to_power(data, POWER_AMOUNT)
-    return add_scalar(duplicate_data(data_pow), ADD_AMOUNT)
+@functools.cache
+def factorial_cached(n):
+    """Path B — unbounded cache: every unique n is stored forever."""
+    if n < 2:
+        return 1
+    return n * factorial_cached(n - 1)
+
+
+def compute_cached():
+    """Entry point for Path B — calls factorial with many unique values."""
+    # Store results so they contribute to peak memory
+    results = []
+    for i in range(1000):
+        results.append(factorial_cached(i))
+    return results
+
+
+def compute_streaming():
+    """Path C — computes factorials iteratively, storing results in a list."""
+    results = []
+    running = 1
+    for i in range(1, 1001):
+        running *= i
+        results.append(running)
+    return results
 
 
 if __name__ == "__main__":
-    process_data()
+    # Keep all three results alive so all paths contribute to peak memory
+    result_a = compute_hashed()
+    result_b = compute_cached()
+    result_c = compute_streaming()
+    print(len(result_a))
+    print(len(result_b))
+    print(len(result_c))
