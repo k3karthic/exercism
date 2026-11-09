@@ -28,4 +28,3 @@ npx vitest run keycloak/test_app.test.ts
 ```
 
 ![app screenshot](../media/keycloak/app.png)
-![redis sessions](../media/keycloak/redis.png)
