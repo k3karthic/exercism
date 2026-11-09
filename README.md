@@ -74,17 +74,18 @@
   - Full-Text Search
     - [PostgreSQL](https://www.postgresql.org/docs/current/textsearch.html)
     - [MySQL](https://dev.mysql.com/doc/refman/9.7/en/fulltext-search.html)
-- Search ([Elasticsearch](https://www.elastic.co/elasticsearch)) - TODO
-  - Mappings
-  - Text Analysis (Analyzers, Tokenizers, Stemming)
-  - Full-Text Queries
-  - Relevance Tuning (BM25, Function Score)
-  - Fuzzy Matching
-  - Synonyms
-  - Autocomplete
-  - Highlighting
-  - Pagination (`search_after`, Point in Time)
-  - Facets & Aggregations
+- Search ([Elasticsearch](https://www.elastic.co/docs/reference/elasticsearch))
+  - [Mappings](https://www.elastic.co/docs/manage-data/data-store/mapping)
+  - [Text Analysis (Analyzers, Tokenizers, Stemming)](https://www.elastic.co/docs/manage-data/data-store/text-analysis)
+  - [Query Languages](https://www.elastic.co/docs/explore-analyze/query-filter/languages)
+  - [Relevance Tuning (BM25, Function Score)](https://www.elastic.co/docs/solutions/search/ranking)
+  - [Search Approaches](https://www.elastic.co/docs/solutions/search/search-approaches)
+  - [Autocomplete](https://www.elastic.co/docs/reference/search-ui/solutions-ecommerce-autocomplete)
+  - [Highlighting](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/highlighting)
+  - [Pagination (`search_after`, Point in Time)](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results)
+  - [Facets](https://www.elastic.co/guide/en/app-search/current/facets-guide.html)
+  - [Hierarchical Facets](https://www.elastic.co/guide/en/app-search/current/hierarchical-facets-guide.html)
+  - [Aggregations](https://www.elastic.co/docs/explore-analyze/query-filter/aggregations)
 - Distributed Systems Patterns
   - Data Consistency,
     - [Saga](https://microservices.io/patterns/data/saga.html)
