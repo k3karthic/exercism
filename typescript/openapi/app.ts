@@ -37,6 +37,7 @@ function requiresApiKey(request: Request): boolean {
 
 class PetstoreExpressServer extends GeneratedExpressServer {
   override setupMiddleware(): void {
+    /* Custom middleware before the generated routes */
     this.app.use(express.raw({ type: "application/octet-stream" }));
     this.app.use((request: Request, response: Response, next: NextFunction): void => {
       if (requiresApiKey(request) && request.header("api_key") !== API_KEY) {

@@ -16,8 +16,19 @@ import {
   PetSearchCriteriaSortOrderEnum,
   PetStatus,
 } from "./generated/client/models/index.ts";
-import { uploadPetImage } from "./server-adapters/PetService.ts";
-import { petStore } from "./store.ts";
+import {
+  createPetDb,
+  deletePetDb,
+  findPetsByStatusDb,
+  findPetsByTagsDb,
+  getPet,
+  inventoryDb,
+  searchPetsDb,
+  updatePetDb,
+  updatePetFromFormDb,
+  uploadPetImage,
+} from "./server-adapters/PetService.ts";
+import { createOrderDb, deleteOrderDb, getOrderDb, searchOrdersDb } from "./server-adapters/StoreService.ts";
 
 const API_KEY = "some-api-key";
 const POSTGRES_USER = "petstore";
@@ -320,7 +331,7 @@ test("search orders", async () => {
 });
 
 test("store creates, upserts, updates, and deletes pets", async () => {
-  const created = await petStore.createPet({
+  const created = await createPetDb({
     id: 50,
     name: "Direct",
     photoUrls: [],
@@ -328,16 +339,16 @@ test("store creates, upserts, updates, and deletes pets", async () => {
   });
   expect(created.id).toBe(50);
 
-  const upserted = await petStore.createPet({
+  const upserted = await createPetDb({
     id: 50,
     name: "Upserted",
     photoUrls: [],
   });
   expect(upserted.name).toBe("Upserted");
 
-  expect(await petStore.updatePet({ name: "No id", photoUrls: [] })).toBe(undefined);
-  expect(await petStore.updatePet({ id: 999, name: "Missing", photoUrls: [] })).toBe(undefined);
-  const updated = await petStore.updatePet({
+  expect(await updatePetDb({ name: "No id", photoUrls: [] })).toBe(undefined);
+  expect(await updatePetDb({ id: 999, name: "Missing", photoUrls: [] })).toBe(undefined);
+  const updated = await updatePetDb({
     id: 50,
     name: "Updated",
     photoUrls: [],
@@ -345,35 +356,35 @@ test("store creates, upserts, updates, and deletes pets", async () => {
   });
   expect(updated?.name).toBe("Updated");
 
-  expect(await petStore.getPet(999)).toBe(undefined);
-  expect(await petStore.updatePetFromForm(50, undefined, undefined)).toBe(true);
-  expect(await petStore.updatePetFromForm(999, undefined, undefined)).toBe(false);
-  expect(await petStore.updatePetFromForm(50, "Renamed", PetStatus.Sold)).toBe(true);
-  expect(await petStore.findPetsByStatus(PetStatus.Sold)).toHaveLength(1);
-  expect(await petStore.findPetsByTags([])).toHaveLength(1);
-  expect(await petStore.findPetsByTags(["calm"])).toHaveLength(1);
-  expect(await petStore.inventory()).toEqual({ sold: 1 });
-  expect(await petStore.deletePet(50)).toBe(true);
-  expect(await petStore.deletePet(50)).toBe(false);
+  expect(await getPet(999)).toBe(undefined);
+  expect(await updatePetFromFormDb(50, undefined, undefined)).toBe(true);
+  expect(await updatePetFromFormDb(999, undefined, undefined)).toBe(false);
+  expect(await updatePetFromFormDb(50, "Renamed", PetStatus.Sold)).toBe(true);
+  expect(await findPetsByStatusDb(PetStatus.Sold)).toHaveLength(1);
+  expect(await findPetsByTagsDb([])).toHaveLength(1);
+  expect(await findPetsByTagsDb(["calm"])).toHaveLength(1);
+  expect(await inventoryDb()).toEqual({ sold: 1 });
+  expect(await deletePetDb(50)).toBe(true);
+  expect(await deletePetDb(50)).toBe(false);
 });
 
 test("store searches pets with filters, sorting, and paging", async () => {
-  await petStore.createPet({
+  await createPetDb({
     name: "Alpha",
     photoUrls: [],
     status: PetStatus.Available,
     tags: [{ name: "tame" }],
   });
-  await petStore.createPet({
+  await createPetDb({
     name: "Beta",
     photoUrls: [],
     status: PetStatus.Sold,
   });
 
-  const everything = await petStore.searchPets({}, 1, 0);
+  const everything = await searchPetsDb({}, 1, 0);
   expect(everything).toMatchObject({ total: 2, hasMore: true });
 
-  const filtered = await petStore.searchPets(
+  const filtered = await searchPetsDb(
     {
       name: "*alp*",
       status: [PetStatus.Available],
@@ -388,23 +399,23 @@ test("store searches pets with filters, sorting, and paging", async () => {
 });
 
 test("store creates, upserts, and deletes orders", async () => {
-  const created = await petStore.createOrder({ id: 70, quantity: 1 });
+  const created = await createOrderDb({ id: 70, quantity: 1 });
   expect(created.id).toBe(70);
-  const generated = await petStore.createOrder({
+  const generated = await createOrderDb({
     petId: 1,
     shipDate: "2024-01-01T00:00:00.000Z",
     status: OrderStatus.Placed,
     complete: true,
   });
   expect(generated.complete).toBe(true);
-  expect(await petStore.getOrder(999)).toBe(undefined);
-  expect(await petStore.deleteOrder(70)).toBe(true);
-  expect(await petStore.deleteOrder(70)).toBe(false);
+  expect(await getOrderDb(999)).toBe(undefined);
+  expect(await deleteOrderDb(70)).toBe(true);
+  expect(await deleteOrderDb(70)).toBe(false);
 });
 
 test("store searches orders with ranges, sorting, and paging", async () => {
   for (const [index, status] of [OrderStatus.Placed, OrderStatus.Approved, OrderStatus.Delivered].entries()) {
-    await petStore.createOrder({
+    await createOrderDb({
       petId: index + 1,
       quantity: index + 1,
       shipDate: `2024-01-0${index + 1}T00:00:00.000Z`,
@@ -413,7 +424,7 @@ test("store searches orders with ranges, sorting, and paging", async () => {
     });
   }
 
-  const ranged = await petStore.searchOrders(
+  const ranged = await searchOrdersDb(
     {
       dateRange: {
         from: "2024-01-02T00:00:00.000Z",
@@ -429,7 +440,7 @@ test("store searches orders with ranges, sorting, and paging", async () => {
   expect(ranged.orders).toHaveLength(1);
   expect(ranged.pagination.totalResults).toBe(1);
 
-  const filtered = await petStore.searchOrders(
+  const filtered = await searchOrdersDb(
     {
       orderId: 3,
       petId: 3,
@@ -442,9 +453,9 @@ test("store searches orders with ranges, sorting, and paging", async () => {
   );
   expect(filtered.orders).toHaveLength(1);
 
-  const empty = await petStore.searchOrders({ sortBy: OrderSearchCriteriaSortByEnum.Id }, 1, 10);
+  const empty = await searchOrdersDb({ sortBy: OrderSearchCriteriaSortByEnum.Id }, 1, 10);
   expect(empty.pagination.totalPages).toBe(1);
-  const none = await petStore.searchOrders({ petId: 99 }, 1, 10);
+  const none = await searchOrdersDb({ petId: 99 }, 1, 10);
   expect(none.pagination.totalPages).toBe(0);
 });
 
@@ -468,7 +479,7 @@ test("malformed JSON bodies keep their error status", async () => {
 });
 
 test("uploadPetImage reports byte counts and optional metadata", async () => {
-  const pet = await petStore.createPet({ name: "Uploader", photoUrls: [] });
+  const pet = await createPetDb({ name: "Uploader", photoUrls: [] });
   const petId = pet.id as number;
 
   const withBody = await uploadPetImage({ petId, additionalMetadata: "meta", body: Buffer.from("abcd") });

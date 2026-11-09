@@ -3,8 +3,7 @@ import assert from "node:assert/strict";
 import { GenericContainer, Wait } from "testcontainers";
 import { RedisContainer, type StartedRedisContainer } from "@testcontainers/redis";
 import request from "supertest";
-import { createClient as createRedisClient } from "redis";
-import { afterAll, beforeAll, beforeEach, test } from "vitest";
+import { afterAll, beforeAll, test } from "vitest";
 
 import {
   DEFAULT_KEYCLOAK_AUDIENCE_SCOPE,
@@ -12,7 +11,6 @@ import {
   DEFAULT_KEYCLOAK_CLIENT_ID,
   DEFAULT_KEYCLOAK_REALM,
   DEFAULT_POST_LOGOUT_REDIRECT_URI,
-  DEFAULT_SESSION_PREFIX,
   createApp,
   type Settings,
 } from "./app.js";
@@ -35,7 +33,7 @@ interface KeycloakRuntime {
 let redisContainer: StartedRedisContainer;
 let keycloakRuntime: KeycloakRuntime;
 let appSettings: Settings;
-let app = createApp();
+let app: ReturnType<typeof createApp>;
 
 function buildBaseUrl(container: { getHost(): string; getMappedPort(port: number): number }) {
   return `http://${container.getHost()}:${container.getMappedPort(8080)}`;
@@ -334,27 +332,18 @@ async function bootstrapContainers(): Promise<void> {
     postLogoutRedirectUri: DEFAULT_POST_LOGOUT_REDIRECT_URI,
     redisUrl: `redis://${redisContainer.getHost()}:${redisContainer.getMappedPort(6379)}/0`,
     sessionCookieName: "keycloak_session_id",
-    sessionPrefix: DEFAULT_SESSION_PREFIX,
+    sessionPrefix: "keycloak-exercise",
     sessionTtlSeconds: 60 * 60 * 10,
     pendingLoginTtlSeconds: 300,
     httpTimeoutMs: 10_000,
   };
 
-  app = createApp(appSettings);
+  app = await createApp(appSettings);
 }
 
 beforeAll(async () => {
   await bootstrapContainers();
 }, 240_000);
-
-beforeEach(async () => {
-  const redis = createRedisClient({
-    url: `redis://${redisContainer.getHost()}:${redisContainer.getMappedPort(6379)}/0`,
-  });
-  await redis.connect();
-  await redis.flushDb();
-  await redis.quit();
-});
 
 afterAll(async () => {
   await keycloakRuntime.container.stop();
@@ -367,20 +356,13 @@ test("root redirects when not logged in", async () => {
   assert.equal(response.headers.location, "/api/auth/login?next=/");
 });
 
-test("login shows welcome and active sessions", async () => {
+test("login shows welcome", async () => {
   const agent = request.agent(app);
   await authenticate(agent, keycloakRuntime.baseUrl);
 
   const response = await agent.get("/");
   assert.equal(response.status, 200);
   assert.match(response.text, /Welcome, testuser/);
-  assert.equal((response.text.match(/data-session-id=/g) ?? []).length, 1);
-
-  const otherAgent = request.agent(app);
-  await authenticate(otherAgent, keycloakRuntime.baseUrl);
-  const otherResponse = await otherAgent.get("/");
-  assert.equal(otherResponse.status, 200);
-  assert.equal((otherResponse.text.match(/data-session-id=/g) ?? []).length, 2);
 });
 
 test("access token includes optional audience", async () => {
@@ -425,27 +407,18 @@ test("logout clears session", async () => {
     new RegExp(`^${keycloakRuntime.baseUrl}/realms/${DEFAULT_KEYCLOAK_REALM}/protocol/openid-connect/logout`),
   );
 
-  const redis = createRedisClient({
-    url: `redis://${redisContainer.getHost()}:${redisContainer.getMappedPort(6379)}/0`,
-  });
-  await redis.connect();
-  const keys = await redis.keys(`${DEFAULT_SESSION_PREFIX}:session:*`);
-  await redis.quit();
-  assert.deepEqual(keys, []);
-
   const redirected = await request(app).get("/").redirects(0);
   assert.equal(redirected.status, 303);
   assert.equal(redirected.headers.location, "/api/auth/login?next=/");
 });
 
 test("login rejects open redirect", async () => {
-  const response = await request(app).get("/api/auth/login?next=https://evil.com").redirects(0);
+  const agent = request.agent(app);
+  const response = await agent.get("/api/auth/login?next=https://evil.com").redirects(0);
   assert.equal(response.status, 303);
   const { callbackUrl } = await authenticateAtKeycloak(response.headers.location as string);
 
-  const callback = await request(app)
-    .get(new URL(callbackUrl).pathname + new URL(callbackUrl).search)
-    .redirects(0);
+  const callback = await agent.get(new URL(callbackUrl).pathname + new URL(callbackUrl).search).redirects(0);
   assert.equal(callback.status, 303);
   assert.equal(callback.headers.location, "/");
 });

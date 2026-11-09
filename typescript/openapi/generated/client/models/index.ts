@@ -1,18 +1,17 @@
-// @ts-nocheck
 /* tslint:disable */
 /* eslint-disable */
-export * from "./Category.ts";
-export * from "./DateRange.ts";
-export * from "./ErrorResponse.ts";
-export * from "./ModelApiResponse.ts";
-export * from "./Order.ts";
-export * from "./OrderSearchCriteria.ts";
-export * from "./OrderSearchResults.ts";
-export * from "./OrderSearchResultsPagination.ts";
-export * from "./OrderStatus.ts";
-export * from "./Pet.ts";
-export * from "./PetSearchCriteria.ts";
-export * from "./PetSearchResults.ts";
-export * from "./PetStatus.ts";
-export * from "./QuantityRange.ts";
-export * from "./Tag.ts";
+export * from "./Category.js";
+export * from "./DateRange.js";
+export * from "./ErrorResponse.js";
+export * from "./ModelApiResponse.js";
+export * from "./Order.js";
+export * from "./OrderSearchCriteria.js";
+export * from "./OrderSearchResults.js";
+export * from "./OrderSearchResultsPagination.js";
+export * from "./OrderStatus.js";
+export * from "./Pet.js";
+export * from "./PetSearchCriteria.js";
+export * from "./PetSearchResults.js";
+export * from "./PetStatus.js";
+export * from "./QuantityRange.js";
+export * from "./Tag.js";

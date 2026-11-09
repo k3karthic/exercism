@@ -3,16 +3,16 @@ const sleep = (delayMs: number): Promise<void> =>
     setTimeout(resolve, delayMs);
   });
 
-async function worker(input: number[], output: number[], workerId: number): Promise<void> {
+export async function worker(input: number[], output: number[], workerId: number): Promise<void> {
   while (input.length > 0) {
     const num = input.shift();
-
     if (num === undefined) {
       break;
     }
 
     console.log(`Worker ${workerId} ${Date.now() / 1000} processing ${num}`);
     await sleep(1000);
+
     output.push(num * 2);
   }
 }
@@ -26,4 +26,6 @@ async function main(): Promise<void> {
   console.log("Results:", output);
 }
 
-void main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  void main();
+}

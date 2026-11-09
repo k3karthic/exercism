@@ -36,6 +36,7 @@
 
     // Recommended Options
     "strict": true,
+    "allowJs": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
@@ -45,5 +46,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "exclude": ["dist/**", "openapi/generated/**"]
+  "include": ["**/*.ts", "openapi/generated/server/controllers/**/*.js"],
+  "exclude": ["dist/**", "openapi/generated/client/**"]
 }

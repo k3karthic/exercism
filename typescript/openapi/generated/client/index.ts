@@ -1,6 +1,5 @@
-// @ts-nocheck
 /* tslint:disable */
 /* eslint-disable */
-export * from "./runtime.ts";
-export * from "./apis/index.ts";
-export * from "./models/index.ts";
+export * from "./runtime.js";
+export * from "./apis/index.js";
+export * from "./models/index.js";

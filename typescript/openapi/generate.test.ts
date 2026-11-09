@@ -3,14 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
 
-import {
-  appendControllerAliases,
-  controllerAlias,
-  disableGeneratedClientTypeChecking,
-  installTargets,
-  normalizeGeneratedFile,
-  pathExists,
-} from "./generate.ts";
+import { installTargets, pathExists } from "./generate.ts";
 
 async function tempDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "generate-"));
@@ -21,51 +14,6 @@ test("pathExists distinguishes missing paths", async () => {
   expect(await pathExists(dir)).toBe(true);
   expect(await pathExists(join(dir, "missing"))).toBe(false);
   await expect(pathExists(join(dir, "file\0bad"))).rejects.toThrow();
-});
-
-test("normalizeGeneratedFile rewrites imports, trims, and adds ts-nocheck once", () => {
-  const source = 'import { a } from "./a.js";   \r\nexport const b = 1;\n\n\n';
-  const normalized = normalizeGeneratedFile("x.ts", source);
-  expect(normalized).toBe('// @ts-nocheck\nimport { a } from "./a.ts";\nexport const b = 1;\n');
-  expect(normalizeGeneratedFile("x.ts", normalized)).toBe(normalized);
-  expect(normalizeGeneratedFile("x.md", "# Title  \n")).toBe("# Title\n");
-});
-
-test("controllerAlias lower-cases the method name and requires an operationId and tag", () => {
-  expect(controllerAlias("get", { operationId: "GetPetById", tags: ["pet"] })).toEqual({
-    controllerName: "petController",
-    alias: "module.exports.GetPetById = getPetById;",
-  });
-  expect(() => controllerAlias("get", { tags: ["pet"] })).toThrow("missing an operationId or tag");
-  expect(() => controllerAlias("get", { operationId: "X" })).toThrow("missing an operationId or tag");
-});
-
-test("appendControllerAliases appends an alias per spec operation", async () => {
-  const dir = await tempDir();
-  await mkdir(join(dir, "controllers"));
-  for (const name of ["PetController", "StoreController"]) {
-    await writeFile(join(dir, "controllers", `${name}.js`), "// generated\n");
-  }
-
-  await appendControllerAliases(dir);
-
-  const pet = await readFile(join(dir, "controllers", "PetController.js"), "utf8");
-  expect(pet).toMatch(/module\.exports\.\w+ = \w+;/);
-  expect(pet.startsWith("// generated\n\nmodule.exports.")).toBe(true);
-});
-
-test("disableGeneratedClientTypeChecking normalizes nested ts and md files only", async () => {
-  const dir = await tempDir();
-  await mkdir(join(dir, "nested"));
-  await writeFile(join(dir, "nested", "a.ts"), 'import "./b.js";  \n');
-  await writeFile(join(dir, "doc.md"), "text  \n");
-  await writeFile(join(dir, "data.json"), "{}  \n");
-
-  await disableGeneratedClientTypeChecking(dir);
-
-  expect(await readFile(join(dir, "nested", "a.ts"), "utf8")).toBe('// @ts-nocheck\nimport "./b.ts";\n');
-  expect(await readFile(join(dir, "doc.md"), "utf8")).toBe("text\n");
-  expect(await readFile(join(dir, "data.json"), "utf8")).toBe("{}  \n");
 });
 
 async function stage(root: string, name: "server" | "client", marker: string) {

@@ -2,8 +2,10 @@ import crypto from "node:crypto";
 import { pathToFileURL } from "node:url";
 
 import express, { type NextFunction, type Request, type Response as ExpressResponse } from "express";
-import jwt, { type JwtPayload } from "jsonwebtoken";
 import { createClient } from "redis";
+import * as client from "openid-client";
+import session from "express-session";
+import { RedisStore } from "connect-redis";
 
 export const DEFAULT_REDIRECT_URI = "http://localhost:3000/api/auth/callback/keycloak";
 export const DEFAULT_POST_LOGOUT_REDIRECT_URI = "http://localhost:3000/";
@@ -36,35 +38,32 @@ export interface Settings {
   httpTimeoutMs: number;
 }
 
-export interface OidcConfiguration {
-  issuer: string;
-  authorizationEndpoint: string;
-  tokenEndpoint: string;
-  jwksUri: string;
-  endSessionEndpoint: string | undefined;
-}
-
-export interface PendingLogin {
-  state: string;
-  nonce: string;
-  nextPath: string;
-  createdAt: string;
-}
-
-export interface SessionRecord {
-  sessionId: string;
+export interface SessionUser {
   userName: string;
   email: string | null;
   subject: string;
   idToken: string;
-  createdAt: string;
-  updatedAt: string;
-  expiresAt: string;
 }
 
-type JsonWebKeyWithKid = JsonWebKey & {
-  kid?: string;
-};
+declare module "express-session" {
+  interface SessionData {
+    pendingLogin?: {
+      state: string;
+      nonce: string;
+      nextPath: string;
+    };
+    user?: SessionUser;
+  }
+}
+
+interface TokenClaims {
+  nonce?: string;
+  preferred_username?: string;
+  name?: string;
+  email?: string;
+  sub?: string;
+  [key: string]: unknown;
+}
 
 function env(name: string, fallback: string | number): string {
   return process.env[name] ?? String(fallback);
@@ -89,18 +88,6 @@ export function createSettingsFromEnv(): Settings {
   };
 }
 
-function now(): Date {
-  return new Date();
-}
-
-function isoNow(): string {
-  return now().toISOString();
-}
-
-function sessionExpiry(ttlSeconds: number): string {
-  return new Date(now().getTime() + ttlSeconds * 1000).toISOString();
-}
-
 function envAsNumber(value: string | undefined, fallback: number): number {
   if (value === undefined) {
     return fallback;
@@ -123,55 +110,12 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-function parseCookieHeader(header: string | undefined): Record<string, string> {
-  if (!header) {
-    return {};
-  }
-
-  return header.split(";").reduce<Record<string, string>>((cookies, item) => {
-    const [name, ...rest] = item.trim().split("=");
-    if (!name || rest.length === 0) {
-      return cookies;
-    }
-
-    cookies[name] = rest.join("=");
-    return cookies;
-  }, {});
-}
-
 function normalizeNextPath(nextPath: string): string {
   if (nextPath.startsWith("/") && !nextPath.startsWith("//")) {
     return nextPath;
   }
 
   return "/";
-}
-
-function jsonHeaders(): Record<string, string> {
-  return { "content-type": "application/json" };
-}
-
-function formHeaders(): Record<string, string> {
-  return { "content-type": "application/x-www-form-urlencoded" };
-}
-
-async function readResponseText(response: globalThis.Response): Promise<string> {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
-  if (!response.ok) {
-    throw new Error(
-      `${init?.method ?? "GET"} ${url} failed with ${response.status}: ${await readResponseText(response)}`,
-    );
-  }
-
-  return (await response.json()) as T;
 }
 
 function createHtmlPage(title: string, body: string): string {
@@ -188,27 +132,12 @@ function createHtmlPage(title: string, body: string): string {
 </html>`;
 }
 
-function renderHomePage(session: SessionRecord, sessions: SessionRecord[]): string {
-  const sessionsMarkup = sessions
-    .map(
-      (item) => `<li data-session-id="${escapeHtml(item.sessionId)}">
-          <strong>${escapeHtml(item.userName)}</strong>
-          <span>${escapeHtml(item.email ?? "-")}</span>
-        </li>`,
-    )
-    .join("\n");
-
+function renderHomePage(user: SessionUser): string {
   return createHtmlPage(
     "Keycloak Express Exercise",
     `<main>
-      <h1>Welcome, ${escapeHtml(session.userName)}</h1>
-      <p>Signed in as ${escapeHtml(session.subject)}</p>
-      <section>
-        <h2>Active sessions</h2>
-        <ul>
-          ${sessionsMarkup}
-        </ul>
-      </section>
+      <h1>Welcome, ${escapeHtml(user.userName)}</h1>
+      <p>Signed in as ${escapeHtml(user.subject)}</p>
       <form method="post" action="/logout">
         <button type="submit">Log out</button>
       </form>
@@ -216,305 +145,13 @@ function renderHomePage(session: SessionRecord, sessions: SessionRecord[]): stri
   );
 }
 
-class RedisSessionStore {
-  constructor(private readonly settings: Settings) {}
-
-  private sessionKey(sessionId: string): string {
-    return `${this.settings.sessionPrefix}:session:${sessionId}`;
-  }
-
-  private pendingKey(state: string): string {
-    return `${this.settings.sessionPrefix}:pending:${state}`;
-  }
-
-  private client() {
-    return createClient({ url: this.settings.redisUrl });
-  }
-
-  async storePendingLogin(pending: PendingLogin): Promise<void> {
-    const client = this.client();
-    await client.connect();
-    try {
-      await client.set(this.pendingKey(pending.state), JSON.stringify(pending), {
-        EX: this.settings.pendingLoginTtlSeconds,
-      });
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async popPendingLogin(state: string): Promise<PendingLogin | null> {
-    const client = this.client();
-    await client.connect();
-    try {
-      const raw = await client.getDel(this.pendingKey(state));
-      if (raw === null) {
-        return null;
-      }
-
-      return JSON.parse(raw) as PendingLogin;
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async createSession(options: { idToken: string; claims: JwtPayload }): Promise<SessionRecord> {
-    const session: SessionRecord = {
-      sessionId: randomToken(),
-      userName: String(options.claims.preferred_username ?? options.claims.name ?? options.claims.email ?? "Developer"),
-      email: options.claims.email === undefined || options.claims.email === "" ? null : String(options.claims.email),
-      subject: String(options.claims.sub),
-      idToken: options.idToken,
-      createdAt: isoNow(),
-      updatedAt: isoNow(),
-      expiresAt: sessionExpiry(this.settings.sessionTtlSeconds),
-    };
-
-    const client = this.client();
-    await client.connect();
-    try {
-      await client.set(this.sessionKey(session.sessionId), JSON.stringify(session), {
-        EX: this.settings.sessionTtlSeconds,
-      });
-    } finally {
-      await client.quit();
-    }
-
-    return session;
-  }
-
-  async getSession(sessionId: string): Promise<SessionRecord | null> {
-    const client = this.client();
-    await client.connect();
-    try {
-      const raw = await client.get(this.sessionKey(sessionId));
-      if (raw === null) {
-        return null;
-      }
-
-      return JSON.parse(raw) as SessionRecord;
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async touchSession(sessionId: string): Promise<SessionRecord | null> {
-    const session = await this.getSession(sessionId);
-    if (session === null) {
-      return null;
-    }
-
-    const updated: SessionRecord = {
-      ...session,
-      updatedAt: isoNow(),
-      expiresAt: sessionExpiry(this.settings.sessionTtlSeconds),
-    };
-
-    const client = this.client();
-    await client.connect();
-    try {
-      await client.set(this.sessionKey(sessionId), JSON.stringify(updated), {
-        EX: this.settings.sessionTtlSeconds,
-      });
-    } finally {
-      await client.quit();
-    }
-
-    return updated;
-  }
-
-  async deleteSession(sessionId: string): Promise<void> {
-    const client = this.client();
-    await client.connect();
-    try {
-      await client.del(this.sessionKey(sessionId));
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async listSessions(): Promise<SessionRecord[]> {
-    const client = this.client();
-    await client.connect();
-    try {
-      const sessions: SessionRecord[] = [];
-      for await (const keys of client.scanIterator({
-        MATCH: `${this.settings.sessionPrefix}:session:*`,
-      })) {
-        const keyList = Array.isArray(keys) ? keys : [keys];
-        for (const key of keyList) {
-          const raw = await client.get(String(key));
-          if (raw === null) {
-            continue;
-          }
-
-          sessions.push(JSON.parse(raw) as SessionRecord);
-        }
-      }
-
-      return sessions.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
-    } finally {
-      await client.quit();
-    }
-  }
-}
-
-class KeycloakService {
-  private configurationCache: OidcConfiguration | null = null;
-  private jwksCache: JsonWebKeyWithKid[] | null = null;
-
-  constructor(private readonly settings: Settings) {}
-
-  private discoveryUrl(): string {
-    return `${this.settings.keycloakBaseUrl.replace(/\/$/, "")}/realms/${this.settings.keycloakRealm}/.well-known/openid-configuration`;
-  }
-
-  private async configuration(): Promise<OidcConfiguration> {
-    if (this.configurationCache !== null) {
-      return this.configurationCache;
-    }
-
-    const payload = await fetchJson<Record<string, unknown>>(this.discoveryUrl(), {
-      headers: jsonHeaders(),
-    });
-
-    const configuration: OidcConfiguration = {
-      issuer: String(payload.issuer),
-      authorizationEndpoint: String(payload.authorization_endpoint),
-      tokenEndpoint: String(payload.token_endpoint),
-      jwksUri: String(payload.jwks_uri),
-      endSessionEndpoint: typeof payload.end_session_endpoint === "string" ? payload.end_session_endpoint : undefined,
-    };
-
-    this.configurationCache = configuration;
-    return configuration;
-  }
-
-  private async jwks(): Promise<JsonWebKeyWithKid[]> {
-    if (this.jwksCache !== null) {
-      return this.jwksCache;
-    }
-
-    const configuration = await this.configuration();
-    const payload = await fetchJson<{ keys: JsonWebKey[] }>(configuration.jwksUri, {
-      headers: jsonHeaders(),
-    });
-    this.jwksCache = payload.keys;
-    return this.jwksCache;
-  }
-
-  private async publicKeyFromJwt(token: string): Promise<crypto.KeyObject> {
-    const decoded = jwt.decode(token, { complete: true });
-    if (!decoded || typeof decoded === "string") {
-      throw new Error("token header is not an object");
-    }
-
-    const kid = decoded.header.kid;
-    if (!kid) {
-      throw new Error("token does not include a key id");
-    }
-
-    const jwk = (await this.jwks()).find((item) => item.kid === kid);
-    if (jwk === undefined) {
-      throw new Error(`unable to find signing key for kid ${kid}`);
-    }
-
-    return crypto.createPublicKey({ key: jwk, format: "jwk" });
-  }
-
-  async authorizationUrl(state: string, nonce: string): Promise<string> {
-    const configuration = await this.configuration();
-    const query = new URLSearchParams({
-      client_id: this.settings.keycloakClientId,
-      redirect_uri: this.settings.redirectUri,
-      response_type: "code",
-      scope: `openid ${this.settings.keycloakAudienceScope}`,
-      state,
-      nonce,
-    });
-
-    return `${configuration.authorizationEndpoint}?${query.toString()}`;
-  }
-
-  async exchangeCode(code: string): Promise<Record<string, unknown>> {
-    const configuration = await this.configuration();
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: this.settings.keycloakClientId,
-      code,
-      redirect_uri: this.settings.redirectUri,
-    });
-
-    if (this.settings.keycloakClientSecret) {
-      body.set("client_secret", this.settings.keycloakClientSecret);
-    }
-
-    return await fetchJson<Record<string, unknown>>(configuration.tokenEndpoint, {
-      method: "POST",
-      headers: formHeaders(),
-      body,
-    });
-  }
-
-  async validateIdToken(idToken: string, nonce: string): Promise<JwtPayload> {
-    const configuration = await this.configuration();
-    const key = await this.publicKeyFromJwt(idToken);
-    const claims = jwt.verify(idToken, key, {
-      algorithms: ["RS256"],
-      audience: this.settings.keycloakClientId,
-      issuer: configuration.issuer,
-    });
-
-    if (typeof claims === "string") {
-      throw new Error("id token payload is not an object");
-    }
-
-    if (claims.nonce !== nonce) {
-      throw new Error("invalid login nonce");
-    }
-
-    return claims;
-  }
-
-  async validateAccessToken(accessToken: string): Promise<JwtPayload> {
-    const configuration = await this.configuration();
-    const key = await this.publicKeyFromJwt(accessToken);
-    const claims = jwt.verify(accessToken, key, {
-      algorithms: ["RS256"],
-      audience: this.settings.keycloakApiAudience,
-      issuer: configuration.issuer,
-    });
-
-    if (typeof claims === "string") {
-      throw new Error("access token payload is not an object");
-    }
-
-    return claims;
-  }
-
-  async logoutUrl(idToken: string): Promise<string> {
-    const configuration = await this.configuration();
-    const endpoint =
-      configuration.endSessionEndpoint ??
-      `${this.settings.keycloakBaseUrl.replace(/\/$/, "")}/realms/${this.settings.keycloakRealm}/protocol/openid-connect/logout`;
-    const query = new URLSearchParams({
-      id_token_hint: idToken,
-      post_logout_redirect_uri: this.settings.postLogoutRedirectUri,
-      client_id: this.settings.keycloakClientId,
-    });
-
-    return `${endpoint}?${query.toString()}`;
-  }
-}
-
-async function getCurrentSession(request: Request, sessionStore: RedisSessionStore, settings: Settings) {
-  const cookies = parseCookieHeader(request.headers.cookie);
-  const sessionId = cookies[settings.sessionCookieName];
-  if (!sessionId) {
-    return null;
-  }
-
-  return await sessionStore.touchSession(sessionId);
+function buildSessionUser(claims: TokenClaims, idToken: string): SessionUser {
+  return {
+    userName: String(claims.preferred_username ?? claims.name ?? claims.email ?? "Developer"),
+    email: claims.email === undefined || claims.email === "" ? null : String(claims.email),
+    subject: String(claims.sub),
+    idToken,
+  };
 }
 
 function getNextPath(value: unknown): string {
@@ -527,24 +164,55 @@ function asyncHandler(handler: (request: Request, response: ExpressResponse, nex
   };
 }
 
-export function createApp(settings: Settings = createSettingsFromEnv()) {
-  const sessionStore = new RedisSessionStore(settings);
-  const keycloak = new KeycloakService(settings);
+export async function createApp(settings: Settings = createSettingsFromEnv()) {
+  const issuer = `${settings.keycloakBaseUrl.replace(/\/$/, "")}/realms/${settings.keycloakRealm}`;
+  const config = await client.discovery(
+    new URL(issuer),
+    settings.keycloakClientId,
+    undefined,
+    settings.keycloakClientSecret ? client.ClientSecretPost(settings.keycloakClientSecret) : undefined,
+    {
+      execute: [client.allowInsecureRequests],
+    },
+  );
+
+  const redisClient = createClient({ url: settings.redisUrl });
+  redisClient.on("error", (err) => {
+    console.error("Redis client error:", err.message);
+  });
+  await redisClient.connect();
+  const redisStore = new RedisStore({ client: redisClient });
+
   const app = express();
 
   app.use(express.urlencoded({ extended: false }));
 
+  app.use(
+    session({
+      store: redisStore,
+      name: settings.sessionCookieName,
+      secret: crypto.randomBytes(32).toString("hex"),
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+        path: "/",
+        maxAge: settings.sessionTtlSeconds * 1000,
+      },
+    }),
+  );
+
   app.get(
     "/",
     asyncHandler(async (request, response) => {
-      const currentSession = await getCurrentSession(request, sessionStore, settings);
-      if (currentSession === null) {
+      if (request.session.user === undefined) {
         response.redirect(303, "/api/auth/login?next=/");
         return;
       }
 
-      const sessions = await sessionStore.listSessions();
-      response.type("html").send(renderHomePage(currentSession, sessions));
+      response.type("html").send(renderHomePage(request.session.user));
     }),
   );
 
@@ -554,32 +222,40 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
       const state = randomToken();
       const nonce = randomToken();
       const nextPath = normalizeNextPath(getNextPath(request.query.next));
-      await sessionStore.storePendingLogin({
-        state,
-        nonce,
-        nextPath,
-        createdAt: isoNow(),
+      request.session.pendingLogin = { state, nonce, nextPath };
+      await new Promise<void>((resolve, reject) => {
+        request.session.save((err) => (err ? reject(err) : resolve()));
       });
 
-      const authUrl = await keycloak.authorizationUrl(state, nonce);
-      response.redirect(303, authUrl);
+      const authUrl = client.buildAuthorizationUrl(config, {
+        state,
+        nonce,
+        scope: `openid ${settings.keycloakAudienceScope}`,
+        redirect_uri: settings.redirectUri,
+        iss: issuer,
+      });
+      response.redirect(303, authUrl.toString());
     }),
   );
 
   app.get(
     "/api/auth/callback/keycloak",
     asyncHandler(async (request, response) => {
-      const code = getNextPath(request.query.code);
       const state = getNextPath(request.query.state);
-      const pending = await sessionStore.popPendingLogin(state);
-      if (pending === null) {
+      const pending = request.session.pendingLogin;
+      if (pending === undefined) {
         response.status(400).type("text").send("invalid login state");
         return;
       }
 
-      const tokenPayload = await keycloak.exchangeCode(code);
-      const idToken = tokenPayload.id_token;
-      const accessToken = tokenPayload.access_token;
+      const query = request.originalUrl.split("?")[1];
+      const callbackUrl = query ? new URL(settings.redirectUri + "?" + query) : new URL(settings.redirectUri);
+      const grant = await client.authorizationCodeGrant(config, callbackUrl, {
+        expectedState: state,
+        expectedNonce: pending.nonce,
+      });
+      const idToken = grant.id_token;
+      const accessToken = grant.access_token;
       if (typeof idToken !== "string") {
         response.status(502).type("text").send("missing id token");
         return;
@@ -590,20 +266,10 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
         return;
       }
 
-      const claims = await keycloak.validateIdToken(idToken, pending.nonce);
-      await keycloak.validateAccessToken(accessToken);
-      const session = await sessionStore.createSession({
-        idToken,
-        claims,
-      });
+      const claims = (grant.claims() ?? {}) as TokenClaims;
+      request.session.user = buildSessionUser(claims, idToken);
+      delete request.session.pendingLogin;
 
-      response.cookie(settings.sessionCookieName, session.sessionId, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: false,
-        path: "/",
-        maxAge: settings.sessionTtlSeconds * 1000,
-      });
       response.redirect(303, normalizeNextPath(pending.nextPath));
     }),
   );
@@ -611,13 +277,20 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
   app.post(
     "/logout",
     asyncHandler(async (request, response) => {
-      const currentSession = await getCurrentSession(request, sessionStore, settings);
+      const user = request.session.user;
       let logoutUrl = settings.postLogoutRedirectUri;
-      if (currentSession !== null) {
-        await sessionStore.deleteSession(currentSession.sessionId);
-        logoutUrl = await keycloak.logoutUrl(currentSession.idToken);
+      if (user !== undefined) {
+        logoutUrl = client
+          .buildEndSessionUrl(config, {
+            id_token_hint: user.idToken,
+            post_logout_redirect_uri: settings.postLogoutRedirectUri,
+          })
+          .toString();
       }
 
+      await new Promise<void>((resolve, reject) => {
+        request.session.destroy((err) => (err ? reject(err) : resolve()));
+      });
       response.clearCookie(settings.sessionCookieName, { path: "/" });
       response.redirect(303, logoutUrl);
     }),
@@ -632,7 +305,7 @@ export function createApp(settings: Settings = createSettingsFromEnv()) {
 }
 
 async function main(): Promise<void> {
-  const app = createApp();
+  const app = await createApp();
   const port = envAsNumber(process.env.PORT, DEFAULT_PORT);
   app.listen(port, "127.0.0.1", () => {
     console.log(`Listening on http://127.0.0.1:${port}`);
