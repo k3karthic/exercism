@@ -5,4 +5,8 @@ export default defineConfig({
     fileParallelism: true,
     exclude: ["dist/**", "node_modules/**"],
   },
+  coverage: {
+    provider: "istanbul",
+    exclude: ["dist/**", "**/generated/**", "debugger/**", "**/*.test.ts", "**/*.test.ts.ts"],
+  },
 });
