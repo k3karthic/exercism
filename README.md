@@ -49,20 +49,31 @@
   - Distributed Programming
     - [Locales](https://chapel-lang.org/docs/language/spec/locales.html)
     - [Distributions](https://chapel-lang.org/docs/language/spec/domain-maps.html)
-- Relational Databases ([PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/)) - TODO
-  - Advanced SQL (Window Functions, CTEs, Recursive CTEs, LATERAL Joins, Upserts)
-  - Query Plans (`EXPLAIN ANALYZE`)
-  - Indexing (B-tree, Composite, Partial, Covering)
-  - Index Types (GIN, GiST, BRIN) - Only PostgreSQL
-  - Clustered Index vs Heap Storage
-  - Transactions & Isolation Levels (Anomalies, MVCC)
-  - Locking (Row Locks, Advisory Locks, Deadlocks)
+- Relational Databases ([PostgreSQL](https://www.postgresql.org/), [MySQL](https://www.mysql.com/))
+  - Query Plans
+    - [PostgreSQL](https://www.postgresql.org/docs/current/using-explain.html)
+    - [MySQL](https://dev.mysql.com/doc/refman/9.7/en/execution-plan-information.html) 
+  - [Index Types](https://www.postgresql.org/docs/current/indexes-types.html)
+  - [Partial Indexes](https://www.postgresql.org/docs/current/indexes-partial.html)
+    - MySQL does not natively support partial indexes, use indexes on generated columns
+  - [Clustered Index vs Heap Storage](https://use-the-index-luke.com/blog/2016-07-29/on-ubers-choice-of-databases)
+  - Transactions & Isolation Levels
+    - [PostgreSQL](https://www.postgresql.org/docs/8.4/transaction-iso.html)
+    - [MySQL](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html) 
+  - Advisory Locks
+    - [PostgreSQL](https://flaviodelgrosso.com/blog/postgresql-advisory-locks)
+    - [MySQL](https://database-transactions.svyatov.com/mysql/05-patterns/advisory-locks) 
   - Job Queue (`SELECT ... FOR UPDATE SKIP LOCKED`)
-  - Bloat & Vacuum (HOT Updates, `fillfactor`, XID Wraparound) - Only PostgreSQL
   - Partitioning
-  - Temporal Tables - Only PostgreSQL
-  - JSON (JSONB, JSON Duality)
-  - Full-Text Search (`tsvector`, [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html), MySQL `FULLTEXT`)
+    - [PostgreSQL](https://www.postgresql.org/docs/current/ddl-partitioning.html)
+    - [MySQL](https://dev.mysql.com/doc/refman/9.7/en/partitioning.html)
+  - [Temporal Tables](https://www.postgresql.org/docs/19/ddl-temporal-tables.html) - Only PostgreSQL
+  - JSON
+    - PostgreSQL - [Data Type](https://www.postgresql.org/docs/current/datatype-json.html), [Functions](https://www.postgresql.org/docs/18/functions-json.html)
+    - MySQL - [Data Type](https://dev.mysql.com/doc/refman/9.7/en/json.html), [Functions](https://dev.mysql.com/doc/refman/9.7/en/json-functions.html)
+  - Full-Text Search
+    - [PostgreSQL](https://www.postgresql.org/docs/current/textsearch.html)
+    - [MySQL](https://dev.mysql.com/doc/refman/9.7/en/fulltext-search.html)
 - Search ([Elasticsearch](https://www.elastic.co/elasticsearch)) - TODO
   - Mappings
   - Text Analysis (Analyzers, Tokenizers, Stemming)
