@@ -57,6 +57,10 @@
   - [Partial Indexes](https://www.postgresql.org/docs/current/indexes-partial.html)
     - MySQL does not natively support partial indexes, use indexes on generated columns
   - [Clustered Index vs Heap Storage](https://use-the-index-luke.com/blog/2016-07-29/on-ubers-choice-of-databases)
+    - PostgreSQL Workarounds
+      - [Table Cluster](https://www.postgresql.org/docs/current/sql-cluster.html)
+      - [Index-Only Scans](https://www.postgresql.org/docs/current/indexes-index-only-scans.html)
+      - [Heap-Only Tuples](https://www.postgresql.org/docs/current/storage-hot.html)
   - Transactions & Isolation Levels
     - [PostgreSQL](https://www.postgresql.org/docs/8.4/transaction-iso.html)
     - [MySQL](https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html) 
@@ -86,6 +90,7 @@
   - [Facets](https://www.elastic.co/guide/en/app-search/current/facets-guide.html)
   - [Hierarchical Facets](https://www.elastic.co/guide/en/app-search/current/hierarchical-facets-guide.html)
   - [Aggregations](https://www.elastic.co/docs/explore-analyze/query-filter/aggregations)
+  - [Performance Tuning](https://www.elastic.co/docs/deploy-manage/production-guidance/optimize-performance)
 - Distributed Systems Patterns
   - Data Consistency,
     - [Saga](https://microservices.io/patterns/data/saga.html)
